@@ -73,6 +73,7 @@ local DRS_Points = class('DRS_Points', function(fileName)
         end, function () end)
 
         if dData == nil or sData == nil or eData == nil then break end
+
         detectionZones[index] = tonumber(dData)
         startZones[index] = tonumber(sData)
         endZones[index] = tonumber(eData)
@@ -84,13 +85,18 @@ local DRS_Points = class('DRS_Points', function(fileName)
     return {detectionZones = detectionZones, startZones = startZones, endZones = endZones, zoneCount = zoneCount}
 end, class.NoInitialize)
 
----@return sessionTypeString
+--- Converts session type number to the corresponding session type string
+---@param sessionType number
+---@return string
 local function sessionTypeString(sessionType)
     local sessionTypes = {"Undefined", "Practice", "Qualify", "Race", "Hotlap", "Time Attack", "Drift", "Drag"}
 
     return sessionTypes[sessionType+1]
 end
 
+--- Converts session type number to the corresponding session type string 
+---@param driver Driver
+---@return boolean
 local function inActivationZone(driver)
     local trackPos = ac.worldCoordinateToTrackProgress(driver.car.position)
 
@@ -112,6 +118,9 @@ local function inActivationZone(driver)
     return false
 end
 
+--- Returns time delta between the driver and driver ahead on track
+---@param driver Driver
+---@return number
 local function getDelta(driver)
     local carAhead = 0
 
@@ -125,6 +134,9 @@ local function getDelta(driver)
     return round(ac.getGapBetweenCars(driver.index, carAhead),5)
 end
 
+--- Checks if delta is within 1 second
+---@param driver Driver
+---@return boolean
 local function checkGap(driver)
     local delta = getDelta(driver)
 
@@ -135,6 +147,9 @@ local function checkGap(driver)
     end
 end
 
+--- Check if driver is on track or in pits
+---@param driver Driver
+---@return boolean
 local function inPits(driver)
     if driver.isInPit or driver.isInPitlane then
         return true
@@ -143,11 +158,17 @@ local function inPits(driver)
     end
 end
 
+--- Locks the specified driver's DRS
+---@param driver Driver
 local function lockDRS(driver)
     driver.drsLocked = true
     ac.setDRS(false)
 end
 
+--- Checks if driver is before the detection line, not in the pits, 
+--- not in a drs zone, and within 1 second of the car ahead on track
+---@param driver Driver
+---@return boolean
 local function drsAvailable(driver)
     if not inPits(driver) then
         if inActivationZone(driver) then
@@ -175,17 +196,20 @@ local function drsAvailable(driver)
             else
                 lockDRS(driver)
                 return false
-            end
+            end -- end if not driver.drsLocked
         else
             lockDRS(driver)
             return false
-        end
+        end -- end if inActivationZone
     else
         lockDRS(driver)
         return false
-    end
+    end -- end if not inPits
 end
 
+--- Enable DRS functionality if the lead driver has completed the specified numbers of laps
+---@param driver Driver
+---@return boolean
 local function enableDRS(driver)
     for driverIndex = 0, Sim.carsCount-1 do
         if ac.getCar(driverIndex).racePosition == 1 then
@@ -201,6 +225,7 @@ local function enableDRS(driver)
     end
 end
 
+--- Control the DRS functionality
 local function controlDRS()
     if DRS_Enabled == false then
         ac.setDRS(false)
@@ -212,6 +237,8 @@ local function controlDRS()
     end
 end
 
+--- Control the MGUK functionality
+---@param driver Driver
 local function controlMGUK(driver)
     if Lap_Count < driver.car.lapCount then
         driver.mgukDeliveryCount = 0
@@ -237,12 +264,15 @@ local function controlMGUK(driver)
     end
 end
 
+--- Control the ERS functionality
+---@param driver Driver
 local function controlERS(driver)
     if driver.car.kersCurrentKJ >= Max_ERS then
         ac.setKERS(false)
     end
 end
 
+--- Initialize
 local function initialize()
     Initialized = true
     DRS_Enabled = false
@@ -256,11 +286,15 @@ local function initialize()
     SessionTypeString = sessionTypeString(SessionTypeInt)
 end
 
+--- Returns the main driver's track position in meters
+---@return number
 local function getTrackPositionM()
     return ac.worldCoordinateToTrackProgress(Drivers[0].car.position)/Sim.trackLengthM
 end
 
-local function getDetectionDistance()
+--- Returns the main driver's distance to the detection line in meters
+---@return number
+local function getDetectionDistanceM()
     return math.round(math.clamp((DRS_Zones.detectionZones[DRS_Current_Zone]/Sim.trackLengthM)-getTrackPositionM(),0,10000), 3)
 end
 
@@ -273,15 +307,14 @@ function script.windowMain(dt)
         controlMGUK()
         controlERS()
 
+        --- SESSION INFO
         ui.pushFont(ui.Font.Main)
         ui.text("SESSION")
         ui.pushFont(ui.Font.Small)
         ui.text("Type: "..SessionTypeString)
-        ui.text("Locked: "..tostring(CarInputs.kers))
         ui.text("Race Position: "..Drivers[0].car.racePosition.."/"..Sim.carsCount)
-        ui.text("Delta: "..getDelta(Drivers[0]))
-        ui.text("Detection Line in: "..tostring(getDetectionDistance()).." m")
 
+        --- ERS DEBUG
         ui.pushFont(ui.Font.Main)
         ui.text("\nERS")
         ui.pushFont(ui.Font.Small)
@@ -289,6 +322,7 @@ function script.windowMain(dt)
         ui.text("MGUK Mode: "..MGUK_Delivery)
         ui.text("MGUK Switch Count: "..Drivers[0].mgukDeliveryCount)
 
+        --- DRS DEBUG
         ui.pushFont(ui.Font.Main)
         ui.text("\nDRS")
         ui.pushFont(ui.Font.Small)
@@ -298,9 +332,11 @@ function script.windowMain(dt)
             else
                 ui.text("Endabled: in "..LapsEngageDRS.." laps")
             end
+            ui.text("Delta: "..getDelta(Drivers[0]))
+            ui.text("Detection Line in: "..tostring(getDetectionDistanceM()).." m")
             ui.text("Locked: "..tostring(Drivers[0].drsLocked))
             ui.text("Within Gap: "..tostring(checkGap()))
-            ui.text("Act Zone: "..tostring(inActivationZone()))
+            ui.text("Before Detection Line: "..tostring(inActivationZone()))
             ui.text("Deploy Zone: "..tostring(Drivers[0].drsZone))
             ui.text("Available: "..tostring(Drivers[0].drsAvailable))
             ui.text("Activated: "..tostring(Drivers[0].drsActive))
