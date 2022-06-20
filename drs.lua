@@ -62,6 +62,7 @@ local DRS_Points = class('DRS_Points', function(fileName)
         local sData = ''
         local eData = ''
 
+        --- Extract DRS detection points from drs_zones.ini
         dData = try(function()
             return ini.sections['ZONE_'..index]['DETECTION'][1]
         end, function () end)
@@ -72,8 +73,10 @@ local DRS_Points = class('DRS_Points', function(fileName)
             return ini.sections['ZONE_'..index]['END'][1]
         end, function () end)
 
+        --- If data is nil, break the while loop
         if dData == nil or sData == nil or eData == nil then break end
 
+        --- Add data to appropriate arrays
         detectionZones[index] = tonumber(dData)
         startZones[index] = tonumber(sData)
         endZones[index] = tonumber(eData)
@@ -103,13 +106,16 @@ local function inActivationZone(driver)
     --- Get next detection line
     for zoneIndex=0, DRS_Zones.zoneCount-1 do
         local prevZone = zoneIndex-1
+        --- Ssets the previous DRS zone to the last DRS zone
         if zoneIndex == 0 then
             prevZone = DRS_Zones.zoneCount-1
         end
+        --- If driver is between the end zone of the previous DRS zone, and the detection line of the upcoming DRS zone
         if trackPos <= DRS_Zones.detectionZones[zoneIndex] and trackPos >= DRS_Zones.endZones[prevZone] then
             DRS_Current_Zone = zoneIndex
             return true
         end
+        --- Increment the current DRS zone once the driver passes the DRS start line
         if trackPos >= DRS_Zones.startZones[zoneIndex] then
             DRS_Current_Zone = zoneIndex + 1
         end
@@ -124,6 +130,7 @@ end
 local function getDelta(driver)
     local carAhead = 0
 
+    --- Get the car that is one position ahead
     for driverIndex = 0, Sim.carsCount-1 do
         local pos = ac.getCar(driverIndex).racePosition
         if driver.car.racePosition == pos+1 then
@@ -162,7 +169,7 @@ end
 ---@param driver Driver
 local function lockDRS(driver)
     driver.drsLocked = true
-    ac.setDRS(false)
+    ac.setDRS(false) -- Need API update
 end
 
 --- Checks if driver is before the detection line, not in the pits, 
@@ -221,8 +228,8 @@ local function enableDRS(driver)
                 driver.drsLocked = true
                 return false
             end
-        end
-    end
+        end --- end if driver is 1st
+    end --- end for drivers in Drivers
 end
 
 --- Control the DRS functionality
@@ -260,7 +267,7 @@ local function controlMGUK(driver)
             Timer0 = Timer0 + 1
         end
     else
-        ac.setMGUKDelivery(driver.mgukDelivery)
+        ac.setMGUKDelivery(driver.mgukDelivery)  -- Need API update
     end
 end
 
@@ -268,7 +275,7 @@ end
 ---@param driver Driver
 local function controlERS(driver)
     if driver.car.kersCurrentKJ >= Max_ERS then
-        ac.setKERS(false)
+        ac.setKERS(false)  -- Need API update
     end
 end
 
@@ -277,8 +284,10 @@ local function initialize()
     Initialized = true
     DRS_Enabled = false
 
+    --- Get DRS Zones from track data folder
     DRS_Zones = DRS_Points("drs_zones.ini")
 
+    --- Populate Drivers array
     for driverIndex = 0, Sim.carsCount-1 do
         table.insert(Drivers,driverIndex,Driver(driverIndex))
     end
@@ -335,7 +344,7 @@ function script.windowMain(dt)
             ui.text("Delta: "..getDelta(Drivers[0]))
             ui.text("Detection Line in: "..tostring(getDetectionDistanceM()).." m")
             ui.text("Locked: "..tostring(Drivers[0].drsLocked))
-            ui.text("Within Gap: "..tostring(checkGap()))
+            ui.text("Within Gap: "..tostring(checkGap(Drivers[0])))
             ui.text("Before Detection Line: "..tostring(inActivationZone()))
             ui.text("Deploy Zone: "..tostring(Drivers[0].drsZone))
             ui.text("Available: "..tostring(Drivers[0].drsAvailable))
