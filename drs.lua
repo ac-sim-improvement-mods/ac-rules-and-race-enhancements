@@ -238,6 +238,7 @@ local function controlDRS()
         ac.setDRS(false)
         DRS_Enabled = enableDRS()
     else
+        --- Set DRS availability for all drivers
         for driver in Drivers do
             driver.drsAvailable = drsAvailable(driver)
         end
@@ -247,26 +248,30 @@ end
 --- Control the MGUK functionality
 ---@param driver Driver
 local function controlMGUK(driver)
+    --- Reset MGUK count
     if Lap_Count < driver.car.lapCount then
         driver.mgukDeliveryCount = 0
         Lap_Count = driver.car.lapCount
     end
+    --- Allow the driver to change MGUK settings if below the max change count
     if driver.mgukDeliveryCount < Max_MGUK_Change then
-        if CarInputs.mgukDeliveryUp or CarInputss.mgukDeliveryDown then
+        if CarInputs.mgukDeliveryUp or CarInputs.mgukDeliveryDown then
             Timer0 = 0
         end
 
-        if Timer0 > 250 then
+        --- Solidify the MGUK Delivery selection
+        if Timer0 > 250 then ---250 is the time it takes for the top banner to disappear
             Timer0 = 0
+            --- Check if MGUK Delivery has changed
             if  driver.car.mgukDelivery ~= driver.mgukDelivery then
                 driver.mgukDeliveryCount = driver.mgukDeliveryCount + 1
-
                 driver.mgukDelivery = driver.car.mgukDelivery
             end
         else
             Timer0 = Timer0 + 1
         end
     else
+        --- Keep MGUK setting locked
         ac.setMGUKDelivery(driver.mgukDelivery)  -- Need API update
     end
 end
@@ -313,8 +318,8 @@ function script.windowMain(dt)
     ---if SessionTypeInt == 3 or SessionTypeInt == 2 then
     if true then
         controlDRS()
-        controlMGUK()
-        controlERS()
+        controlMGUK(driver)
+        controlERS(driver)
 
         --- SESSION INFO
         ui.pushFont(ui.Font.Main)
