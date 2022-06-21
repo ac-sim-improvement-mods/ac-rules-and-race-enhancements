@@ -176,12 +176,11 @@ end
 
 --- Checks if driver is before the detection line, not in the pits, 
 --- not in a drs zone, and within 1 second of the car ahead on track
----@param driverIndex number
+---@param driver Driver
 ---@return boolean
-local function drsAvailable(driverIndex)
-    local driver = Drivers[driverIndex]
+local function drsAvailable(driver)
     driver:refresh()
-    ac.log("Driver["..driverIndex.."]: "..tostring(driver.drsZone))
+    ac.log("Driver["..driver.index.."]: "..tostring(driver.drsZone))
     if not inPits(driver) then
         if inActivationZone(driver) then
             driver.drsLocked = false
@@ -244,7 +243,7 @@ local function controlDRS()
     else
         --- Set DRS availability for all drivers
         for driverIndex in ipairs(Drivers) do
-            Drivers[driverIndex].drsAvailable = drsAvailable(driverIndex)
+            Drivers[driverIndex].drsAvailable = drsAvailable(Drivers[driverIndex])
         end
     end
 end
