@@ -3,15 +3,12 @@ local Session = ac.getSession(0)
 local CarInputs = physics.getCarInputControls()
 
 local Initialized = false
-local SessionTypeInt = Session.type
-local SessionTypeString = ""
 
-local LapsEngageDRS = 2
+local LapsEngageDRS = 0
 local Lap_Count = 0
 
 local Drivers = {}
 
-local DRS_Current_Zone = 0
 local DRS_Enabled = false
 local DRS_Zones = {}
 
@@ -20,9 +17,8 @@ local Max_ERS = 4000
 local Timer0 = 0
 
 ---@class Driver
----@generic T
----@param carIndex any
----@return Driver|{data: T, original: T}
+---@param carIndex number
+---@return Driver
 local Driver = class('Driver', function(carIndex)
     local car = ac.getCar(carIndex)
     local index = carIndex
@@ -30,20 +26,21 @@ local Driver = class('Driver', function(carIndex)
     local lapsCompleted = car.lapCount
 
     local isInPit = car.isInPit
-    local isInPitLane = car.isInPitLane
+    local isInPitLane = car.isInPitlane
 
     local drsPresent = car.drsPresent
     local drsLocked = false
     local drsActivationZone = false
     local drsZone = car.drsAvailable
     local drsActive = car.drsActive
+    local drsAvailable = false
 
     local mgukPresent = car.hasCockpitERSDelivery
     local mgukLocked = false
     local mgukDelivery = 0
     local mgukDeliveryCount = 0
-    return {aiControlled = aiControlled, lapsCompleted = lapsCompleted,
-        drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive,
+    return {car = car, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted,
+        drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
         mgukPresent = mgukPresent, mgukLocked = mgukLocked, mgukDelivery = mgukDelivery, mgukDeliveryCount = mgukDeliveryCount}
 end, class.NoInitialize)
 
@@ -55,6 +52,7 @@ local DRS_Points = class('DRS_Points', function(fileName)
     local detectionZones = {}
     local startZones = {}
     local endZones = {}
+    local currentZone = 0
 
     local index = 0
     while true do
@@ -85,16 +83,16 @@ local DRS_Points = class('DRS_Points', function(fileName)
     end
 
     local zoneCount = index
-    return {detectionZones = detectionZones, startZones = startZones, endZones = endZones, zoneCount = zoneCount}
+    
+    return {detectionZones = detectionZones, startZones = startZones, endZones = endZones, zoneCount = zoneCount, currentZone = currentZone}
 end, class.NoInitialize)
 
 --- Converts session type number to the corresponding session type string
----@param sessionType number
 ---@return string
-local function sessionTypeString(sessionType)
+local function sessionTypeString()
     local sessionTypes = {"Undefined", "Practice", "Qualify", "Race", "Hotlap", "Time Attack", "Drift", "Drag"}
 
-    return sessionTypes[sessionType+1]
+    return sessionTypes[Session.type + 1]
 end
 
 --- Converts session type number to the corresponding session type string 
@@ -106,18 +104,18 @@ local function inActivationZone(driver)
     --- Get next detection line
     for zoneIndex=0, DRS_Zones.zoneCount-1 do
         local prevZone = zoneIndex-1
-        --- Ssets the previous DRS zone to the last DRS zone
+        --- Sets the previous DRS zone to the last DRS zone
         if zoneIndex == 0 then
             prevZone = DRS_Zones.zoneCount-1
         end
         --- If driver is between the end zone of the previous DRS zone, and the detection line of the upcoming DRS zone
         if trackPos <= DRS_Zones.detectionZones[zoneIndex] and trackPos >= DRS_Zones.endZones[prevZone] then
-            DRS_Current_Zone = zoneIndex
+            DRS_Zones.currentZone = zoneIndex
             return true
         end
         --- Increment the current DRS zone once the driver passes the DRS start line
         if trackPos >= DRS_Zones.startZones[zoneIndex] then
-            DRS_Current_Zone = zoneIndex + 1
+            DRS_Zones.currentZone = zoneIndex + 1
         end
     end
 
@@ -138,7 +136,7 @@ local function getDelta(driver)
         end
     end
 
-    return round(ac.getGapBetweenCars(driver.index, carAhead),5)
+    return math.round(math.clamp(ac.getGapBetweenCars(driver.index, carAhead),0,999),5)
 end
 
 --- Checks if delta is within 1 second
@@ -215,17 +213,16 @@ local function drsAvailable(driver)
 end
 
 --- Enable DRS functionality if the lead driver has completed the specified numbers of laps
----@param driver Driver
 ---@return boolean
-local function enableDRS(driver)
+local function enableDRS()
     for driverIndex = 0, Sim.carsCount-1 do
         if ac.getCar(driverIndex).racePosition == 1 then
             --- CarState index starts at 1...
             if ac.getCarState(driverIndex+1).lapCount >= LapsEngageDRS then
-                driver.drsLocked = false
+                Drivers[driverIndex].drsLocked = false
                 return true
             else
-                driver.drsLocked = true
+                Drivers[driverIndex].driver.drsLocked = true
                 return false
             end
         end --- end if driver is 1st
@@ -286,7 +283,6 @@ end
 
 --- Initialize
 local function initialize()
-    Initialized = true
     DRS_Enabled = false
 
     --- Get DRS Zones from track data folder
@@ -294,10 +290,8 @@ local function initialize()
 
     --- Populate Drivers array
     for driverIndex = 0, Sim.carsCount-1 do
-        table.insert(Drivers,driverIndex,Driver(driverIndex))
+        table.insert(Drivers, driverIndex, Driver(driverIndex))
     end
-
-    SessionTypeString = sessionTypeString(SessionTypeInt)
 end
 
 --- Returns the main driver's track position in meters
@@ -309,23 +303,25 @@ end
 --- Returns the main driver's distance to the detection line in meters
 ---@return number
 local function getDetectionDistanceM()
-    return math.round(math.clamp((DRS_Zones.detectionZones[DRS_Current_Zone]/Sim.trackLengthM)-getTrackPositionM(),0,10000), 3)
+    return math.round(math.clamp((DRS_Zones.detectionZones[DRS_Zones.currentZone]/Sim.trackLengthM)-getTrackPositionM(),0,10000), 3)
 end
 
 function script.windowMain(dt)
     if not Initialized then initialize() end
 
+    ui.text(tostring(Drivers[0].drsLocked))
+
     ---if SessionTypeInt == 3 or SessionTypeInt == 2 then
     if true then
         controlDRS()
-        controlMGUK(driver)
-        controlERS(driver)
+        ---controlMGUK(driver)
+        ---controlERS(driver)
 
         --- SESSION INFO
         ui.pushFont(ui.Font.Main)
         ui.text("SESSION")
         ui.pushFont(ui.Font.Small)
-        ui.text("Type: "..SessionTypeString)
+        ui.text("Type: "..sessionTypeString())
         ui.text("Race Position: "..Drivers[0].car.racePosition.."/"..Sim.carsCount)
 
         --- ERS DEBUG
@@ -333,7 +329,7 @@ function script.windowMain(dt)
         ui.text("\nERS")
         ui.pushFont(ui.Font.Small)
         ui.text("ERS Spent: "..string.format("%2.1f", Drivers[0].car.kersCurrentKJ).."/"..Max_ERS)
-        ui.text("MGUK Mode: "..MGUK_Delivery)
+        ---ui.text("MGUK Mode: "..MGUK_Delivery)
         ui.text("MGUK Switch Count: "..Drivers[0].mgukDeliveryCount)
 
         --- DRS DEBUG
@@ -346,11 +342,13 @@ function script.windowMain(dt)
             else
                 ui.text("Endabled: in "..LapsEngageDRS.." laps")
             end
+            
+            ui.text("Delta: "..DRS_Zones.currentZone)
             ui.text("Delta: "..getDelta(Drivers[0]))
             ui.text("Detection Line in: "..tostring(getDetectionDistanceM()).." m")
             ui.text("Locked: "..tostring(Drivers[0].drsLocked))
             ui.text("Within Gap: "..tostring(checkGap(Drivers[0])))
-            ui.text("Before Detection Line: "..tostring(inActivationZone()))
+            ui.text("Before Detection Line: "..tostring(inActivationZone(Drivers[0])))
             ui.text("Deploy Zone: "..tostring(Drivers[0].drsZone))
             ui.text("Available: "..tostring(Drivers[0].drsAvailable))
             ui.text("Activated: "..tostring(Drivers[0].drsActive))
