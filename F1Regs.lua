@@ -17,6 +17,7 @@ local Max_MGUK_Change = 4
 local Max_ERS = 4000
 local Timer0 = 0
 local Timer1 = 0
+local Timer2 = 0
 
 ---@class Driver
 ---@param carIndex number
@@ -204,29 +205,27 @@ local function getDelta(driver)
     local TrackOrder = getTrackOrder()
 
     for index=0, #TrackOrder do
-        if TrackOrder[index].index == driver.index then
-            if index == 0 then
-                if not inPits(TrackOrder[#TrackOrder]) then
+        if driver.index == TrackOrder[index].index then
+            if not inPits(TrackOrder[#TrackOrder]) then
+                if index == 0 then
                     driver.carAhead = TrackOrder[#TrackOrder].index
                 else
-                    
+                    driver.carAhead = TrackOrder[index - 1].index
                 end
-
-
-                ---ac.log(ac.getDriverName(TrackOrder[0].index.." is ahead of "..ac.getDriverName(TrackOrder[index].index)))
-
-            else
-                ---ac.log(ac.getDriverName(TrackOrder[index+1].index).." is ahead of "..ac.getDriverName(TrackOrder[index].index))
-                driver.carAhead = TrackOrder[index - 1].index
+                --ac.log(index.." "..driver.carAhead)
             end
         end
-
-        
-
-        ac.log(index.. " " ..TrackOrder[index].index.. ": "..ac.getDriverName(TrackOrder[index].index).." "..TrackOrder[index].trackPosition)
-
     end
 
+    if Timer2 > 1 then
+        Timer2 = 0
+        if ac.getDriverName(driver.index) == "William Gawlik" then
+            ac.log(ac.getDriverName(driver.carAhead).." is ahead of "..ac.getDriverName(driver.index))
+        end
+    end
+
+    Timer2 = Timer2 + 1
+    
     return math.round(math.clamp(ac.getGapBetweenCars(driver.index, carAheadIndex),0,999.99999),5)
 end
 
@@ -256,47 +255,44 @@ end
 ---@param driver Driver
 ---@return boolean
 local function drsAvailable(driver)
-    if Timer1 > 5 then
-        Timer1 = 0
-        driver:refresh()
-        if not inPits(driver) then
-            if inActivationZone(driver) then
-                driver.drsLocked = false
-                return checkGap(driver)
-    
-            elseif not driver.drsZone then
-                --- Check if car is within 1 second of leading car
+    local inActivationZone = inActivationZone(driver)
+    local inGap = checkGap(driver)
+
+    driver:refresh()
+    if not inPits(driver) then
+        if inActivationZone then
+            driver.drsLocked = false
+            return inGap
+        elseif not driver.drsZone then
+            --- Check if car is within 1 second of leading car
+            if driver.drsAvailable then
+                return true
+            else
+                lockDRS(driver)
+                return false
+            end
+
+        elseif driver.drsZone then
+            --- Lock DRS if it was not available upon entering DRS zone
+            if not driver.drsLocked then
                 if driver.drsAvailable then
                     return true
                 else
                     lockDRS(driver)
                     return false
                 end
-    
-            elseif driver.drsZone then
-                --- Lock DRS if it was not available upon entering DRS zone
-                if not driver.drsLocked then
-                    if driver.drsAvailable then
-                        return true
-                    else
-                        lockDRS(driver)
-                        return false
-                    end
-                else
-                    lockDRS(driver)
-                    return false
-                end -- end if not driver.drsLocked
             else
                 lockDRS(driver)
                 return false
-            end -- end if inActivationZone
+            end -- end if not driver.drsLocked
         else
             lockDRS(driver)
             return false
-        end -- end if not inPits
-    end
-
-    Timer1 = Timer1 + 1
+        end -- end if inActivationZone
+    else
+        lockDRS(driver)
+        return false
+    end -- end if not inPits
 end
 
 --- Enable DRS functionality if the lead driver has completed the specified numbers of laps
@@ -427,7 +423,7 @@ function script.windowMain(dt)
             ---ui.text("Delta: "..getDelta(Drivers[0]))
 
             ui.text("Locked: "..tostring(Drivers[0].drsLocked))
-            ---ui.text("Within Gap: "..tostring(checkGap(Drivers[0])))
+            ui.text("Within Gap: "..tostring(checkGap(Drivers[0])))
             ui.text("Before Detection Line: "..tostring(inActivationZone(Drivers[0])))
             ui.text("Deploy Zone: "..tostring(Drivers[0].drsZone))
             ui.text("Available: "..tostring(Drivers[0].drsAvailable))
