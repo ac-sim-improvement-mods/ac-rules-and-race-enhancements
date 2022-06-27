@@ -36,9 +36,10 @@ local Driver = class('Driver', function(carIndex)
     local isInPitLane = car.isInPitlane
 
     local drsPresent = car.drsPresent
-    local drsLocked = false
+    local drsLocked = true
     local drsActivationZone = false
     local drsZone = car.drsAvailable
+    local drsZoneId = 0
     local drsActive = car.drsActive
     local drsAvailable = false
 
@@ -46,7 +47,7 @@ local Driver = class('Driver', function(carIndex)
     local mgukLocked = false
     local mgukDelivery = 0
     local mgukDeliveryCount = 0
-    return {name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackPosition = trackPosition,
+    return {drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackPosition = trackPosition,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
         mgukPresent = mgukPresent, mgukLocked = mgukLocked, mgukDelivery = mgukDelivery, mgukDeliveryCount = mgukDeliveryCount}
 end, class.NoInitialize)
@@ -61,7 +62,6 @@ local DRS_Points = class('DRS_Points', function(fileName)
     local detectionZones = {}
     local startZones = {}
     local endZones = {}
-    local currentZone = 0
 
     local index = 0
     while true do
@@ -93,7 +93,7 @@ local DRS_Points = class('DRS_Points', function(fileName)
 
     local zoneCount = index
     
-    return {detectionZones = detectionZones, startZones = startZones, endZones = endZones, zoneCount = zoneCount, currentZone = currentZone}
+    return {detectionZones = detectionZones, startZones = startZones, endZones = endZones, zoneCount = zoneCount}
 end, class.NoInitialize)
 
 --- Converts session type number to the corresponding session type string
@@ -121,9 +121,10 @@ function Driver:refresh()
 end
 
 --- Returns the main driver's distance to the detection line in meters
+---@param driver Driver
 ---@return number
-local function getDetectionDistanceM()
-    return math.round(math.clamp((DRS_Zones.detectionZones[DRS_Zones.currentZone]*Sim.trackLengthM)-getTrackPositionM(0),0,10000), 3)
+local function getDetectionDistanceM(driver)
+    return math.round(math.clamp((DRS_Zones.detectionZones[driver.drsZoneId]*Sim.trackLengthM)-getTrackPositionM(0),0,10000), 3)
 end
 
 --- Converts session type number to the corresponding session type string 
@@ -141,7 +142,7 @@ local function inActivationZone(driver)
         end
         --- If driver is between the end zone of the previous DRS zone, and the detection line of the upcoming DRS zone
         if trackPos <= DRS_Zones.detectionZones[zoneIndex] and trackPos >= DRS_Zones.endZones[prevZone] then
-            DRS_Zones.currentZone = zoneIndex
+            driver.drsZoneId = zoneIndex
             driver.drsLocked = false
             return true
         end
@@ -171,7 +172,12 @@ end
 ---@param driver Driver
 local function lockDRS(driver)
     driver.drsLocked = true
-    ac.setDRS(false) -- Need API update
+
+    --- Need API update
+    if driver.index == 0 then
+        ac.log("hi")
+        ac.setDRS(false)
+    end
 end
 
 --- Check if driver is on track or in pits
@@ -256,9 +262,6 @@ local function checkGap(driver)
     end
 end
 
-
-
-
 --- Checks if driver is before the detection line, not in the pits, 
 --- not in a drs zone, and within 1 second of the car ahead on track
 ---@param driver Driver
@@ -267,21 +270,25 @@ local function drsAvailable(driver)
     driver:refresh()
     local inActivationZone = inActivationZone(driver)
     local inGap = checkGap(driver)
+    
+    if inPits(driver) then
+        return false
+    elseif inActivationZone then
+        return inGap
+    elseif not driver.drsZone then
+        if driver.drsAvailable then
+            return true
+        else
+            lockDRS(driver)
+            return false
+        end
 
-    if not inPits(driver) then
-        if inActivationZone then
-            return inGap
-        elseif not driver.drsZone then
-            if driver.drsAvailable then
-                return true
-            end
-
-        elseif driver.drsZone then
-            if not driver.drsLocked then
-                if driver.drsAvailable then
-                    return true
-                end
-            end
+    elseif driver.drsZone then
+        if not driver.drsLocked and driver.drsAvailable then
+            return true
+        else
+            lockDRS(driver)
+            return false
         end
     end
 
@@ -414,14 +421,14 @@ function script.windowMain(dt)
             ui.pushFont(ui.Font.Small)
             
             ui.text("DRS Enabled: "..tostring(DRS_Enabled))
-            ui.text("DRS Zone ID: "..DRS_Zones.currentZone)
+            ui.text("DRS Zone ID: "..tostring(Drivers[0].drsZoneId))
             ui.text("Locked: "..tostring(Drivers[0].drsLocked))
             ui.text("Within Gap: "..tostring(checkGap(Drivers[0])))
             ui.text("Before Detection Line: "..tostring(inActivationZone(Drivers[0])))
             ui.text("Deploy Zone: "..tostring(Drivers[0].drsZone))
             ui.text("Available: "..tostring(Drivers[0].drsAvailable))
             ui.text("Activated: "..tostring(Drivers[0].drsActive))
-            ui.text("Detection Line in: "..tostring(getDetectionDistanceM()).." m")
+            ui.text("Detection Line in: "..tostring(getDetectionDistanceM(Drivers[0])).." m")
             ui.text("Track Pos: "..tostring(Drivers[0].trackPosition).." m")
 
         else
