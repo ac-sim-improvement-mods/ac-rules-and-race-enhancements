@@ -27,6 +27,7 @@ local Driver = class('Driver', function(carIndex)
     local index = carIndex
     local aiControlled = car.isAIControlled
     local lapsCompleted = car.lapCount
+    local name = ac.getDriverName(carIndex)
 
     local trackPosition = 0
     local carAhead = -1
@@ -45,7 +46,7 @@ local Driver = class('Driver', function(carIndex)
     local mgukLocked = false
     local mgukDelivery = 0
     local mgukDeliveryCount = 0
-    return {car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackPosition = trackPosition,
+    return {name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackPosition = trackPosition,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
         mgukPresent = mgukPresent, mgukLocked = mgukLocked, mgukDelivery = mgukDelivery, mgukDeliveryCount = mgukDeliveryCount}
 end, class.NoInitialize)
@@ -116,7 +117,6 @@ function Driver:refresh()
     self.isInPitLane = self.car.isInPitlane
     self.drsZone = self.car.drsAvailable
     self.drsActive = self.car.drsActive
-    --if self.index == 7 then ac.log(self.index) end
     self.trackPosition = getTrackPositionM(self.index)
 end
 
@@ -142,6 +142,7 @@ local function inActivationZone(driver)
         --- If driver is between the end zone of the previous DRS zone, and the detection line of the upcoming DRS zone
         if trackPos <= DRS_Zones.detectionZones[zoneIndex] and trackPos >= DRS_Zones.endZones[prevZone] then
             DRS_Zones.currentZone = zoneIndex
+            driver.drsLocked = false
             return true
         end
     end
@@ -166,13 +167,19 @@ function dump(o)
    end
 end
 
-
+--- Locks the specified driver's DRS
+---@param driver Driver
+local function lockDRS(driver)
+    driver.drsLocked = true
+    ac.setDRS(false) -- Need API update
+end
 
 --- Check if driver is on track or in pits
 ---@param driver Driver
 ---@return boolean
 local function inPits(driver)
-    if driver.isInPitlane then
+    if driver.isInPitlane or driver.isInPit then
+        lockDRS(driver)
         return true
     else
         return false
@@ -185,6 +192,16 @@ local function getTrackOrder()
     local trackOrder = {}
     for index=0, #Drivers do
         trackOrder[index+1] = Drivers[index]
+    end
+    local trackOrderSize = #trackOrder
+
+    for index=1, #trackOrder do
+        if index <= trackOrderSize then
+            if inPits(trackOrder[index]) then
+                table.remove(trackOrder, index)
+                trackOrderSize = trackOrderSize - 1
+            end
+        end
     end
 
     table.sort(trackOrder, function (a,b) return a.trackPosition > b.trackPosition end)
@@ -201,32 +218,29 @@ end
 ---@param driver Driver
 ---@return number
 local function getDelta(driver)
-    local carAheadIndex = -1
     local TrackOrder = getTrackOrder()
 
     for index=0, #TrackOrder do
         if driver.index == TrackOrder[index].index then
-            if not inPits(TrackOrder[#TrackOrder]) then
-                if index == 0 then
-                    driver.carAhead = TrackOrder[#TrackOrder].index
-                else
-                    driver.carAhead = TrackOrder[index - 1].index
-                end
-                --ac.log(index.." "..driver.carAhead)
+            if index == 0 then
+                driver.carAhead = TrackOrder[#TrackOrder].index
+            else
+                driver.carAhead = TrackOrder[index - 1].index
             end
+
         end
     end
 
     if Timer2 > 1 then
         Timer2 = 0
-        if ac.getDriverName(driver.index) == "William Gawlik" then
-            ac.log(ac.getDriverName(driver.carAhead).." is ahead of "..ac.getDriverName(driver.index))
+        if ac.getDriverName(driver.index) == "Yuki Tsunoda" then
+            --ac.log(ac.getDriverName(driver.carAhead).." is ahead of "..ac.getDriverName(driver.index))
         end
     end
 
     Timer2 = Timer2 + 1
     
-    return math.round(math.clamp(ac.getGapBetweenCars(driver.index, carAheadIndex),0,999.99999),5)
+    return math.round(math.clamp(ac.getGapBetweenCars(driver.index, driver.carAhead),0,999.99999),5)
 end
 
 --- Checks if delta is within 1 second
@@ -243,56 +257,36 @@ local function checkGap(driver)
 end
 
 
---- Locks the specified driver's DRS
----@param driver Driver
-local function lockDRS(driver)
-    driver.drsLocked = true
-    ac.setDRS(false) -- Need API update
-end
+
 
 --- Checks if driver is before the detection line, not in the pits, 
 --- not in a drs zone, and within 1 second of the car ahead on track
 ---@param driver Driver
 ---@return boolean
 local function drsAvailable(driver)
+    driver:refresh()
     local inActivationZone = inActivationZone(driver)
     local inGap = checkGap(driver)
 
-    driver:refresh()
     if not inPits(driver) then
         if inActivationZone then
-            driver.drsLocked = false
             return inGap
         elseif not driver.drsZone then
-            --- Check if car is within 1 second of leading car
             if driver.drsAvailable then
                 return true
-            else
-                lockDRS(driver)
-                return false
             end
 
         elseif driver.drsZone then
-            --- Lock DRS if it was not available upon entering DRS zone
             if not driver.drsLocked then
                 if driver.drsAvailable then
                     return true
-                else
-                    lockDRS(driver)
-                    return false
                 end
-            else
-                lockDRS(driver)
-                return false
-            end -- end if not driver.drsLocked
-        else
-            lockDRS(driver)
-            return false
-        end -- end if inActivationZone
-    else
-        lockDRS(driver)
-        return false
-    end -- end if not inPits
+            end
+        end
+    end
+
+    lockDRS(driver)
+    return false
 end
 
 --- Enable DRS functionality if the lead driver has completed the specified numbers of laps
@@ -395,10 +389,10 @@ function script.windowMain(dt)
         ui.pushFont(ui.Font.Main)
         ui.text("SESSION")
         ui.pushFont(ui.Font.Small)
-        ui.text("Type: "..tostring(Drivers[0]))
         ui.text("Type: "..sessionTypeString())
         ui.text("Race Position: "..Drivers[0].car.racePosition.."/"..Sim.carsCount)
-        ui.text("Driver Ahead: "..Drivers[0].carAhead)
+        ui.text("\nDriver Ahead: "..tostring(ac.getDriverName(Drivers[0].carAhead)))
+        ui.text("Delta: "..getDelta(Drivers[0]))
 
         --- ERS DEBUG
         ui.pushFont(ui.Font.Main)
@@ -409,19 +403,18 @@ function script.windowMain(dt)
         ui.text("MGUK Switch Count: "..Drivers[0].mgukDeliveryCount)
 
         --- DRS DEBUG
-        ui.pushFont(ui.Font.Main)
-        ui.text("\nDRS")
-        ui.pushFont(ui.Font.Small)
+      
         if Drivers[0].drsPresent then
+            ui.pushFont(ui.Font.Main)
             if DRS_Enabled == true then
-                ui.text("Enabled: "..tostring(DRS_Enabled))
+                ui.text("\nDRS [ENABLED]")
             else
-                ui.text("Endabled: in "..LapsEngageDRS.." laps")
+                ui.text("DRS ["..LapsEngageDRS.." laps]")
             end
+            ui.pushFont(ui.Font.Small)
             
-            ui.text("DRS Zone #: "..DRS_Zones.currentZone)
-            ---ui.text("Delta: "..getDelta(Drivers[0]))
-
+            ui.text("DRS Enabled: "..tostring(DRS_Enabled))
+            ui.text("DRS Zone ID: "..DRS_Zones.currentZone)
             ui.text("Locked: "..tostring(Drivers[0].drsLocked))
             ui.text("Within Gap: "..tostring(checkGap(Drivers[0])))
             ui.text("Before Detection Line: "..tostring(inActivationZone(Drivers[0])))
