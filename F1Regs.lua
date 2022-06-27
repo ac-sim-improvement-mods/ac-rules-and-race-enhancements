@@ -115,6 +115,7 @@ function Driver:refresh()
     self.isInPitLane = self.car.isInPitlane
     self.drsZone = self.car.drsAvailable
     self.drsActive = self.car.drsActive
+    --if self.index == 7 then ac.log(self.index) end
     self.trackPosition = getTrackPositionM(self.index)
 end
 
@@ -181,21 +182,18 @@ end
 ---@return table
 local function getTrackOrder()
     local trackOrder = {}
-    for k, v in ipairs(Drivers) do
-        trackOrder[k] = v
-    end
-
-    
-    for index in ipairs(trackOrder) do
-        if trackOrder[index].isInPitLane or trackOrder[index].isInPit then
-            --ac.log("Remove "..ac.getDriverName(trackOrder[index].index) )
-            table.remove(trackOrder, index)
-        end
+    for index=0, #Drivers do
+        trackOrder[index+1] = Drivers[index]
     end
 
     table.sort(trackOrder, function (a,b) return a.trackPosition > b.trackPosition end)
 
-    return trackOrder
+    local newTrackOrder = {}
+    for index=0, #trackOrder do
+        newTrackOrder[index] = trackOrder[index+1]
+    end
+
+    return newTrackOrder
 end
 
 --- Returns time delta between the driver and driver ahead on track
@@ -205,18 +203,25 @@ local function getDelta(driver)
     local carAheadIndex = -1
     local TrackOrder = getTrackOrder()
 
-    for index in ipairs(TrackOrder) do
+    for index=0, #TrackOrder do
         if TrackOrder[index].index == driver.index then
-            if index == Sim.carsCount-1 then
-                driver.carAhead = 0
+            if index == 0 then
+                if not inPits(TrackOrder[#TrackOrder]) then
+                    driver.carAhead = TrackOrder[#TrackOrder].index
+                else
+                    
+                end
+
 
                 ---ac.log(ac.getDriverName(TrackOrder[0].index.." is ahead of "..ac.getDriverName(TrackOrder[index].index)))
 
             else
                 ---ac.log(ac.getDriverName(TrackOrder[index+1].index).." is ahead of "..ac.getDriverName(TrackOrder[index].index))
-                driver.carAhead = index + 1
+                driver.carAhead = TrackOrder[index - 1].index
             end
         end
+
+        
 
         ac.log(index.. " " ..TrackOrder[index].index.. ": "..ac.getDriverName(TrackOrder[index].index).." "..TrackOrder[index].trackPosition)
 
@@ -251,7 +256,7 @@ end
 ---@param driver Driver
 ---@return boolean
 local function drsAvailable(driver)
-    if Timer1 > 10 then
+    if Timer1 > 5 then
         Timer1 = 0
         driver:refresh()
         if not inPits(driver) then
@@ -318,7 +323,7 @@ local function controlDRS()
         DRS_Enabled = enableDRS()
     else
         --- Set DRS availability for all drivers
-        for driverIndex in ipairs(Drivers) do
+        for driverIndex=0, #Drivers do
             Drivers[driverIndex].drsAvailable = drsAvailable(Drivers[driverIndex])
         end
     end
@@ -394,7 +399,7 @@ function script.windowMain(dt)
         ui.pushFont(ui.Font.Main)
         ui.text("SESSION")
         ui.pushFont(ui.Font.Small)
-        ui.text("Type: "..tostring(Drivers[1].isInPitLane))
+        ui.text("Type: "..tostring(Drivers[0]))
         ui.text("Type: "..sessionTypeString())
         ui.text("Race Position: "..Drivers[0].car.racePosition.."/"..Sim.carsCount)
         ui.text("Driver Ahead: "..Drivers[0].carAhead)
