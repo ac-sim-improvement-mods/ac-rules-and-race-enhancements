@@ -175,7 +175,6 @@ local function lockDRS(driver)
 
     --- Need API update
     if driver.index == 0 then
-        ac.log("hi")
         ac.setDRS(false)
     end
 end
@@ -245,8 +244,11 @@ local function getDelta(driver)
     end
 
     Timer2 = Timer2 + 1
-    
-    return math.round(math.clamp(ac.getGapBetweenCars(driver.index, driver.carAhead),0,999.99999),5)
+
+    local driverSpeed = driver.car.speedKmh / 3.6
+    local test = (getTrackPositionM(driver.carAhead) - getTrackPositionM(driver.index)) / driverSpeed
+
+    return math.round(test,5)
 end
 
 --- Checks if delta is within 1 second
@@ -398,8 +400,9 @@ function script.windowMain(dt)
         ui.pushFont(ui.Font.Small)
         ui.text("Type: "..sessionTypeString())
         ui.text("Race Position: "..Drivers[0].car.racePosition.."/"..Sim.carsCount)
+
         ui.text("\nDriver Ahead: "..tostring(ac.getDriverName(Drivers[0].carAhead)))
-        ui.text("Delta: "..getDelta(Drivers[0]))
+        ui.text("Delta: "..math.round(getDelta(Drivers[0]),1))
 
         --- ERS DEBUG
         ui.pushFont(ui.Font.Main)
