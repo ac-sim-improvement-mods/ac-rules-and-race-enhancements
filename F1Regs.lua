@@ -8,7 +8,6 @@ local LapsEngageDRS = 0
 local Lap_Count = 0
 
 local Drivers = {}
-local TrackOrder = {}
 
 local DRS_Enabled = false
 local DRS_Zones = nil
@@ -16,8 +15,6 @@ local DRS_Zones = nil
 local Max_MGUK_Change = 4
 local Max_ERS = 4000
 local Timer0 = 0
-local Timer1 = 0
-local Timer2 = 0
 
 ---@class Driver
 ---@param carIndex number
@@ -151,23 +148,6 @@ local function inActivationZone(driver)
     return false
 end
 
-local function compare(carA,carB)
-    return carA.trackPosition < carB.trackPosition
-end
-
-function dump(o)
-   if type(o) == 'table' then
-      local s = '{ '
-      for k,v in pairs(o) do
-         if type(k) ~= 'number' then k = '"'..k..'"' end
-         s = s .. '['..k..'] = ' .. dump(v) .. ','
-      end
-      return s .. '} '
-   else
-      return tostring(o)
-   end
-end
-
 --- Locks the specified driver's DRS
 ---@param driver Driver
 local function lockDRS(driver)
@@ -235,15 +215,6 @@ local function getDelta(driver)
 
         end
     end
-
-    if Timer2 > 1 then
-        Timer2 = 0
-        if ac.getDriverName(driver.index) == "Yuki Tsunoda" then
-            --ac.log(ac.getDriverName(driver.carAhead).." is ahead of "..ac.getDriverName(driver.index))
-        end
-    end
-
-    Timer2 = Timer2 + 1
 
     local driverSpeed = driver.car.speedKmh / 3.6
     local test = (getTrackPositionM(driver.carAhead) - getTrackPositionM(driver.index)) / driverSpeed
