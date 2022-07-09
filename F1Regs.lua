@@ -350,6 +350,8 @@ local function initialize()
     --- Populate DRIVERS array
     for driverIndex = 0, SIM.carsCount-1 do
         table.insert(DRIVERS, driverIndex, Driver(driverIndex))
+        DRIVERS[driverIndex]:refresh()
+        ac.store(driverIndex,0)
     end
 
     print("Initialized")
