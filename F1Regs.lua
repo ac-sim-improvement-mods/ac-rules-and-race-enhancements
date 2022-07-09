@@ -2,8 +2,9 @@ local SIM = ac.getSim()
 local CAR_INPUTS = physics.getCarInputControls()
 
 local INITIALIZED = false
+local RACE_STARTED = false
 
-local DRS_LAPS = 0
+local DRS_LAPS = 2
 local LAP_COUNT = 0
 
 local DRIVERS = {}
@@ -267,10 +268,9 @@ local function enableDRS()
         if ac.getCar(driverIndex).racePosition == 1 then
             --- CarState index starts at 1...
             if ac.getCarState(driverIndex+1).lapCount >= DRS_LAPS then
-                DRIVERS[driverIndex].drsLocked = false
                 return true
             else
-                DRIVERS[driverIndex].driver.drsLocked = true
+                DRIVERS[driverIndex].drsLocked = true
                 return false
             end
         end --- end if driver is 1st
@@ -352,12 +352,21 @@ local function initialize()
         table.insert(DRIVERS, driverIndex, Driver(driverIndex))
     end
 
+    print("Initialized")
     INITIALIZED = true
 end
 
 function script.update(dt)
     if ac.getSimState().raceSessionType == 3 then
         if not INITIALIZED then initialize() end
+        if ac.getSimState().timeToSessionStart > 0 and RACE_STARTED then
+            DRS_LAPS = 2
+            RACE_STARTED = false
+            initialize()
+        elseif ac.getSimState().timeToSessionStart <= 0 then
+            RACE_STARTED = true
+        end
+
         controlSystems()
     end
 end
@@ -389,7 +398,7 @@ function script.windowMain(dt)
             if DRS_ENABLED == true then
                 ui.text("\nDRS [ENABLED]")
             else
-                ui.text("DRS ["..DRS_LAPS.." laps]")
+                ui.text("\nDRS ["..DRS_LAPS.." laps]")
             end
             ui.pushFont(ui.Font.Small)
             
