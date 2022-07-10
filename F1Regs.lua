@@ -236,7 +236,10 @@ end
 local function drsAvailable(driver)
     driver:refresh()
     
-    if inPits(driver) then
+    if not DRS_ENABLED then
+        lockDRS(driver)
+        return false
+    elseif inPits(driver) then
         return false
     elseif inActivationZone(driver) then
         return checkGap(driver)
@@ -247,7 +250,6 @@ local function drsAvailable(driver)
             lockDRS(driver)
             return false
         end
-
     elseif driver.drsZone then
         if not driver.drsLocked and driver.drsAvailable then
             return true
@@ -322,15 +324,14 @@ local function controlSystems()
     --- Set DRS availability for all DRIVERS
     for driverIndex=0, #DRIVERS do
         local driver = DRIVERS[driverIndex]
+        controlMGUK(driver)
+        controlERS(driver)
 
         if DRS_ENABLED == false then
             ac.setDRS(false)
             DRS_ENABLED = enableDRS()
-        else
-            controlMGUK(driver)
-            controlERS(driver)
         end
-        
+
         driver.drsAvailable = drsAvailable(driver)
         if driver.drsAvailable then
             ac.store(driverIndex,1)
