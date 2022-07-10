@@ -5,6 +5,7 @@ local INITIALIZED = false
 local RACE_STARTED = false
 
 local DRS_LAPS = 2
+local LEADER_LAP_COUNT = 0
 local LAP_COUNT = 0
 
 local DRIVERS = {}
@@ -268,11 +269,11 @@ end
 local function enableDRS()
     for driverIndex = 0, SIM.carsCount-1 do
         if ac.getCar(driverIndex).racePosition == 1 then
+            LEADER_LAP_COUNT = ac.getCarState(driverIndex+1).lapCount
             --- CarState index starts at 1...
-            if ac.getCarState(driverIndex+1).lapCount >= DRS_LAPS then
+            if LEADER_LAP_COUNT >= DRS_LAPS then
                 return true
             else
-                DRIVERS[driverIndex].drsLocked = true
                 return false
             end
         end --- end if driver is 1st
@@ -344,6 +345,8 @@ end
 --- Initialize
 local function initialize()
     DRS_ENABLED = false
+    LEADER_LAP_COUNT = 0
+    RACE_STARTED = false
 
     --- Get DRS Zones from track data folder
     DRS_ZONES = DRS_Points("drs_zones.ini")
@@ -363,8 +366,6 @@ function script.update(dt)
     if ac.getSimState().raceSessionType == 3 then
         if not INITIALIZED then initialize() end
         if ac.getSimState().timeToSessionStart > 0 and RACE_STARTED then
-            DRS_LAPS = 2
-            RACE_STARTED = false
             initialize()
         elseif ac.getSimState().timeToSessionStart <= 0 then
             RACE_STARTED = true
@@ -401,7 +402,7 @@ function script.windowMain(dt)
             if DRS_ENABLED == true then
                 ui.text("\nDRS [ENABLED]")
             else
-                ui.text("\nDRS ["..DRS_LAPS.." laps]")
+                ui.text("\nDRS ["..DRS_LAPS-LEADER_LAP_COUNT.." laps]")
             end
             ui.pushFont(ui.Font.Small)
             
