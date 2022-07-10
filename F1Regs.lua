@@ -9,13 +9,13 @@ local LEADER_LAP_COUNT = 0
 local LAP_COUNT = 0
 
 local DRIVERS = {}
+local DRIVERS_ON_TRACK = 0
 
 local DRS_ENABLED = false
 local DRS_ZONES = nil
 
 local MGUK_CHANGE_LIMIT = 4
 local ERS_LIMIT = 4000
-local TIMER_0 = 0
 
 ---@class Driver
 ---@param carIndex number
@@ -27,7 +27,8 @@ local Driver = class('Driver', function(carIndex)
     local lapsCompleted = car.lapCount
     local name = ac.getDriverName(carIndex)
 
-    local trackPosition = 0
+    local trackPosition = -1
+    local trackProgress = 0
     local carAhead = -1
 
     local isInPit = car.isInPit
@@ -45,7 +46,9 @@ local Driver = class('Driver', function(carIndex)
     local mgukLocked = false
     local mgukDelivery = 0
     local mgukDeliveryCount = 0
-    return {drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackPosition = trackPosition,
+    local mgukChangeTime = 100000000
+
+    return {trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackProgress = trackProgress,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
         mgukPresent = mgukPresent, mgukLocked = mgukLocked, mgukDelivery = mgukDelivery, mgukDeliveryCount = mgukDeliveryCount}
 end, class.NoInitialize)
@@ -95,7 +98,7 @@ end, class.NoInitialize)
 --- Converts session type number to the corresponding session type string
 ---@return string
 local function sessionTypeString()
-    local sessionTypes = {"Undefined", "Practice", "Qualify", "Race", "Hotlap", "Time Attack", "Drift", "Drag"}
+    local sessionTypes = {"UNDEFINED", "PRACTICE", "QUALIFY", "RACE", "HOTLAP", "TIME ATTACK", "DRIFT", "DRAG"}
 
     return sessionTypes[ac.getSimState().raceSessionType + 1]
 end
@@ -113,14 +116,14 @@ function Driver:refresh()
     self.isInPitLane = self.car.isInPitlane
     self.drsZone = self.car.drsAvailable
     self.drsActive = self.car.drsActive
-    self.trackPosition = getTrackPositionM(self.index)
+    self.trackProgress = getTrackPositionM(self.index)
 end
 
 --- Returns the main driver's distance to the detection line in meters
 ---@param driver Driver
 ---@return number
 local function getDetectionDistanceM(driver)
-    return math.round(math.clamp((DRS_ZONES.detectionZones[driver.drsZoneId]*SIM.trackLengthM)-getTrackPositionM(0),0,10000), 3)
+    return math.round(math.clamp((DRS_ZONES.detectionZones[driver.drsZoneId]*SIM.trackLengthM)-getTrackPositionM(0),0,10000), 5)
 end
 
 --- Converts session type number to the corresponding session type string 
@@ -188,12 +191,14 @@ local function getTrackOrder()
         end
     end
 
-    table.sort(trackOrder, function (a,b) return a.trackPosition > b.trackPosition end)
+    table.sort(trackOrder, function (a,b) return a.trackProgress > b.trackProgress end)
 
     local newTrackOrder = {}
     for index=0, #trackOrder do
         newTrackOrder[index] = trackOrder[index+1]
     end
+
+    DRIVERS_ON_TRACK = #trackOrder
 
     return newTrackOrder
 end
@@ -206,6 +211,7 @@ local function getDelta(driver)
 
     for index=0, #TrackOrder do
         if driver.index == TrackOrder[index].index then
+            driver.trackPosition = index + 1
             if index == 0 then
                 driver.carAhead = TrackOrder[#TrackOrder].index
             else
@@ -284,31 +290,33 @@ end
 --- Control the MGUK functionality
 ---@param driver Driver
 local function controlMGUK(driver)
-    --- Reset MGUK count
-    if LAP_COUNT < driver.car.lapCount then
-        driver.mgukDeliveryCount = 0
-        LAP_COUNT = driver.car.lapCount
-    end
-    --- Allow the driver to change MGUK settings if below the max change count
-    if driver.mgukDeliveryCount < MGUK_CHANGE_LIMIT then
-        if CAR_INPUTS.mgukDeliveryUp or CAR_INPUTS.mgukDeliveryDown then
-            TIMER_0 = 0
+    if ac.getSimState().timeToSessionStart < -5000 then
+        --- Reset MGUK count
+        if LAP_COUNT < driver.car.lapCount then
+            driver.mgukDeliveryCount = 0
+            driver.mgukDelivery = driver.car.mgukDelivery
+            LAP_COUNT = driver.car.lapCount
         end
+        --- Allow the driver to change MGUK settings if below the max change count
+        if driver.mgukDeliveryCount < MGUK_CHANGE_LIMIT then
+            if CAR_INPUTS.mgukDeliveryUp or CAR_INPUTS.mgukDeliveryDown then
+                driver.mgukChangeTime = ac.getSimState().time
+            end
 
-        --- Solidify the MGUK Delivery selection
-        if TIMER_0 > 250 then ---250 is the time it takes for the top banner to disappear
-            TIMER_0 = 0
-            --- Check if MGUK Delivery has changed
-            if  driver.car.mgukDelivery ~= driver.mgukDelivery then
-                driver.mgukDeliveryCount = driver.mgukDeliveryCount + 1
-                driver.mgukDelivery = driver.car.mgukDelivery
+            --- Solidify the MGUK Delivery selection
+            if ac.getSimState().time > (driver.mgukChangeTime + 5000) then ---550 is the time it takes for the top banner to disappear
+                --- Check if MGUK Delivery has changed
+                if  driver.car.mgukDelivery ~= driver.mgukDelivery then
+                    driver.mgukDeliveryCount = driver.mgukDeliveryCount + 1
+                    driver.mgukDelivery = driver.car.mgukDelivery
+                end
             end
         else
-            TIMER_0 = TIMER_0 + 1
+            --- Keep MGUK setting locked
+            ac.setMGUKDelivery(driver.mgukDelivery)  -- Need API update
         end
     else
-        --- Keep MGUK setting locked
-        ac.setMGUKDelivery(driver.mgukDelivery)  -- Need API update
+        driver.mgukDelivery = driver.car.mgukDelivery
     end
 end
 
@@ -347,6 +355,7 @@ local function initialize()
     DRS_ENABLED = false
     LEADER_LAP_COUNT = 0
     RACE_STARTED = false
+    DRIVERS = {}
 
     --- Get DRS Zones from track data folder
     DRS_ZONES = DRS_Points("drs_zones.ini")
@@ -356,13 +365,14 @@ local function initialize()
         table.insert(DRIVERS, driverIndex, Driver(driverIndex))
         DRIVERS[driverIndex]:refresh()
         ac.store(driverIndex,0)
+        DRIVERS[driverIndex].trackPosition = DRIVERS[driverIndex].car.racePosition
     end
 
     print("Initialized")
     INITIALIZED = true
 end
 
-function script.update(dt)
+function script.update()
     if ac.getSimState().raceSessionType == 3 then
         if not INITIALIZED then initialize() end
         if ac.getSimState().timeToSessionStart > 0 and RACE_STARTED then
@@ -370,7 +380,6 @@ function script.update(dt)
         elseif ac.getSimState().timeToSessionStart <= 0 then
             RACE_STARTED = true
         end
-
         controlSystems()
     end
 end
@@ -380,17 +389,16 @@ function script.windowMain(dt)
     if ac.getSimState().raceSessionType == 3 then
         --- SESSION INFO
         ui.pushFont(ui.Font.Main)
-        ui.text("SESSION")
+        ui.text("["..sessionTypeString().." SESSION]")
         ui.pushFont(ui.Font.Small)
-        ui.text("Type: "..sessionTypeString())
         ui.text("Race Position: "..driver.car.racePosition.."/"..SIM.carsCount)
-
-        ui.text("\nDriver Ahead: "..tostring(ac.getDriverName(driver.carAhead)))
+        ui.text("Track Position: "..driver.trackPosition.."/"..DRIVERS_ON_TRACK)
+        ui.text("Driver Ahead: "..tostring(ac.getDriverName(driver.carAhead)))
         if not inPits(driver) then ui.text("Delta: "..math.round(getDelta(driver),1)) end
 
         --- ERS DEBUG
         ui.pushFont(ui.Font.Main)
-        ui.text("\nERS")
+        ui.text("\n[ERS]")
         ui.pushFont(ui.Font.Small)
         ui.text("ERS Spent: "..string.format("%2.1f", driver.car.kersCurrentKJ).."/"..ERS_LIMIT)
         ui.text("MGUK Mode: "..driver.mgukDelivery)
@@ -400,22 +408,20 @@ function script.windowMain(dt)
         if driver.drsPresent then
             ui.pushFont(ui.Font.Main)
             if DRS_ENABLED == true then
-                ui.text("\nDRS [ENABLED]")
+                ui.text("\n[DRS ENABLED]")
             else
-                ui.text("\nDRS ["..DRS_LAPS-LEADER_LAP_COUNT.." laps]")
+                ui.text("\n[DRS IN "..DRS_LAPS-LEADER_LAP_COUNT.." laps]")
             end
             ui.pushFont(ui.Font.Small)
-            
-            ui.text("DRS Enabled: "..tostring(DRS_ENABLED))
-            ui.text("DRS Zone ID: "..tostring(driver.drsZoneId))
+            ui.text("Zone ID: "..tostring(driver.drsZoneId))
             ui.text("Locked: "..tostring(driver.drsLocked))
-            if not inPits(driver) then ui.text("Within Gap: "..tostring(checkGap(driver))) end
-            ui.text("Before Detection Line: "..tostring(inActivationZone(driver)))
+            if not inPits(driver) then ui.text("In Gap: "..tostring(checkGap(driver))) end
+            ui.text("Before Detection: "..tostring(inActivationZone(driver)))
             ui.text("Deploy Zone: "..tostring(driver.drsZone))
             ui.text("Available: "..tostring(driver.drsAvailable))
             ui.text("Activated: "..tostring(driver.drsActive))
-            ui.text("Detection Line in: "..tostring(getDetectionDistanceM(driver)).." m")
-            ui.text("Track Pos: "..tostring(driver.trackPosition).." m")
+            ui.text("Detection: "..tostring(getDetectionDistanceM(driver)).." m")
+            ui.text("Track Prog: "..tostring(math.round(driver.trackProgress,5)).." m")
 
         else
             ui.text("DRS not present")
