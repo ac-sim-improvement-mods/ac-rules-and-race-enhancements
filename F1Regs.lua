@@ -1,5 +1,4 @@
 local SIM = ac.getSim()
-local CAR_INPUTS = physics.getCarInputControls()
 
 local INITIALIZED = false
 local RACE_STARTED = false
@@ -46,7 +45,7 @@ local Driver = class('Driver', function(carIndex)
     local mgukLocked = false
     local mgukDelivery = 0
     local mgukDeliveryCount = 0
-    local mgukChangeTime = 100000000
+    local mgukChangeTime = 5
 
     return {trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackProgress = trackProgress,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
@@ -299,12 +298,13 @@ local function controlMGUK(driver)
         end
         --- Allow the driver to change MGUK settings if below the max change count
         if driver.mgukDeliveryCount < MGUK_CHANGE_LIMIT then
-            if CAR_INPUTS.mgukDeliveryUp or CAR_INPUTS.mgukDeliveryDown then
+            if physics.getCarInputControls().mgukDeliveryUp or physics.getCarInputControls().mgukDeliveryDown then
                 driver.mgukChangeTime = ac.getSimState().time
             end
-
+            
             --- Solidify the MGUK Delivery selection
-            if ac.getSimState().time > (driver.mgukChangeTime + 5000) then ---550 is the time it takes for the top banner to disappear
+            if ac.getSimState().time > (driver.mgukChangeTime + 4900) then ---4900 is the time it takes for the top banner to disappear
+                
                 --- Check if MGUK Delivery has changed
                 if  driver.car.mgukDelivery ~= driver.mgukDelivery then
                     driver.mgukDeliveryCount = driver.mgukDeliveryCount + 1
