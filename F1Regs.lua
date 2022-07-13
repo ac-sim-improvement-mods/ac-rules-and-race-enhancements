@@ -240,17 +240,14 @@ end
 ---@param driver Driver
 ---@return boolean
 local function drsAvailable(driver)
-    if DRS_ENABLED then
-        if inPits(driver) then
-            return false
-        elseif inActivationZone(driver) then
+    if DRS_ENABLED and not inPits(driver) then
+        if inActivationZone(driver) then
             return checkGap(driver)
         elseif driver.drsAvailable and not driver.drsLocked then
             return true
         end
     end
 
-    lockDRS(driver)
     return false
 end
 
@@ -321,7 +318,7 @@ local function controlDRS(driver)
     if driver.drsAvailable then
         ac.store(driver.index,1)
     else
-        ac.setDRS(false)
+        lockDRS(driver)
         ac.store(driver.index,0)
     end
 end
