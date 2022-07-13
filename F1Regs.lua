@@ -267,17 +267,12 @@ end
 local function enableDRS()
     for driverIndex = 0, SIM.carsCount-1 do
         if ac.getCar(driverIndex).racePosition == 1 then
-            LEADER_LAP_COUNT = ac.getCarState(driverIndex+1).lapCount
             --- CarState index starts at 1...
-            if LEADER_LAP_COUNT >= DRS_LAPS then
-                return true
-            else
-                return false
-            end
+            LEADER_LAP_COUNT = ac.getCarState(driverIndex+1).lapCount
+            (LEADER_LAP_COUNT >= DRS_LAPS and true or false)
         end --- end if driver is 1st
     end --- end for drivers in DRIVERS
 end
-
 
 --- Control the MGUK functionality
 ---@param driver Driver
@@ -324,7 +319,7 @@ end
 --- Control the DRS functionality
 ---@param driver Driver
 local function controlDRS(driver)
-    if DRS_ENABLED == false then
+    if not DRS_ENABLED then
         ac.setDRS(false)
         DRS_ENABLED = enableDRS()
     end
