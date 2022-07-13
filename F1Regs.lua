@@ -164,12 +164,7 @@ end
 ---@param driver Driver
 ---@return boolean
 local function inPits(driver)
-    if driver.isInPitlane or driver.isInPit then
-        lockDRS(driver)
-        return true
-    else
-        return false
-    end
+    return ((driver.isInPitlane or driver.isInPit) and true or false)
 end
 
 --- Check if driver is on track or in pits
