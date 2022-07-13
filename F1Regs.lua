@@ -3,7 +3,7 @@ local SIM = ac.getSim()
 local INITIALIZED = false
 local RACE_STARTED = false
 
-local DRS_LAPS = 0
+local DRS_LAPS = 2
 local LEADER_LAP_COUNT = 0
 local LAP_COUNT = 0
 
