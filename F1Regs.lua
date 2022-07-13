@@ -216,7 +216,6 @@ end
 ---@return boolean
 local function checkGap(driver)
     local delta = getDelta(driver)
-
     return ((delta < 1.0 and delta >= 0.0) and true or false)
 end
 
@@ -243,12 +242,8 @@ local function enableDRS()
         if ac.getCar(driverIndex).racePosition == 1 then
             --- CarState index starts at 1...
             LEADER_LAP_COUNT = ac.getCarState(driverIndex+1).lapCount
-            if LEADER_LAP_COUNT >= DRS_LAPS then
-                return true
-            else
-                return false
-            end
         end
+        return ((LEADER_LAP_COUNT >= DRS_LAPS) and true or false)
     end
 end
 
