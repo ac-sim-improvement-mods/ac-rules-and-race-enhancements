@@ -3,7 +3,7 @@ local SIM = ac.getSim()
 local INITIALIZED = false
 local RACE_STARTED = false
 
-local DRS_LAPS = 2
+local DRS_LAPS = 0
 local LEADER_LAP_COUNT = 0
 local LAP_COUNT = 0
 
@@ -197,7 +197,7 @@ local function getDelta(driver)
 
     for index=1, #TrackOrder do
         if driver.index == TrackOrder[index].index then
-            driver.trackPosition = index + 1
+            driver.trackPosition = index
             if index == 1 then
                 driver.carAhead = TrackOrder[#TrackOrder].index
             else
@@ -348,7 +348,7 @@ function script.update()
 end
 
 function script.windowMain(dt)
-    local driver = DRIVERS[0]
+    local driver = DRIVERS[1]
     if ac.getSimState().raceSessionType == 3 then
         --- SESSION INFO
         ui.pushFont(ui.Font.Main)
