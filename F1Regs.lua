@@ -322,24 +322,29 @@ local function controlERS(driver)
 end
 
 --- Control the DRS functionality
+---@param driver Driver
+local function controlDRS(driver)
+    if DRS_ENABLED == false then
+        ac.setDRS(false)
+        DRS_ENABLED = enableDRS()
+    end
+
+    driver.drsAvailable = drsAvailable(driver)
+    if driver.drsAvailable then
+        ac.store(driverIndex,1)
+    else
+        ac.store(driverIndex,0)
+    end
+end
+
+--- Controls all the regulated systems
 local function controlSystems()
     --- Set DRS availability for all DRIVERS
     for driverIndex=0, #DRIVERS do
         local driver = DRIVERS[driverIndex]
         controlMGUK(driver)
         controlERS(driver)
-
-        if DRS_ENABLED == false then
-            ac.setDRS(false)
-            DRS_ENABLED = enableDRS()
-        end
-
-        driver.drsAvailable = drsAvailable(driver)
-        if driver.drsAvailable then
-            ac.store(driverIndex,1)
-        else
-            ac.store(driverIndex,0)
-        end
+        controlDRS(driver)
     end
 end
 
