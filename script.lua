@@ -8,7 +8,7 @@ function script.update(dt)
     if ac.load(car.index) == 0 then
         ac.log(car.index..":[LOCKED] "..ac.getDriverName(car.index))
         if car.drsActive then
-            ac.setWingGain(9, 8, 1)
+            --ac.setWingGain(9, 8, 1)
             data.brake = 0.1001
         end
     else
