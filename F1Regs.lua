@@ -3,7 +3,7 @@ local SIM = ac.getSim()
 local INITIALIZED = false
 local RACE_STARTED = false
 
-local DRS_LAPS = 2
+local DRS_LAPS = 1
 local LEADER_LAP_COUNT = 0
 local LAP_COUNT = 0
 
@@ -269,9 +269,9 @@ local function enableDRS()
         if ac.getCar(driverIndex).racePosition == 1 then
             --- CarState index starts at 1...
             LEADER_LAP_COUNT = ac.getCarState(driverIndex+1).lapCount
-            (LEADER_LAP_COUNT >= DRS_LAPS and true or false)
-        end --- end if driver is 1st
-    end --- end for drivers in DRIVERS
+            return (LEADER_LAP_COUNT >= DRS_LAPS and true or false)
+        end
+    end
 end
 
 --- Control the MGUK functionality
