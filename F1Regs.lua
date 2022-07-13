@@ -242,26 +242,19 @@ end
 local function drsAvailable(driver)
     driver:refresh()
     
-    if not DRS_ENABLED then
-        lockDRS(driver)
-        return false
-    elseif inPits(driver) then
-        return false
-    elseif inActivationZone(driver) then
-        return checkGap(driver)
-    elseif not driver.drsZone then
-        if driver.drsAvailable then
-            return true
-        else
-            lockDRS(driver)
+    if DRS_ENABLED then
+        if inPits(driver) then
             return false
-        end
-    elseif driver.drsZone then
-        if not driver.drsLocked and driver.drsAvailable then
-            return true
-        else
-            lockDRS(driver)
-            return false
+        elseif inActivationZone(driver) then
+            return checkGap(driver)
+        elseif not driver.drsZone then
+            if driver.drsAvailable then
+                return true
+            end
+        elseif driver.drsZone then
+            if not driver.drsLocked and driver.drsAvailable then
+                return true
+            end
         end
     end
 
