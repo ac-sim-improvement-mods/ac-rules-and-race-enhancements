@@ -192,14 +192,9 @@ local function getTrackOrder()
 
     table.sort(trackOrder, function (a,b) return a.trackProgress > b.trackProgress end)
 
-    local newTrackOrder = {}
-    for index=0, #trackOrder do
-        newTrackOrder[index] = trackOrder[index+1]
-    end
-
     DRIVERS_ON_TRACK = #trackOrder
 
-    return newTrackOrder
+    return trackOrder
 end
 
 --- Returns time delta between the driver and driver ahead on track
@@ -208,10 +203,10 @@ end
 local function getDelta(driver)
     local TrackOrder = getTrackOrder()
 
-    for index=0, #TrackOrder do
+    for index=1, #TrackOrder do
         if driver.index == TrackOrder[index].index then
             driver.trackPosition = index + 1
-            if index == 0 then
+            if index == 1 then
                 driver.carAhead = TrackOrder[#TrackOrder].index
             else
                 driver.carAhead = TrackOrder[index - 1].index
