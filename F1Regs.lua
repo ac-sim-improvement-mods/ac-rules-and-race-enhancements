@@ -245,9 +245,7 @@ local function drsAvailable(driver)
             return false
         elseif inActivationZone(driver) then
             return checkGap(driver)
-        elseif not driver.drsZone and driver.drsAvailable then
-            return true
-        elseif driver.drsZone and not driver.drsLocked and driver.drsAvailable then
+        elseif driver.drsAvailable and not driver.drsLocked then
             return true
         end
     end
