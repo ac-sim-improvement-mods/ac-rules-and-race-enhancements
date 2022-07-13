@@ -3,7 +3,7 @@ local SIM = ac.getSim()
 local INITIALIZED = false
 local RACE_STARTED = false
 
-local DRS_LAPS = 1
+local DRS_LAPS = 0
 local LEADER_LAP_COUNT = 0
 local LAP_COUNT = 0
 
@@ -240,8 +240,6 @@ end
 ---@param driver Driver
 ---@return boolean
 local function drsAvailable(driver)
-    driver:refresh()
-    
     if DRS_ENABLED then
         if inPits(driver) then
             return false
@@ -269,7 +267,11 @@ local function enableDRS()
         if ac.getCar(driverIndex).racePosition == 1 then
             --- CarState index starts at 1...
             LEADER_LAP_COUNT = ac.getCarState(driverIndex+1).lapCount
-            return (LEADER_LAP_COUNT >= DRS_LAPS and true or false)
+            if LEADER_LAP_COUNT >= DRS_LAPS then
+                return true
+            else
+                return false
+            end
         end
     end
 end
@@ -319,15 +321,13 @@ end
 --- Control the DRS functionality
 ---@param driver Driver
 local function controlDRS(driver)
-    if not DRS_ENABLED then
-        ac.setDRS(false)
-        DRS_ENABLED = enableDRS()
-    end
+    if not DRS_ENABLED then DRS_ENABLED = enableDRS() end
 
     driver.drsAvailable = drsAvailable(driver)
     if driver.drsAvailable then
         ac.store(driverIndex,1)
     else
+        ac.setDRS(false)
         ac.store(driverIndex,0)
     end
 end
@@ -337,6 +337,7 @@ local function controlSystems()
     --- Set DRS availability for all DRIVERS
     for driverIndex=0, #DRIVERS do
         local driver = DRIVERS[driverIndex]
+        driver:refresh()
         controlMGUK(driver)
         controlERS(driver)
         controlDRS(driver)
