@@ -155,9 +155,7 @@ local function lockDRS(driver)
     driver.drsLocked = true
 
     --- Need API update
-    if driver.index == 0 then
-        ac.setDRS(false)
-    end
+    if driver.index == 0 then ac.setDRS(false) end
 end
 
 --- Check if driver is on track or in pits
@@ -358,8 +356,13 @@ function script.windowMain(dt)
         ui.pushFont(ui.Font.Small)
         ui.text("Race Position: "..driver.car.racePosition.."/"..SIM.carsCount)
         ui.text("Track Position: "..driver.trackPosition.."/"..DRIVERS_ON_TRACK)
-        ui.text("Driver Ahead: "..tostring(ac.getDriverName(driver.carAhead)))
-        if not inPits(driver) then ui.text("Delta: "..math.round(getDelta(driver),1)) end
+        
+        if not inPits(driver) then
+            ui.text("Driver Ahead: "..tostring(ac.getDriverName(driver.carAhead)))
+            ui.text("Delta: "..math.round(getDelta(driver),1))
+        else
+            ui.text("IN PITS")
+        end
 
         --- ERS DEBUG
         ui.pushFont(ui.Font.Main)
