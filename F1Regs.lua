@@ -174,6 +174,7 @@ local function getTrackOrder()
     for index=0, #DRIVERS do
         trackOrder[index+1] = DRIVERS[index]
     end
+    DRIVERS_ON_TRACK = #trackOrder
     local trackOrderSize = #trackOrder
 
     for index=1, #trackOrder do
@@ -186,8 +187,6 @@ local function getTrackOrder()
     end
 
     table.sort(trackOrder, function (a,b) return a.trackProgress > b.trackProgress end)
-
-    DRIVERS_ON_TRACK = #trackOrder
 
     return trackOrder
 end
@@ -218,11 +217,7 @@ end
 local function checkGap(driver)
     local delta = getDelta(driver)
 
-    if delta < 1.0 and delta >= 0.0 then
-        return true
-    else
-        return false
-    end
+    return ((delta < 1.0 and delta >= 0.0) and true or false)
 end
 
 --- Checks if driver is before the detection line, not in the pits, 
