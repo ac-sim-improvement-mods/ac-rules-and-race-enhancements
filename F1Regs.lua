@@ -3,7 +3,7 @@ local SIM = ac.getSim()
 local INITIALIZED = false
 local RACE_STARTED = false
 
-local DRS_LAPS = 2
+local DRS_LAPS = 0
 local LEADER_LAP_COUNT = 0
 local LAP_COUNT = 0
 
@@ -156,7 +156,7 @@ end
 local function lockDRS(driver)
     driver.drsLocked = true
     driver.drsAvailable = false
-    ac.store(driver.index,0)
+    ac.store(driver.index..":drs","false")
     -- Need API update
     if driver.index == 0 then ac.setDRS(false) end
 end
@@ -237,9 +237,9 @@ local function drsAvailable(driver)
     end
 
     if driver.drsAvailable then
-        ac.store(driver.index,1)
+        ac.store(driver.index..":drs","true")
     else
-        ac.store(driver.index,0)
+        ac.store(driver.index..":drs","false")
     end
 end
 
@@ -406,9 +406,6 @@ function script.windowMain(dt)
                 ui.text("DRS not present")
             end
         end)
-
-        --- DRS DEBUG
-
     else
         ui.pushFont(ui.Font.Main)
         ui.text("This is a "..sessionTypeString().." not a RACE session")
