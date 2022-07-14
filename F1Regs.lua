@@ -362,23 +362,23 @@ function script.windowMain(dt)
 
         ui.treeNode("["..sessionTypeString().." SESSION]", ui.TreeNodeFlags.None, function ()
             
-            ui.text("Leader Laps: "..LEADER_LAP_COUNT)
-            ui.text("Race Position: "..driver.car.racePosition.."/"..SIM.carsCount)
-            ui.text("Track Position: "..driver.trackPosition.."/"..DRIVERS_ON_TRACK)
-            ui.text("Driver: "..driver.name)
+            ui.text("- Leader Laps: "..LEADER_LAP_COUNT)
+            ui.text("- Race Position: "..driver.car.racePosition.."/"..SIM.carsCount)
+            ui.text("- Track Position: "..driver.trackPosition.."/"..DRIVERS_ON_TRACK)
+            ui.text("- Driver: "..driver.name)
             if not inPits(driver) then
-                ui.text("Driver Ahead: "..tostring(ac.getDriverName(driver.carAhead)))
-                ui.text("Delta: "..math.round(getDelta(driver),1))
+                ui.text("- Driver Ahead: "..tostring(ac.getDriverName(driver.carAhead)))
+                ui.text("- Delta: "..math.round(getDelta(driver),1))
             else
-                ui.text("IN PITS")
+                ui.text("- IN PITS")
             end
         end)
 
         ui.treeNode("[MGUK]", ui.TreeNodeFlags.None, function ()
             if driver.mgukPresent then
-                ui.text("ERS Spent: "..string.format("%2.1f", driver.car.kersCurrentKJ).."/"..ERS_LIMIT)
-                ui.text("MGUK Mode: "..driver.mgukDelivery)
-                ui.text("MGUK Switch Count: "..driver.mgukDeliveryCount)
+                ui.text("- ERS Spent: "..string.format("%2.1f", driver.car.kersCurrentKJ).."/"..ERS_LIMIT)
+                ui.text("- MGUK Mode: "..driver.mgukDelivery)
+                ui.text("- MGUK Switch Count: "..driver.mgukDeliveryCount)
             else
                 ui.text("MGUK not present")
             end
@@ -388,19 +388,19 @@ function script.windowMain(dt)
         ui.treeNode("[DRS]", ui.TreeNodeFlags.None, function ()
             if driver.drsPresent then
                 if DRS_ENABLED == true then
-                    ui.text("DRS: enabled")
+                    ui.text("- DRS: enabled")
                 else
-                    ui.text("DRS: in "..DRS_LAPS-LEADER_LAP_COUNT.." laps")
+                    ui.text("- DRS: in "..DRS_LAPS-LEADER_LAP_COUNT.." laps")
                 end
-                ui.text("Zone ID: "..tostring(driver.drsZoneId))
-                ui.text("Locked: "..tostring(driver.drsLocked))
-                if not inPits(driver) then ui.text("In Gap: "..tostring(checkGap(driver))) end
-                ui.text("Before Detection: "..tostring(inActivationZone(driver)))
-                ui.text("Deploy Zone: "..tostring(driver.drsZone))
-                ui.text("Available: "..tostring(driver.drsAvailable))
-                ui.text("Activated: "..tostring(driver.drsActive))
-                ui.text("Detection: "..tostring(getDetectionDistanceM(driver)).." m")
-                ui.text("Track Prog: "..tostring(math.round(driver.trackProgress,5)).." m")
+                ui.text("- Zone ID: "..tostring(driver.drsZoneId))
+                ui.text("- Locked: "..tostring(driver.drsLocked))
+                if not inPits(driver) then ui.text("- In Gap: "..tostring(checkGap(driver))) end
+                ui.text("- Before Detection: "..tostring(inActivationZone(driver)))
+                ui.text("- Deploy Zone: "..tostring(driver.drsZone))
+                ui.text("- Available: "..tostring(driver.drsAvailable))
+                ui.text("- Activated: "..tostring(driver.drsActive))
+                ui.text("- Detection: "..tostring(getDetectionDistanceM(driver)).." m")
+                ui.text("- Track Prog: "..tostring(math.round(driver.trackProgress,5)).." m")
     
             else
                 ui.text("DRS not present")
