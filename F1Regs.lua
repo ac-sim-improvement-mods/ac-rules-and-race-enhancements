@@ -241,6 +241,11 @@ local function drsAvailable(driver)
     else
         ac.store(driver.index..":drs","false")
     end
+
+    -- Helps with reseting the values after a restart
+    if not RACE_STARTED then
+        ac.store(driver.index..":drs","false")
+    end
 end
 
 --- Enable DRS functionality if the lead driver has completed the specified numbers of laps
