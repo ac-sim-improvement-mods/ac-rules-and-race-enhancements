@@ -3,12 +3,11 @@ local SIM = ac.getSim()
 local INITIALIZED = false
 local RACE_STARTED = false
 
-local DRS_LAPS = 0
+local DRS_LAPS = 1
 
 local DRIVERS = {}
 local DRIVERS_ON_TRACK = 0
 
-local DRS_ENABLED = false
 local DRS_ZONES = nil
 
 local MGUK_CHANGE_LIMIT = 4
@@ -32,6 +31,7 @@ local Driver = class('Driver', function(carIndex)
     local isInPit = car.isInPit
     local isInPitLane = car.isInPitlane
 
+    local drsEnabled = false
     local drsPresent = car.drsPresent
     local drsLocked = true
     local drsActivationZone = false
@@ -48,7 +48,7 @@ local Driver = class('Driver', function(carIndex)
     
     local lapCount = 0 
 
-    return {lapCount = lapCount, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackProgress = trackProgress,
+    return {drsEnabled = drsEnabled, lapCount = lapCount, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackProgress = trackProgress,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
         mgukPresent = mgukPresent, mgukLocked = mgukLocked, mgukDelivery = mgukDelivery, mgukDeliveryCount = mgukDeliveryCount}
 end, class.NoInitialize)
@@ -110,6 +110,17 @@ local function getTrackPositionM(index)
     return ac.worldCoordinateToTrackProgress(ac.getCar(index).position)*SIM.trackLengthM
 end
 
+--- Enable DRS functionality if the lead driver has completed the specified numbers of laps
+---@param driver Driver
+---@return boolean
+local function enableDRS(driver)
+    if driver.lapCount >= DRS_LAPS then
+        return true
+    else
+        return false
+    end
+end
+
 function Driver:refresh()
     self.lapsCompleted = self.car.lapCount
     self.isInPit = self.car.isInPit
@@ -118,6 +129,7 @@ function Driver:refresh()
     self.drsActive = self.car.drsActive
     self.racePosition = self.car.racePosition
     self.trackProgress = getTrackPositionM(self.index)
+    self.drsEnabled = enableDRS(self)
 end
 
 --- Returns the main driver's distance to the detection line in meters
@@ -200,6 +212,8 @@ end
 local function getDelta(driver)
     local TrackOrder = getTrackOrder()
 
+    -- Determine the driver ahead's driver index
+    -- If the driver has the most track progress, then the next driver is the driver with the least track progress
     for index=1, #TrackOrder do
         if driver.index == TrackOrder[index].index then
             driver.trackPosition = index
@@ -226,11 +240,18 @@ end
 --- not in a drs zone, and within 1 second of the car ahead on track
 ---@param driver Driver
 local function drsAvailable(driver)
-    if DRS_ENABLED and not inPits(driver) then
-        if inActivationZone(driver) then
-            driver.drsAvailable = checkGap(driver) and true or false
-        elseif driver.drsAvailable and not driver.drsLocked then
-            driver.drsAvailable = true
+    if not inPits(driver) then
+        local bInActivationZone = inActivationZone(driver)
+        local bCheckGap = checkGap(driver)
+
+        if driver.drsEnabled then
+            if bInActivationZone then
+                driver.drsAvailable = bCheckGap and true or false
+            elseif driver.drsAvailable and not driver.drsLocked then
+                driver.drsAvailable = true
+            else
+                lockDRS(driver)
+            end
         else
             lockDRS(driver)
         end
@@ -238,6 +259,8 @@ local function drsAvailable(driver)
         lockDRS(driver)
     end
 
+    -- Store variables in AC memory
+    -- Data format {0:drs=true} or {0:drs=false}
     if driver.drsAvailable then
         ac.store(driver.index..":drs","true")
     else
@@ -247,21 +270,6 @@ local function drsAvailable(driver)
     -- Helps with reseting the values after a restart
     if not RACE_STARTED then
         ac.store(driver.index..":drs","false")
-    end
-end
-
---- Enable DRS functionality if the lead driver has completed the specified numbers of laps
----@param driver Driver
----@return boolean
-local function enableDRS(driver)
-    if driver.racePosition == 1 then
-        -- CarState index starts at 1...
-        LEADER_LAP_COUNT = driver.car.lapCount
-    end
-    if LEADER_LAP_COUNT >= DRS_LAPS then
-        return true
-    else
-        return false
     end
 end
 
@@ -310,13 +318,12 @@ end
 --- Control the DRS functionality
 ---@param driver Driver
 local function controlDRS(driver)
-    if not DRS_ENABLED then DRS_ENABLED = enableDRS(driver) end
+    if not driver.drsEnabled then driver.drsEnabled = enableDRS(driver) end
     drsAvailable(driver)
 end
 
 --- Controls all the regulated systems
 local function controlSystems()
-    -- Set DRS availability for all DRIVERS
     for driverIndex=0, #DRIVERS do
         local driver = DRIVERS[driverIndex]
         driver:refresh()
@@ -328,7 +335,6 @@ end
 
 --- Initialize
 local function initialize()
-    DRS_ENABLED = false
     RACE_STARTED = false
     DRIVERS = {}
 
@@ -342,6 +348,8 @@ local function initialize()
         driver:refresh()
         lockDRS(driver)
         driver.trackPosition = driver.racePosition
+        driver.lapCount = 0
+        driver.drsEnabled = false
     end
 
     print("Initialized")
@@ -350,9 +358,12 @@ end
 
 function script.update()
     if ac.getSim().raceSessionType == 3 then
+        -- Initialize the session
         if not INITIALIZED then initialize() end
+        -- Handle users restarting the session
         if ac.getSim().timeToSessionStart > 0 and RACE_STARTED then
             initialize()
+        -- Race session has started
         elseif ac.getSim().timeToSessionStart <= 0 then
             RACE_STARTED = true
         end
@@ -362,13 +373,11 @@ end
 
 function script.windowMain(dt)
     if ac.getSim().raceSessionType == 3 then
-        local driver = DRIVERS[0]
+        local driver = DRIVERS[1]
 
         ui.pushFont(ui.Font.Small)
-
         ui.treeNode("["..sessionTypeString().." SESSION]", ui.TreeNodeFlags.DefaultOpen, function ()
-            
-            ui.text("- Laps: "..driver.car.lapCount)
+            ui.text("- Laps: "..driver.lapCount)
             ui.text("- Race Position: "..driver.car.racePosition.."/"..SIM.carsCount)
             ui.text("- Track Position: "..driver.trackPosition.."/"..DRIVERS_ON_TRACK)
             ui.text("- Driver: "..driver.name)
@@ -378,7 +387,9 @@ function script.windowMain(dt)
             else
                 ui.text("- IN PITS")
             end
+            ui.text("\n")
         end)
+
 
         ui.treeNode("[MGUK]", ui.TreeNodeFlags.DefaultOpen, function ()
             if driver.mgukPresent then
@@ -388,15 +399,15 @@ function script.windowMain(dt)
             else
                 ui.text("MGUK not present")
             end
-
+            ui.text("\n")
         end)
 
         ui.treeNode("[DRS]", ui.TreeNodeFlags.DefaultOpen, function ()
             if driver.drsPresent then
-                if DRS_ENABLED == true then
+                if driver.drsEnabled == true then
                     ui.text("- DRS: enabled")
                 else
-                    ui.text("- DRS: in "..DRS_LAPS-LEADER_LAP_COUNT.." laps")
+                    ui.text("- DRS: in "..DRS_LAPS-driver.car.lapCount.." laps")
                 end
                 ui.text("- Zone ID: "..tostring(driver.drsZoneId))
                 ui.text("- Locked: "..tostring(driver.drsLocked))
