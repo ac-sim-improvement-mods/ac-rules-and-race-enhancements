@@ -4,8 +4,6 @@ local INITIALIZED = false
 local RACE_STARTED = false
 
 local DRS_LAPS = 0
-local LEADER_LAP_COUNT = 0
-local LAP_COUNT = 0
 
 local DRIVERS = {}
 local DRIVERS_ON_TRACK = 0
@@ -47,8 +45,10 @@ local Driver = class('Driver', function(carIndex)
     local mgukDelivery = 0
     local mgukDeliveryCount = 0
     local mgukChangeTime = 5
+    
+    local lapCount = 0 
 
-    return {racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackProgress = trackProgress,
+    return {lapCount = lapCount, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackProgress = trackProgress,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
         mgukPresent = mgukPresent, mgukLocked = mgukLocked, mgukDelivery = mgukDelivery, mgukDeliveryCount = mgukDeliveryCount}
 end, class.NoInitialize)
@@ -268,10 +268,10 @@ end
 local function controlMGUK(driver)
     if ac.getSim().timeToSessionStart < -5000 then
         -- Reset MGUK count
-        if LAP_COUNT < driver.car.lapCount then
+        if driver.lapCount < driver.car.lapCount then
             driver.mgukDeliveryCount = 0
             driver.mgukDelivery = driver.car.mgukDelivery
-            LAP_COUNT = driver.car.lapCount
+            driver.lapCount = driver.car.lapCount
         end
         -- Allow the driver to change MGUK settings if below the max change count
         if driver.mgukDeliveryCount < MGUK_CHANGE_LIMIT then
@@ -367,7 +367,7 @@ function script.windowMain(dt)
 
         ui.treeNode("["..sessionTypeString().." SESSION]", ui.TreeNodeFlags.DefaultOpen, function ()
             
-            ui.text("- Leader Laps: "..LEADER_LAP_COUNT)
+            ui.text("- Laps: "..driver.car.lapCount)
             ui.text("- Race Position: "..driver.car.racePosition.."/"..SIM.carsCount)
             ui.text("- Track Position: "..driver.trackPosition.."/"..DRIVERS_ON_TRACK)
             ui.text("- Driver: "..driver.name)
