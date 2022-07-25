@@ -3,7 +3,7 @@ local SIM = ac.getSim()
 local INITIALIZED = false
 local RACE_STARTED = false
 
-local DRS_LAPS = 2
+local DRS_LAPS = 0
 local LEADER_LAP_COUNT = 0
 local LAP_COUNT = 0
 
@@ -365,7 +365,7 @@ function script.windowMain(dt)
 
         ui.pushFont(ui.Font.Small)
 
-        ui.treeNode("["..sessionTypeString().." SESSION]", ui.TreeNodeFlags.None, function ()
+        ui.treeNode("["..sessionTypeString().." SESSION]", ui.TreeNodeFlags.DefaultOpen, function ()
             
             ui.text("- Leader Laps: "..LEADER_LAP_COUNT)
             ui.text("- Race Position: "..driver.car.racePosition.."/"..SIM.carsCount)
@@ -379,7 +379,7 @@ function script.windowMain(dt)
             end
         end)
 
-        ui.treeNode("[MGUK]", ui.TreeNodeFlags.None, function ()
+        ui.treeNode("[MGUK]", ui.TreeNodeFlags.DefaultOpen, function ()
             if driver.mgukPresent then
                 ui.text("- ERS Spent: "..string.format("%2.1f", driver.car.kersCurrentKJ).."/"..ERS_LIMIT)
                 ui.text("- MGUK Mode: "..driver.mgukDelivery)
@@ -390,7 +390,7 @@ function script.windowMain(dt)
 
         end)
 
-        ui.treeNode("[DRS]", ui.TreeNodeFlags.None, function ()
+        ui.treeNode("[DRS]", ui.TreeNodeFlags.DefaultOpen, function ()
             if driver.drsPresent then
                 if DRS_ENABLED == true then
                     ui.text("- DRS: enabled")
