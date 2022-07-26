@@ -41,6 +41,7 @@ local Driver = class('Driver', function(carIndex)
     local drsZone = car.drsAvailable
     local drsZoneId = 0
     local drsActive = car.drsActive
+    local drsCheck = false
     local drsAvailable = false
 
     local mgukPresent = car.hasCockpitERSDelivery
@@ -51,7 +52,7 @@ local Driver = class('Driver', function(carIndex)
     
     local lapCount = 0 
 
-    return {drsEnabled = drsEnabled, lapCount = lapCount, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackProgress = trackProgress,
+    return {drsCheck = drsCheck, drsEnabled = drsEnabled, lapCount = lapCount, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackProgress = trackProgress,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
         mgukPresent = mgukPresent, mgukLocked = mgukLocked, mgukDelivery = mgukDelivery, mgukDeliveryCount = mgukDeliveryCount}
 end, class.NoInitialize)
@@ -171,6 +172,7 @@ end
 local function lockDRS(driver)
     driver.drsLocked = true
     driver.drsAvailable = false
+    driver.drsCheck = false
     ac.store("f1r.drs."..driver.index,0)
     -- Need API update
     if driver.index == 0 then ac.setDRS(false) end
@@ -247,10 +249,11 @@ local function drsAvailable(driver)
         local bInActivationZone = inActivationZone(driver)
         local bCheckGap = checkGap(driver)
 
-        if driver.drsEnabled then
+        if driver.drsEnabled and not driver.drsLocked then
             if bInActivationZone then
-                driver.drsAvailable = bCheckGap and true or false
-            elseif driver.drsAvailable and not driver.drsLocked then
+                driver.drsCheck = bCheckGap
+                driver.drsAvailable = false
+            elseif driver.drsCheck then
                 driver.drsAvailable = true
             else
                 lockDRS(driver)
@@ -321,8 +324,12 @@ end
 --- Control the DRS functionality
 ---@param driver Driver
 local function controlDRS(driver)
-    if not driver.drsEnabled then driver.drsEnabled = enableDRS(driver) end
-    drsAvailable(driver)
+    if ac.getSim().timeToSessionStart < -5000 then
+        if not driver.drsEnabled then driver.drsEnabled = enableDRS(driver) end
+        drsAvailable(driver)
+    else
+        lockDRS(driver)
+    end
 end
 
 --- Controls all the regulated systems
@@ -339,6 +346,8 @@ end
 --- Initialize
 local function initialize()
     RACE_STARTED = false
+    
+    DRIVERS = nil
     DRIVERS = {}
 
     -- Get DRS Zones from track data folder
@@ -346,13 +355,12 @@ local function initialize()
 
     -- Populate DRIVERS array
     for driverIndex = 0, SIM.carsCount-1 do
-        table.insert(DRIVERS, driverIndex, Driver(driverIndex))
+        table.insert(DRIVERS, driverIndex, new Driver(driverIndex))
         local driver = DRIVERS[driverIndex]
         driver:refresh()
-        lockDRS(driver)
+
         driver.trackPosition = driver.racePosition
         driver.lapCount = 0
-        driver.drsEnabled = false
     end
 
     print("Initialized")
@@ -367,7 +375,7 @@ function script.update()
         if ac.getSim().timeToSessionStart > 0 and RACE_STARTED then
             initialize()
         -- Race session has started
-        elseif ac.getSim().timeToSessionStart <= 0 then
+        elseif ac.getSim().timeToSessionStart <= 0 and not RACE_STARTED then
             RACE_STARTED = true
         end
         controlSystems()
@@ -415,10 +423,10 @@ function script.windowMain(dt)
                 ui.text("- Zone ID: "..tostring(driver.drsZoneId))
                 ui.text("- Locked: "..tostring(driver.drsLocked))
                 if not inPits(driver) then ui.text("- In Gap: "..tostring(checkGap(driver))) end
-                ui.text("- Before Detection: "..tostring(inActivationZone(driver)))
-                ui.text("- Deploy Zone: "..tostring(driver.drsZone))
                 ui.text("- Available: "..tostring(driver.drsAvailable))
-                ui.text("- Activated: "..tostring(driver.drsActive))
+                ui.text("- Active: "..tostring(driver.drsActive))
+                ui.text("- Deploy Zone: "..tostring(driver.drsZone))
+                ui.text("- Detection Zone: "..tostring(inActivationZone(driver)))
                 ui.text("- Detection: "..tostring(getDetectionDistanceM(driver)).." m")
                 ui.text("- Track Prog: "..tostring(math.round(driver.trackProgress,5)).." m")
     
