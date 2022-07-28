@@ -325,7 +325,6 @@ end
 ---@param driver Driver
 local function controlDRS(driver)
     if ac.getSim().timeToSessionStart < -5000 then
-        if not driver.drsEnabled then driver.drsEnabled = enableDRS(driver) end
         drsAvailable(driver)
     else
         lockDRS(driver)
