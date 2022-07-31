@@ -9,7 +9,7 @@ function script.update(dt)
         if car.isAIControlled then
             ac.setWingGain(9, 1, 1) -- Mildly tested on RSS FH2022S
             if car.drsActive then
-                ac.setWingGain(9, 35, 1) -- Mildly tested on RSS FH2022S
+                ac.setWingGain(9, 15, 1) -- Mildly tested on RSS FH2022S
                 data.brake = 0.1001
                 data.gas = 1
             else

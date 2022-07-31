@@ -10,6 +10,7 @@ local F1R_CONFIG = nil
 local DRS_ZONES = nil
 local DRIVERS = {}
 local DRIVERS_ON_TRACK = 0
+local LEADER_LAPS = 0
 
 ---@class MappedConfig
 ---@field filename string
@@ -134,7 +135,7 @@ end
 ---@param driver Driver
 ---@return boolean
 local function enableDRS(driver)
-    if driver.lapCount >= F1R_CONFIG.data.RULES.DRS_LAPS then
+    if LEADER_LAPS >= F1R_CONFIG.data.RULES.DRS_LAPS then
         return true
     else
         return false
@@ -290,7 +291,7 @@ local function drsAvailable(driver)
     end
 
     -- Helps with reseting the values after a restart
-    if not RACE_STARTED then
+    if not ac.getSim().isSessionStarted then
         ac.store("f1r.drsAvailable."..driver.index,0)
     end
 end
@@ -351,6 +352,9 @@ end
 local function controlSystems()
     for driverIndex=0, #DRIVERS do
         local driver = DRIVERS[driverIndex]
+        if driver.car.racePosition == 1 then
+            LEADER_LAPS = driver.lapCount
+        end
         driver:refresh()
         controlMGUK(driver)
         controlERS(driver)
@@ -360,9 +364,11 @@ end
 
 --- Initialize
 local function initialize()
-    RACE_STARTED = false
+    INITIALIZED = true
     DRIVERS = nil
     DRIVERS = {}
+    LEADER_LAPS = 0
+
 
     F1R_CONFIG = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings_defaults.ini", {
         RULES = { DRS_LAPS = ac.INIConfig.OptionalNumber, DRS_DELTA = ac.INIConfig.OptionalNumber, 
@@ -384,19 +390,14 @@ local function initialize()
     end
 
     print("Initialized")
-    INITIALIZED = true
 end
 
 function script.update()
     if ac.getSim().raceSessionType == 3 then
         -- Initialize the session
-        if not INITIALIZED then initialize() end
-        -- Handle users restarting the session
-        if ac.getSim().timeToSessionStart > 0 and RACE_STARTED then
-            initialize()
-        -- Race session has started
-        elseif ac.getSim().timeToSessionStart <= 0 and not RACE_STARTED then
-            RACE_STARTED = true
+        if not INITIALIZED and not ac.getSim().isSessionStarted then initialize()
+        elseif ac.getSim().isSessionStarted then
+            INITIALIZED = false
         end
         controlSystems()
     end
@@ -404,11 +405,13 @@ end
 
 function script.windowMain(dt)
     if ac.getSim().raceSessionType == 3 then
-        local driver = DRIVERS[0]
+        local driver = DRIVERS[ac.getSim().closelyFocusedCar]
 
         ui.pushFont(ui.Font.Small)
         ui.treeNode("["..sessionTypeString().." SESSION]", ui.TreeNodeFlags.DefaultOpen, function ()
-            ui.text("- Laps: "..driver.lapCount)
+            ui.text("- Race Started: "..tostring(ac.getSim().isSessionStarted))
+            ui.text("- Leader Laps: "..LEADER_LAPS)
+            ui.text("- Laps: "..driver.lapCount.."/"..ac.getSession(ac.getSim().currentSessionIndex).laps)
             ui.text("- Race Position: "..driver.car.racePosition.."/"..SIM.carsCount)
             ui.text("- Track Position: "..driver.trackPosition.."/"..DRIVERS_ON_TRACK)
             ui.text("- Driver: "..driver.name)
