@@ -6,15 +6,10 @@ local SIM = ac.getSim()
 local INITIALIZED = false
 local RACE_STARTED = false
 
---- local DRS_LAPS = 0
-
 local F1R_CONFIG = nil
 local DRS_ZONES = nil
 local DRIVERS = {}
 local DRIVERS_ON_TRACK = 0
-
---- local MGUK_CHANGE_LIMIT = 4
---- local MAX_ERS = 4000
 
 ---@class MappedConfig
 ---@field filename string
