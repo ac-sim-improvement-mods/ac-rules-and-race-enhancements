@@ -1,5 +1,5 @@
 ---
---- Script v0.5.3-alpha
+--- Script v0.6-alpha
 ---
 if not car.isAIControlled then
     return nil
@@ -13,6 +13,7 @@ function script.update(dt)
         if car.drsActive then
             --ac.setWingGain(9, 8, 1)
             data.brake = 0.1001
+            data.gas = 1
         end
     else
         if car.drsActive then
