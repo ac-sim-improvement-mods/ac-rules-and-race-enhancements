@@ -8,7 +8,7 @@ end
 function script.update(dt)
     local data = ac.accessCarPhysics()
 
-    if ac.load("f1r.drs."..car.index) == 0 then
+    if ac.load("f1r.drsAvailable."..car.index) == 0 then
         ac.log(car.index..":[LOCKED] "..ac.getDriverName(car.index))
         if car.drsActive then
             --ac.setWingGain(9, 8, 1)

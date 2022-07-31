@@ -194,7 +194,7 @@ local function lockDRS(driver)
     driver.drsLocked = true
     driver.drsAvailable = false
     driver.drsCheck = false
-    ac.store("f1r.drs."..driver.index,0)
+    ac.store("f1r.drsAvailable."..driver.index,0)
     -- Need API update
     if driver.index == 0 then ac.setDRS(false) end
 end
@@ -287,16 +287,16 @@ local function drsAvailable(driver)
     end
 
     -- Store variables in AC memory
-    -- Data format {f1r.drs.0=true} or {f1r.drs.0=false}
+    -- Data format {f1r.drsAvailable.0=true} or {f1r.drsAvailable.0=false}
     if driver.drsAvailable then
-        ac.store("f1r.drs."..driver.index,1)
+        ac.store("f1r.drsAvailable."..driver.index,1)
     else
-        ac.store("f1r.drs."..driver.index,0)
+        ac.store("f1r.drsAvailable."..driver.index,0)
     end
 
     -- Helps with reseting the values after a restart
     if not RACE_STARTED then
-        ac.store("f1r.drs."..driver.index,0)
+        ac.store("f1r.drsAvailable."..driver.index,0)
     end
 end
 
@@ -410,7 +410,7 @@ end
 
 function script.windowMain(dt)
     if ac.getSim().raceSessionType == 3 then
-        local driver = DRIVERS[3]
+        local driver = DRIVERS[0]
 
         ui.pushFont(ui.Font.Small)
         ui.treeNode("["..sessionTypeString().." SESSION]", ui.TreeNodeFlags.DefaultOpen, function ()
