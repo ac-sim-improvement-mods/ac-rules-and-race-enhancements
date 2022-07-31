@@ -1,20 +1,41 @@
 ---
---- Script v0.5.3-alpha
+--- Script v0.6.0-alpha
 ---
 local SIM = ac.getSim()
 
 local INITIALIZED = false
 local RACE_STARTED = false
 
-local DRS_LAPS = 0
+--- local DRS_LAPS = 0
 
+local F1R_CONFIG = nil
+local DRS_ZONES = nil
 local DRIVERS = {}
 local DRIVERS_ON_TRACK = 0
 
-local DRS_ZONES = nil
+--- local MGUK_CHANGE_LIMIT = 4
+--- local MAX_ERS = 4000
 
-local MGUK_CHANGE_LIMIT = 4
-local ERS_LIMIT = 4000
+---@class MappedConfig
+---@field filename string
+---@field ini ac.INIConfig
+---@field data table
+---@field original table
+---@field map table
+---@generic T
+---@param filename string
+---@param map T
+---@return MappedConfig|{data: T, original: T}
+local MappedConfig = class('MappedConfig', function(filename, map)
+  local ini = ac.INIConfig.load(filename)
+  local data = ini:mapConfig(map)
+  return {filename = filename, ini = ini, map = map, data = data}
+end, class.NoInitialize)
+
+function MappedConfig:reload()
+  self.ini = ac.INIConfig.load(self.filename) or self.ini
+  self.data = self.ini:mapConfig(self.map)
+end
 
 ---@class Driver
 ---@param carIndex number
@@ -50,7 +71,7 @@ local Driver = class('Driver', function(carIndex)
     local mgukDeliveryCount = 0
     local mgukChangeTime = 5
     
-    local lapCount = 0 
+    local lapCount = 0
 
     return {drsCheck = drsCheck, drsEnabled = drsEnabled, lapCount = lapCount, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackProgress = trackProgress,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
@@ -118,7 +139,7 @@ end
 ---@param driver Driver
 ---@return boolean
 local function enableDRS(driver)
-    if driver.lapCount >= DRS_LAPS then
+    if driver.lapCount >= F1R_CONFIG.data.RULES.DRS_LAPS then
         return true
     else
         return false
@@ -173,7 +194,7 @@ local function lockDRS(driver)
     driver.drsLocked = true
     driver.drsAvailable = false
     driver.drsCheck = false
-    ac.store("f1r.drs."..driver.index,0)
+    ac.store("f1r.drsAvailable."..driver.index,0)
     -- Need API update
     if driver.index == 0 then ac.setDRS(false) end
 end
@@ -238,7 +259,7 @@ end
 ---@return boolean
 local function checkGap(driver)
     local delta = getDelta(driver)
-    return ((delta < 1.0 and delta >= 0.0) and true or false)
+    return ((delta < F1R_CONFIG.data.RULES.DRS_DELTA and delta >= 0.0) and true or false)
 end
 
 --- Checks if driver is before the detection line, not in the pits, 
@@ -266,16 +287,16 @@ local function drsAvailable(driver)
     end
 
     -- Store variables in AC memory
-    -- Data format {f1r.drs.0=true} or {f1r.drs.0=false}
+    -- Data format {f1r.drsAvailable.0=true} or {f1r.drsAvailable.0=false}
     if driver.drsAvailable then
-        ac.store("f1r.drs."..driver.index,1)
+        ac.store("f1r.drsAvailable."..driver.index,1)
     else
-        ac.store("f1r.drs."..driver.index,0)
+        ac.store("f1r.drsAvailable."..driver.index,0)
     end
 
     -- Helps with reseting the values after a restart
     if not RACE_STARTED then
-        ac.store("f1r.drs."..driver.index,0)
+        ac.store("f1r.drsAvailable."..driver.index,0)
     end
 end
 
@@ -290,7 +311,7 @@ local function controlMGUK(driver)
             driver.lapCount = driver.car.lapCount
         end
         -- Allow the driver to change MGUK settings if below the max change count
-        if driver.mgukDeliveryCount < MGUK_CHANGE_LIMIT then
+        if driver.mgukDeliveryCount < F1R_CONFIG.data.RULES.MGUK_CHANGE_LIMIT then
             if physics.getCarInputControls().mgukDeliveryUp or physics.getCarInputControls().mgukDeliveryDown then
                 driver.mgukChangeTime = ac.getSim().time
             end
@@ -316,7 +337,7 @@ end
 --- Control the ERS functionality
 ---@param driver Driver
 local function controlERS(driver)
-    if driver.car.kersCurrentKJ >= ERS_LIMIT then
+    if driver.car.kersCurrentKJ >= F1R_CONFIG.data["RULES"]["MAX_ERS"] then
         ac.setKERS(false)  -- Need API update
     end
 end
@@ -345,19 +366,24 @@ end
 --- Initialize
 local function initialize()
     RACE_STARTED = false
-    
     DRIVERS = nil
     DRIVERS = {}
+
+    F1R_CONFIG = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings_defaults.ini", {
+        RULES = { DRS_LAPS = ac.INIConfig.OptionalNumber, DRS_DELTA = ac.INIConfig.OptionalNumber, 
+        MGUK_CHANGE_LIMIT = ac.INIConfig.OptionalNumber, MAX_ERS = ac.INIConfig.OptionalNumber },
+    })
+
+    ac.log("Loaded config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings_defaults.ini")
 
     -- Get DRS Zones from track data folder
     DRS_ZONES = DRS_Points("drs_zones.ini")
 
     -- Populate DRIVERS array
     for driverIndex = 0, SIM.carsCount-1 do
-        table.insert(DRIVERS, driverIndex, new Driver(driverIndex))
+        table.insert(DRIVERS, driverIndex, Driver(driverIndex))
         local driver = DRIVERS[driverIndex]
         driver:refresh()
-
         driver.trackPosition = driver.racePosition
         driver.lapCount = 0
     end
@@ -400,12 +426,11 @@ function script.windowMain(dt)
             ui.text("\n")
         end)
 
-
         ui.treeNode("[MGUK]", ui.TreeNodeFlags.DefaultOpen, function ()
             if driver.mgukPresent then
-                ui.text("- ERS Spent: "..string.format("%2.1f", driver.car.kersCurrentKJ).."/"..ERS_LIMIT)
+                ui.text("- ERS Spent: "..string.format("%2.1f", driver.car.kersCurrentKJ).."/"..F1R_CONFIG.data.RULES.MAX_ERS)
                 ui.text("- MGUK Mode: "..driver.mgukDelivery)
-                ui.text("- MGUK Switch Count: "..driver.mgukDeliveryCount)
+                ui.text("- MGUK Switch Count: "..driver.mgukDeliveryCount.."/"..F1R_CONFIG.data.RULES.MGUK_CHANGE_LIMIT)
             else
                 ui.text("MGUK not present")
             end
@@ -417,7 +442,7 @@ function script.windowMain(dt)
                 if driver.drsEnabled == true then
                     ui.text("- DRS: enabled")
                 else
-                    ui.text("- DRS: in "..DRS_LAPS-driver.car.lapCount.." laps")
+                    ui.text("- DRS: in ".. F1R_CONFIG.data.RULES.DRS_LAPS-driver.car.lapCount.." laps")
                 end
                 ui.text("- Zone ID: "..tostring(driver.drsZoneId))
                 ui.text("- Locked: "..tostring(driver.drsLocked))
