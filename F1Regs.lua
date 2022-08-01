@@ -394,10 +394,9 @@ end
 
 function script.update()
     if ac.getSim().raceSessionType == 3 then
-        -- Initialize the session
-        if not INITIALIZED and not ac.getSim().isSessionStarted then initialize()
-        elseif ac.getSim().isSessionStarted then
-            INITIALIZED = false
+        -- Handle users restarting the session
+        if not ac.getSim().isSessionStarted then
+            if not INITIALIZED then initialize() end
         end
         controlSystems()
     end
