@@ -365,6 +365,7 @@ end
 --- Initialize
 local function initialize()
     INITIALIZED = true
+    RACE_STARTED = false
     DRIVERS = nil
     DRIVERS = {}
     LEADER_LAPS = 0
@@ -393,24 +394,34 @@ local function initialize()
 end
 
 function script.update()
-    if ac.getSim().raceSessionType == 3 then
-        -- Handle users restarting the session
-        if not ac.getSim().isSessionStarted then
+    local SIM = ac.getSim()
+
+    if SIM.raceSessionType == 3 then
+        -- Initialize the session
+        if not SIM.isSessionStarted and not RACE_STARTED then
             if not INITIALIZED then initialize() end
+        -- Race session has started
+        elseif SIM.isSessionStarted and not RACE_STARTED then
+            RACE_STARTED = true
+        elseif SIM.isSessionStarted and RACE_STARTED then
+            INITIALIZED = false
         end
         controlSystems()
     end
 end
 
 function script.windowMain(dt)
-    if ac.getSim().raceSessionType == 3 then
-        local driver = DRIVERS[ac.getSim().closelyFocusedCar]
+    local SIM = ac.getSim()
+    
+    if SIM.raceSessionType == 3 then
+        local driver = DRIVERS[SIM.focusedCar]
+        local math = math
 
         ui.pushFont(ui.Font.Small)
         ui.treeNode("["..sessionTypeString().." SESSION]", ui.TreeNodeFlags.DefaultOpen, function ()
             ui.text("- Race Started: "..tostring(ac.getSim().isSessionStarted))
             ui.text("- Leader Laps: "..LEADER_LAPS)
-            ui.text("- Laps: "..driver.lapCount.."/"..ac.getSession(ac.getSim().currentSessionIndex).laps)
+            ui.text("- Laps: "..driver.lapCount.."/"..ac.getSession(SIM.currentSessionIndex).laps)
             ui.text("- Race Position: "..driver.car.racePosition.."/"..SIM.carsCount)
             ui.text("- Track Position: "..driver.trackPosition.."/"..DRIVERS_ON_TRACK)
             ui.text("- Driver: "..driver.name)
