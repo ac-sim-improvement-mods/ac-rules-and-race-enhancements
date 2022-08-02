@@ -210,18 +210,20 @@ local function getTrackOrder()
         trackOrder[index+1] = DRIVERS[index]
     end
 
-    DRIVERS_ON_TRACK = #trackOrder
+    local drivers_on_track = #trackOrder
     
     -- Remove drivers in the pits from the track order
     for index=1, #trackOrder do
-        if index <= DRIVERS_ON_TRACK then
+        if index <= drivers_on_track then
             if inPits(trackOrder[index]) then
                 table.remove(trackOrder, index)
-                DRIVERS_ON_TRACK = DRIVERS_ON_TRACK - 1
+                drivers_on_track = drivers_on_track - 1
             end
         end
     end
 
+    DRIVERS_ON_TRACK = drivers_on_track
+    
     -- Sort drivers by position on track, and ignore drivers in the pits
     table.sort(trackOrder, function (a,b) return a.trackProgress > b.trackProgress end)
 
