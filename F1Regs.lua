@@ -1,5 +1,5 @@
 ---
---- Script v0.6.0-alpha
+--- Script v0.6.1-alpha
 ---
 local INITIALIZED = false
 local RACE_STARTED = false
@@ -471,7 +471,7 @@ function script.windowMain(dt)
                 ui.text("- Detection Zone: "..tostring(inActivationZone(driver)))
                 ui.text("- Detection: "..tostring(getDetectionDistanceM(driver)).." m")
                 ui.text("- Track Prog: "..tostring(math.round(driver.trackProgress,5)).." m")
-    
+
             else
                 ui.text("DRS not present")
             end
