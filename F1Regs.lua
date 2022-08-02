@@ -45,6 +45,7 @@ local Driver = class('Driver', function(carIndex)
     local trackPosition = -1
     local trackProgress = 0
     local carAhead = -1
+    local carAheadDelta = -1
 
     local isInPit = car.isInPit
     local isInPitLane = car.isInPitlane
@@ -67,7 +68,7 @@ local Driver = class('Driver', function(carIndex)
     
     local lapCount = 0
 
-    return {drsCheck = drsCheck, drsEnabled = drsEnabled, lapCount = lapCount, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackProgress = trackProgress,
+    return {carAheadDelta = carAheadDelta, drsCheck = drsCheck, drsEnabled = drsEnabled, lapCount = lapCount, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackProgress = trackProgress,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
         mgukPresent = mgukPresent, mgukLocked = mgukLocked, mgukDelivery = mgukDelivery, mgukDeliveryCount = mgukDeliveryCount}
 end, class.NoInitialize)
@@ -189,7 +190,6 @@ local function lockDRS(driver)
     driver.drsLocked = true
     driver.drsAvailable = false
     driver.drsCheck = false
-    ac.store("f1r.drsAvailable."..driver.index,0)
     -- Need SDK update
     if driver.index == 0 then ac.setDRS(false) end
 end
@@ -257,6 +257,7 @@ end
 ---@return boolean
 local function checkGap(driver)
     local delta = getDelta(driver)
+    driver.carAheadDelta = delta
     return ((delta < F1R_CONFIG.data.RULES.DRS_DELTA and delta >= 0.0) and true or false)
 end
 
@@ -282,19 +283,6 @@ local function drsAvailable(driver)
         end
     else
         lockDRS(driver)
-    end
-
-    -- Store variables in AC memory
-    -- Data format {f1r.drsAvailable.0=true} or {f1r.drsAvailable.0=false}
-    if driver.drsAvailable then
-        ac.store("f1r.drsAvailable."..driver.index,1)
-    else
-        ac.store("f1r.drsAvailable."..driver.index,0)
-    end
-
-    -- Helps with reseting the values after a restart
-    if not ac.getSim().isSessionStarted then
-        ac.store("f1r.drsAvailable."..driver.index,0)
     end
 end
 
@@ -355,8 +343,8 @@ end
 local function controlSystems()
     local drivers = DRIVERS
     local leader_laps = LEADER_LAPS
-    for driverIndex=0, #drivers do
-        local driver = drivers[driverIndex]
+    for index=0, #drivers do
+        local driver = drivers[index]
         if driver.car.racePosition == 1 then
             leader_laps = driver.lapCount
         end
@@ -364,6 +352,7 @@ local function controlSystems()
         controlMGUK(driver)
         controlERS(driver)
         controlDRS(driver)
+        ac.store("f1r."..index,stringify(driver, true))
     end
     LEADER_LAPS = leader_laps
 end
