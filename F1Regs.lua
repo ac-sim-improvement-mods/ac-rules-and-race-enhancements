@@ -133,30 +133,32 @@ end
 --- Enable DRS functionality if the lead driver has completed the specified numbers of laps
 ---@return boolean
 local function enableDRS()
-        if not rainCheck() then
-            if WET_TRACK then
-                DRS_LAPS = LEADER_LAPS + F1R_CONFIG.data.RULES.DRS_LAPS
-                WET_TRACK = false
-                return false
-            else
-                if LEADER_LAPS >= DRS_LAPS then
-                    return true
-                else
-                    return false
-                end  
-            end 
+    if not rainCheck() then
+        if LEADER_LAPS >= DRS_LAPS then
+            return true
         else
-            return false 
-        end 
+            return false
+        end  
+    else
+        return false 
+    end 
 end
 
 -- Determines if the track is too wet for DRS to be enabled
 ---@return boolean
 local function rainCheck()
     if csp.wetness > F1R_CONFIG.data.RULES.WET_DRS_LIMIT then
+        if not WET_TRACK then
+            ac.log("Track is too wet. Wetness: "..csp.wetness)
+        end
         WET_TRACK = true
         return true
     else
+        if WET_TRACK then
+            ac.log("Track is drying. DRS enabled in 2 laps")
+            DRS_LAPS = LEADER_LAPS + F1R_CONFIG.data.RULES.DRS_LAPS
+            WET_TRACK = false
+        end 
         return false
     end
 end
