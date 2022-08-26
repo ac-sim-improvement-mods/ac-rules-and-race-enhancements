@@ -147,9 +147,10 @@ end
 -- Determines if the track is too wet for DRS to be enabled
 ---@return boolean
 local function rainCheck()
-    if csp.wetness > F1R_CONFIG.data.RULES.WET_DRS_LIMIT then
+    local wetness = csp.wetness
+    if wetness > F1R_CONFIG.data.RULES.WET_DRS_LIMIT then
         if not WET_TRACK then
-            ac.log("Track is too wet. Wetness: "..csp.wetness)
+            ac.log("Track is too wet. Wetness: "..wetness)
         end
         WET_TRACK = true
         return true
