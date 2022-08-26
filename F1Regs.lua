@@ -8,6 +8,8 @@ local DRS_ZONES = nil
 local DRIVERS = {}
 local DRIVERS_ON_TRACK = 0
 local LEADER_LAPS = 0
+local DRS_LAPS = 0
+local WET_TRACK = false
 
 ---@class MappedConfig
 ---@field filename string
@@ -131,12 +133,34 @@ end
 --- Enable DRS functionality if the lead driver has completed the specified numbers of laps
 ---@return boolean
 local function enableDRS()
-    if LEADER_LAPS >= F1R_CONFIG.data.RULES.DRS_LAPS then
+        if not rainCheck() then
+            if WET_TRACK then
+                DRS_LAPS = LEADER_LAPS + F1R_CONFIG.data.RULES.DRS_LAPS
+                WET_TRACK = false
+                return false
+            else
+                if LEADER_LAPS >= DRS_LAPS then
+                    return true
+                else
+                    return false
+                end  
+            end 
+        else
+            return false 
+        end 
+end
+
+-- Determines if the track is too wet for DRS to be enabled
+---@return boolean
+local function rainCheck()
+    if csp.wetness > F1R_CONFIG.data.RULES.WET_DRS_LIMIT then
+        WET_TRACK = true
         return true
     else
         return false
     end
 end
+
 
 function Driver:refresh()
     self.lapsCompleted = self.car.lapCount
@@ -369,6 +393,7 @@ local function initialize()
     INITIALIZED = true
     RACE_STARTED = false
     LEADER_LAPS = 0
+    DRS_LAPS = F1R_CONFIG.data.RULES.DRS_LAPS
 
     for index in pairs(DRIVERS) do
         DRIVERS[index] = nil
