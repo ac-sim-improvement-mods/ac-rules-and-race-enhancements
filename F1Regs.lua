@@ -1,5 +1,5 @@
 ---
---- Script v0.7.0-alpha
+--- Script v0.8.0-alpha
 ---
 local INITIALIZED = false
 
@@ -8,6 +8,8 @@ local DRS_ZONES = nil
 local DRIVERS = {}
 local DRIVERS_ON_TRACK = 0
 local LEADER_LAPS = 0
+local DRS_LAPS = 0
+local WET_TRACK = false
 
 ---@class MappedConfig
 ---@field filename string
@@ -136,11 +138,55 @@ local function getTrackPositionM(index)
     return ac.worldCoordinateToTrackProgress(ac.getCar(index).position)*ac.getSim().trackLengthM
 end
 
+-- Determines if the track is too wet for DRS to be enabled
+---@return boolean
+local function rainCheck()
+    local sim = ac.getSim()
+    -- rainIntensity number
+    -- rainWetness number
+    -- rainWater number
+
+    local track_rain_intensity = sim.rainIntensity
+    local track_wetness = sim.rainWetness
+    local track_puddles = sim.rainWater
+    if track_wetness >= F1R_CONFIG.data.RULES.WET_DRS_LIMIT and
+        track_puddles >= F1R_CONFIG.data.RULES.WET_DRS_LIMIT then
+
+        if not WET_TRACK then
+            ac.log("Track is too wet, DRS disabled until conditions improve")
+            ac.log("Puddles: "..track_puddles)
+            ac.log("Wetness: "..track_wetness)
+            ac.log("Intensity: "..track_rain_intensity)
+        end
+
+        WET_TRACK = true
+
+        return true
+    else
+        if WET_TRACK then
+            if track_wetness >= F1R_CONFIG.data.RULES.WET_DRS_LIMIT - 0.05 and
+            track_puddles >= F1R_CONFIG.data.RULES.WET_DRS_LIMIT - 0.05 and
+            track_rain_intensity > 0.70 then
+                return true
+            else
+                ac.log("Track is drying. DRS enabled in 2 laps")
+                DRS_LAPS = LEADER_LAPS + F1R_CONFIG.data.RULES.DRS_LAPS
+                WET_TRACK = false
+                return false
+            end
+        end
+    end
+end
+
 --- Enable DRS functionality if the lead driver has completed the specified numbers of laps
 ---@return boolean
 local function enableDRS()
-    if LEADER_LAPS >= F1R_CONFIG.data.RULES.DRS_LAPS then
-        return true
+    if not rainCheck() then
+        if LEADER_LAPS >= DRS_LAPS then
+            return true
+        else
+            return false
+        end
     else
         return false
     end
@@ -374,7 +420,6 @@ end
 
 --- Initialize
 local function initialize()
-    INITIALIZED = true
     RACE_STARTED = false
     LEADER_LAPS = 0
     
@@ -387,14 +432,17 @@ local function initialize()
     DRIVERS = {}
 
     F1R_CONFIG = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings_defaults.ini", {
-        RULES = { DRS_LAPS = ac.INIConfig.OptionalNumber, DRS_DELTA = ac.INIConfig.OptionalNumber, 
-        MGUK_CHANGE_LIMIT = ac.INIConfig.OptionalNumber, MAX_ERS = ac.INIConfig.OptionalNumber, WET_DRS_LIMIT = ac.INIConfig.OptionalNumber},
+        RULES = { DRS_LAPS = ac.INIConfig.OptionalNumber, DRS_DELTA = ac.INIConfig.OptionalNumber,
+        MGUK_CHANGE_LIMIT = ac.INIConfig.OptionalNumber, MAX_ERS = ac.INIConfig.OptionalNumber,
+        WET_DRS_LIMIT = ac.INIConfig.OptionalNumber },
+
     })
 
     ac.log("Loaded config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings_defaults.ini")
 
     -- Get DRS Zones from track data folder
     DRS_ZONES = DRS_Points("drs_zones.ini")
+    DRS_LAPS = F1R_CONFIG.data.RULES.DRS_LAPS
 
     -- Populate DRIVERS array
     for driverIndex = 0, ac.getSim().carsCount-1 do
@@ -406,6 +454,7 @@ local function initialize()
         ac.log("Driver "..driverIndex..": "..driver.name)
     end
 
+    INITIALIZED = true
     ac.log("Initialized")
 end
 
@@ -420,7 +469,9 @@ function script.update()
         else
             INITIALIZED = false
         end
-        controlSystems()
+        if INITIALIZED or sim.isSessionStarted then
+            controlSystems()
+        end
     end
 end
 

@@ -1,5 +1,5 @@
 ---
---- Script v0.7.0-alpha
+--- Script v0.8.0-alpha
 ---
 if not car.isAIControlled then
     return nil
