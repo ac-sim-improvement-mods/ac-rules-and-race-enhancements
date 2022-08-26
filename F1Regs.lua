@@ -130,24 +130,15 @@ local function getTrackPositionM(index)
     return ac.worldCoordinateToTrackProgress(ac.getCar(index).position)*ac.getSim().trackLengthM
 end
 
---- Enable DRS functionality if the lead driver has completed the specified numbers of laps
----@return boolean
-local function enableDRS()
-    if not rainCheck() then
-        if LEADER_LAPS >= DRS_LAPS then
-            return true
-        else
-            return false
-        end  
-    else
-        return false 
-    end 
-end
-
 -- Determines if the track is too wet for DRS to be enabled
 ---@return boolean
 local function rainCheck()
-    local wetness = csp.wetness
+    local sim = ac.getSim()
+    -- rainIntensity number
+    -- rainWetness number
+    -- rainWater number
+
+    local wetness = sim.rainWetness
     if wetness > F1R_CONFIG.data.RULES.WET_DRS_LIMIT then
         if not WET_TRACK then
             ac.log("Track is too wet. Wetness: "..wetness)
@@ -159,11 +150,24 @@ local function rainCheck()
             ac.log("Track is drying. DRS enabled in 2 laps")
             DRS_LAPS = LEADER_LAPS + F1R_CONFIG.data.RULES.DRS_LAPS
             WET_TRACK = false
-        end 
+        end
         return false
     end
 end
 
+--- Enable DRS functionality if the lead driver has completed the specified numbers of laps
+---@return boolean
+local function enableDRS()
+    if not rainCheck() then
+        if LEADER_LAPS >= DRS_LAPS then
+            return true
+        else
+            return false
+        end
+    else
+        return false
+    end
+end
 
 function Driver:refresh()
     self.lapsCompleted = self.car.lapCount
