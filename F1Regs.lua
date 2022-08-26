@@ -107,6 +107,14 @@ local DRS_Points = class('DRS_Points', function(fileName)
 
         index = index + 1
     end
+    
+    if #detectionZones >= 0 and #startZones >= 0 and #endZones >= o then
+        ac.log(#detectionZones.." DRS detetection zones loaded")
+        ac.log(#startZones.." DRS start zones loaded")
+        ac.log(#endZones.." DRS end zones loaded")
+    else
+        ac.log("No DRS Zones detected on this track!")
+    end 
 
     local zoneCount = index
     
@@ -369,6 +377,8 @@ local function initialize()
     INITIALIZED = true
     RACE_STARTED = false
     LEADER_LAPS = 0
+    
+    ac.log(sessionTypeString().." session detected")
 
     for index in pairs(DRIVERS) do
         DRIVERS[index] = nil
@@ -378,7 +388,7 @@ local function initialize()
 
     F1R_CONFIG = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings_defaults.ini", {
         RULES = { DRS_LAPS = ac.INIConfig.OptionalNumber, DRS_DELTA = ac.INIConfig.OptionalNumber, 
-        MGUK_CHANGE_LIMIT = ac.INIConfig.OptionalNumber, MAX_ERS = ac.INIConfig.OptionalNumber },
+        MGUK_CHANGE_LIMIT = ac.INIConfig.OptionalNumber, MAX_ERS = ac.INIConfig.OptionalNumber, WET_DRS_LIMIT = ac.INIConfig.OptionalNumber},
     })
 
     ac.log("Loaded config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings_defaults.ini")
@@ -393,9 +403,10 @@ local function initialize()
         driver:refresh()
         driver.trackPosition = driver.racePosition
         driver.mgukDeliveryCount = 0
+        ac.log("Driver "..driverIndex..": "..driver.name)
     end
 
-    print("Initialized")
+    ac.log("Initialized")
 end
 
 function script.update()
