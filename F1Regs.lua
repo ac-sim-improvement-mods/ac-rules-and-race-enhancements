@@ -42,6 +42,9 @@ local Driver = class('Driver', function(carIndex)
     local lapsCompleted = car.lapCount
     local name = ac.getDriverName(carIndex)
 
+    local carNode = nil
+    local animDir = ''
+
     local racePosition = car.racePosition
     local trackPosition = -1
     local trackProgress = 0
@@ -68,7 +71,7 @@ local Driver = class('Driver', function(carIndex)
     local mgukChangeTime = 5
     local mgukLapCheck = 0
 
-    return {carAheadDelta = carAheadDelta, drsCheck = drsCheck, drsEnabled = drsEnabled, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackProgress = trackProgress,
+    return {animDir = animDir, carNode = carNode, carAheadDelta = carAheadDelta, drsCheck = drsCheck, drsEnabled = drsEnabled, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackProgress = trackProgress,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
         mgukPresent = mgukPresent, mgukLocked = mgukLocked, mgukDelivery = mgukDelivery, mgukDeliveryCount = mgukDeliveryCount}
 end, class.NoInitialize)
@@ -110,10 +113,10 @@ local DRS_Points = class('DRS_Points', function(fileName)
         index = index + 1
     end
     
-    if #detectionZones >= 0 and #startZones >= 0 and #endZones >= o then
-        ac.log(#detectionZones.." DRS detetection zones loaded")
-        ac.log(#startZones.." DRS start zones loaded")
-        ac.log(#endZones.." DRS end zones loaded")
+    if #detectionZones >= 0 and #startZones >= 0 and #endZones >= 0 then
+        ac.log("DRS detect zones: "..#detectionZones)
+        ac.log("DRS start zones: "..#startZones)
+        ac.log("DRS end zones: "..#endZones)
     else
         ac.log("No DRS Zones detected on this track!")
     end 
@@ -169,9 +172,10 @@ local function rainCheck()
             track_rain_intensity > 0.70 then
                 return true
             else
-                ac.log("Track is drying. DRS enabled in 2 laps")
                 DRS_LAPS = LEADER_LAPS + F1R_CONFIG.data.RULES.DRS_LAPS
                 WET_TRACK = false
+
+                ac.log("Track is drying. DRS enabled in 2 laps on lap "..DRS_LAPS)
                 return false
             end
         end
@@ -243,6 +247,7 @@ local function lockDRS(driver)
     driver.drsCheck = false
     -- Need SDK update
     if driver.index == 0 then ac.setDRS(false) end
+    --driver.carNode:setAnimation(driver.animDir, 0)
 end
 
 --- Check if driver is on track or in pits
@@ -383,7 +388,7 @@ end
 --- Control the DRS functionality
 ---@param driver Driver
 local function controlDRS(driver)
-    if ac.getSim().timeToSessionStart < -5000 then
+    if ac.getSim().timeToSessionStart < -1000 then
         drsAvailable(driver)
     else
         lockDRS(driver)
@@ -409,6 +414,7 @@ local function controlSystems()
         data[index..".carAhead"] = driver.carAhead
         data[index..".carAheadDelta"] = driver.carAheadDelta
     end
+    
     ac.store("F1Reg",stringify(data, true))
 
     -- Example of how to load the data
@@ -451,7 +457,14 @@ local function initialize()
         driver:refresh()
         driver.trackPosition = driver.racePosition
         driver.mgukDeliveryCount = 0
-        ac.log("Driver "..driverIndex..": "..driver.name)
+
+        driver.carNode = ac.findNodes('carRoot:'..driver.index)
+        if string.find(ac.getCarID(driver.index), "rss") or string.find(ac.getCarID(driver.index), "ACFL") then
+            driver.animDir = ac.getFolder(ac.FolderID.ContentCars) .. '/' .. ac.getCarID(driver.index) .. '/animations/Wing_Rear.ksanim'
+        elseif string.find(ac.getCarID(driver.index), "vrc") then
+            driver.animDir = ac.getFolder(ac.FolderID.ContentCars) .. '/' .. ac.getCarID(driver.index) .. '/animations/RearWing_Gurney.ksanim'
+        end
+        ac.log("Driver "..driver.index..": "..driver.name)
     end
 
     INITIALIZED = true
@@ -463,14 +476,18 @@ function script.update()
 
     if sim.raceSessionType == 3 then
         -- Initialize the session
-        if not sim.isSessionStarted then
-            if not INITIALIZED then initialize() end
-        -- Race session has started
-        else
-            INITIALIZED = false
-        end
-        if INITIALIZED or sim.isSessionStarted then
-            controlSystems()
+        if sim.timeToSessionStart < 7000 then 
+            if not sim.isSessionStarted then
+                if not INITIALIZED then initialize() end
+            -- Race session has started
+            else
+                INITIALIZED = false
+            end
+            if sim.timeToSessionStart < 5000 then 
+                if INITIALIZED or sim.isSessionStarted then
+                    controlSystems()
+                end
+            end
         end
     end
 end
