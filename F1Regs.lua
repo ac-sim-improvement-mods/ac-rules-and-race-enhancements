@@ -414,7 +414,7 @@ local function controlSystems()
         data[index..".carAhead"] = driver.carAhead
         data[index..".carAheadDelta"] = driver.carAheadDelta
     end
-    
+
     ac.store("F1Reg",stringify(data, true))
 
     -- Example of how to load the data
@@ -494,7 +494,7 @@ end
 
 function script.windowMain(dt)
     local sim = ac.getSim()
-  
+
     if sim.raceSessionType == 3 then
         local driver = DRIVERS[sim.focusedCar]
         local math = math
@@ -510,7 +510,7 @@ function script.windowMain(dt)
             ui.text("- Driver: "..driver.name)
             if not inPits(driver) then
                 ui.text("- Driver Ahead: "..tostring(ac.getDriverName(driver.carAhead)))
-                ui.text("- Delta: "..math.round(getDelta(driver),1))
+                ui.text("- Delta: "..math.round(getDelta(driver),3))
             else
                 ui.text("- IN PITS")
             end
