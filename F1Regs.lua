@@ -10,6 +10,7 @@ local DRIVERS_ON_TRACK = 0
 local LEADER_LAPS = 0
 local DRS_LAPS = 0
 local WET_TRACK = false
+local DRS_ENABLED = false
 
 ---@class MappedConfig
 ---@field filename string
@@ -42,9 +43,6 @@ local Driver = class('Driver', function(carIndex)
     local lapsCompleted = car.lapCount
     local name = ac.getDriverName(carIndex)
 
-    local carNode = nil
-    local animDir = ''
-
     local racePosition = car.racePosition
     local trackPosition = -1
     local trackProgress = 0
@@ -54,7 +52,6 @@ local Driver = class('Driver', function(carIndex)
     local isInPit = car.isInPit
     local isInPitLane = car.isInPitlane
 
-    local drsEnabled = false
     local drsPresent = car.drsPresent
     local drsLocked = true
     local drsActivationZone = false
@@ -71,7 +68,7 @@ local Driver = class('Driver', function(carIndex)
     local mgukChangeTime = 5
     local mgukLapCheck = 0
 
-    return {animDir = animDir, carNode = carNode, carAheadDelta = carAheadDelta, drsCheck = drsCheck, drsEnabled = drsEnabled, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackProgress = trackProgress,
+    return {carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackProgress = trackProgress,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
         mgukPresent = mgukPresent, mgukLocked = mgukLocked, mgukDelivery = mgukDelivery, mgukDeliveryCount = mgukDeliveryCount}
 end, class.NoInitialize)
@@ -156,6 +153,7 @@ local function rainCheck()
         track_puddles >= F1R_CONFIG.data.RULES.WET_DRS_LIMIT then
 
         if not WET_TRACK then
+            ui.toast(ui.Icons.Bell, "DRS Disabled | Conditions too wet")
             ac.log("Track is too wet, DRS disabled until conditions improve")
             ac.log("Puddles: "..track_puddles)
             ac.log("Wetness: "..track_wetness)
@@ -175,6 +173,7 @@ local function rainCheck()
                 DRS_LAPS = LEADER_LAPS + F1R_CONFIG.data.RULES.DRS_LAPS
                 WET_TRACK = false
 
+                ui.toast(ui.Icons.Bell, "DRS Enabled in "..DRS_LAPS.." laps")
                 ac.log("Track is drying. DRS enabled in 2 laps on lap "..DRS_LAPS)
                 return false
             end
@@ -187,6 +186,9 @@ end
 local function enableDRS()
     if not rainCheck() then
         if LEADER_LAPS >= DRS_LAPS then
+            if not DRS_ENABLED then
+                ui.toast(ui.Icons.Bell, "DRS Enabled")
+            end
             return true
         else
             return false
@@ -204,7 +206,6 @@ function Driver:refresh()
     self.drsActive = self.car.drsActive
     self.racePosition = self.car.racePosition
     self.trackProgress = getTrackPositionM(self.index)
-    self.drsEnabled = enableDRS(self)
 end
 
 --- Returns the main driver's distance to the detection line in meters
@@ -247,7 +248,6 @@ local function lockDRS(driver)
     driver.drsCheck = false
     -- Need SDK update
     if driver.index == 0 then ac.setDRS(false) end
-    --driver.carNode:setAnimation(driver.animDir, 0)
 end
 
 --- Check if driver is on track or in pits
@@ -325,7 +325,7 @@ local function drsAvailable(driver)
         local bInActivationZone = inActivationZone(driver)
         local bCheckGap = checkGap(driver)
 
-        if driver.drsEnabled and not driver.drsLocked then
+        if DRS_ENABLED and not driver.drsLocked then
             if bInActivationZone then
                 driver.drsCheck = bCheckGap
                 driver.drsAvailable = false
@@ -388,7 +388,8 @@ end
 --- Control the DRS functionality
 ---@param driver Driver
 local function controlDRS(driver)
-    if ac.getSim().timeToSessionStart < -1000 then
+    DRS_ENABLED = enableDRS()
+    if ac.getSim().isSessionStarted then
         drsAvailable(driver)
     else
         lockDRS(driver)
@@ -458,14 +459,10 @@ local function initialize()
         driver.trackPosition = driver.racePosition
         driver.mgukDeliveryCount = 0
 
-        driver.carNode = ac.findNodes('carRoot:'..driver.index)
-        if string.find(ac.getCarID(driver.index), "rss") or string.find(ac.getCarID(driver.index), "ACFL") then
-            driver.animDir = ac.getFolder(ac.FolderID.ContentCars) .. '/' .. ac.getCarID(driver.index) .. '/animations/Wing_Rear.ksanim'
-        elseif string.find(ac.getCarID(driver.index), "vrc") then
-            driver.animDir = ac.getFolder(ac.FolderID.ContentCars) .. '/' .. ac.getCarID(driver.index) .. '/animations/RearWing_Gurney.ksanim'
-        end
         ac.log("Driver "..driver.index..": "..driver.name)
     end
+
+    ui.toast(ui.Icons.Bell, "DRS Enabled in "..DRS_LAPS.." laps")
 
     INITIALIZED = true
     ac.log("Initialized")
