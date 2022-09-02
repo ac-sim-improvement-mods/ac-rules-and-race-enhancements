@@ -112,17 +112,11 @@ local DRS_Points = class('DRS_Points', function(fileName)
         startZones[index] = tonumber(sData)
         endZones[index] = tonumber(eData)
 
+        ac.log("[Loaded] DRS Zone "..index.." ["..dData..","..sData..","..eData.."]")
+
         index = index + 1
     end
     
-    if #detectionZones >= 0 and #startZones >= 0 and #endZones >= 0 then
-        ac.log("DRS detect zones: "..#detectionZones)
-        ac.log("DRS start zones: "..#startZones)
-        ac.log("DRS end zones: "..#endZones)
-    else
-        ac.log("No DRS Zones detected on this track!")
-    end 
-
     local zoneCount = index
     
     return {detectionZones = detectionZones, startZones = startZones, endZones = endZones, zoneCount = zoneCount}
@@ -130,10 +124,10 @@ end, class.NoInitialize)
 
 --- Converts session type number to the corresponding session type string
 ---@return string
-local function sessionTypeString()
+local function sessionTypeString(sim)
     local sessionTypes = {"UNDEFINED", "PRACTICE", "QUALIFY", "RACE", "HOTLAP", "TIME ATTACK", "DRIFT", "DRAG"}
 
-    return sessionTypes[ac.getSim().raceSessionType + 1]
+    return sessionTypes[sim.raceSessionType + 1]
 end
 
 --- Returns the main driver's track position in meters
@@ -145,8 +139,7 @@ end
 
 -- Determines if the track is too wet for DRS to be enabled
 ---@return boolean
-local function rainCheck()
-    local sim = ac.getSim()
+local function rainCheck(sim)
     -- rainIntensity number
     -- rainWetness number
     -- rainWater number
@@ -188,8 +181,8 @@ end
 
 --- Enable DRS functionality if the lead driver has completed the specified numbers of laps
 ---@return boolean
-local function enableDRS()
-    if not rainCheck() then
+local function enableDRS(sim)
+    if not rainCheck(sim) then
         if LEADER_LAPS >= DRS_LAPS then
             if not DRS_ENABLED then
                 ui.toast(ui.Icons.Bell, "DRS Enabled")
@@ -204,20 +197,21 @@ local function enableDRS()
 end
 
 function Driver:refresh()
-    self.lapsCompleted = self.car.lapCount
-    self.isInPit = self.car.isInPit
-    self.isInPitLane = self.car.isInPitlane
-    self.drsZone = self.car.drsAvailable
-    self.drsActive = self.car.drsActive
-    self.racePosition = self.car.racePosition
-    self.trackProgress = getTrackPositionM(self.index)
+    local car = self.car
+    self.lapsCompleted = car.lapCount
+    self.isInPit = car.isInPit
+    self.isInPitLane = car.isInPitlane
+    self.drsZone = car.drsAvailable
+    self.drsActive = car.drsActive
+    self.racePosition = car.racePosition
+    self.trackProgress = getTrackPositionM(car.index)
 end
 
 --- Returns the main driver's distance to the detection line in meters
 ---@param driver Driver
 ---@return number
-local function getDetectionDistanceM(driver)
-    return math.round(math.clamp((DRS_ZONES.detectionZones[driver.drsZoneId]*ac.getSim().trackLengthM)-getTrackPositionM(0),0,10000), 5)
+local function getDetectionDistanceM(sim,driver)
+    return math.round(math.clamp((DRS_ZONES.detectionZones[driver.drsZoneId]*sim.trackLengthM)-getTrackPositionM(driver.index),0,10000), 5)
 end
 
 --- Converts session type number to the corresponding session type string 
@@ -274,7 +268,7 @@ local function getTrackOrder()
     local drivers_on_track = #track_order
     
     -- Remove drivers in the pits from the track order
-    for index=1, #track_order do
+    for index=1, #track_order+1 do
         if index <= drivers_on_track then
             if inPits(track_order[index]) then
                 table.remove(track_order, index)
@@ -286,7 +280,7 @@ local function getTrackOrder()
     DRIVERS_ON_TRACK = drivers_on_track
 
     -- Sort drivers by position on track, and ignore drivers in the pits
-    table.sort(track_order, function (a,b) return a.trackProgress > b.trackProgress end)
+    table.sort(track_order, function (a,b) return getTrackPositionM(a.index) > getTrackPositionM(b.index) end)
 
     return track_order
 end
@@ -349,8 +343,7 @@ end
 
 --- Control the MGUK functionality
 ---@param driver Driver
-local function controlMGUK(driver)
-    local sim = ac.getSim()
+local function controlMGUK(sim,driver)
     if sim.timeToSessionStart < -5000 then
         -- Reset MGUK count
         if driver.mgukLapCheck < driver.car.lapCount then
@@ -392,9 +385,9 @@ end
 
 --- Control the DRS functionality
 ---@param driver Driver
-local function controlDRS(driver)
-    DRS_ENABLED = enableDRS()
-    if ac.getSim().isSessionStarted then
+local function controlDRS(sim,driver)
+    DRS_ENABLED = enableDRS(sim)
+    if sim.isSessionStarted then
         drsAvailable(driver)
     else
         lockDRS(driver)
@@ -421,7 +414,7 @@ end
 -- end
 
 --- Controls all the regulated systems
-local function controlSystems()
+local function controlSystems(sim)
     local drivers = DRIVERS
     local leader_laps = LEADER_LAPS
     local data = {}
@@ -431,11 +424,9 @@ local function controlSystems()
             leader_laps = driver.lapsCompleted
         end
         driver:refresh()
-        controlMGUK(driver)
+        controlMGUK(sim,driver)
         controlERS(driver)
-        controlDRS(driver)
-
-        physics.setAITopSpeed(driver.index, 5)
+        controlDRS(sim,driver)
 
         -- overtake_check(driver)
 
@@ -454,44 +445,50 @@ local function controlSystems()
 end
 
 --- Initialize
-local function initialize()
+local function initialize(sim)
     RACE_STARTED = false
     LEADER_LAPS = 0
 
-    ac.log(sessionTypeString().." session detected")
+    ac.log(sessionTypeString(sim).." session detected")
 
+    if not sim.raceSessionType == 3 then
+        ac.log("Not a race session")
+        return false
+    end
+
+    -- Empty DRIVERS table
     for index in pairs(DRIVERS) do
         DRIVERS[index] = nil
     end
-
     DRIVERS = {}
 
+    -- Load config file
     F1R_CONFIG = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings_defaults.ini", {
         RULES = { DRS_LAPS = ac.INIConfig.OptionalNumber, DRS_DELTA = ac.INIConfig.OptionalNumber,
         MGUK_CHANGE_LIMIT = ac.INIConfig.OptionalNumber, MAX_ERS = ac.INIConfig.OptionalNumber,
         WET_DRS_LIMIT = ac.INIConfig.OptionalNumber },
 
     })
-
-    ac.log("Loaded config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings_defaults.ini")
+    ac.log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings_defaults.ini")
 
     -- Get DRS Zones from track data folder
     DRS_ZONES = DRS_Points("drs_zones.ini")
     DRS_LAPS = F1R_CONFIG.data.RULES.DRS_LAPS
 
     -- Populate DRIVERS array
-    for driverIndex = 0, ac.getSim().carsCount-1 do
+    for driverIndex = 0, sim.carsCount-1 do
         table.insert(DRIVERS, driverIndex, Driver(driverIndex))
         local driver = DRIVERS[driverIndex]
         driver:refresh()
         driver.trackPosition = driver.racePosition
         driver.mgukDeliveryCount = 0
 
-        ac.log("[Loaded] driver "..driver.index..": "..driver.name)
+        ac.log("[Loaded] Driver "..driver.index..": "..driver.name)
     end
 
     ui.toast(ui.Icons.Bell, "DRS Enabled in "..DRS_LAPS.." laps")
-    ac.log("Initialized")
+
+    ac.log("[F1Regs Initialized]")
 
     return true
 end
@@ -499,19 +496,14 @@ end
 function script.update()
     local sim = ac.getSim()
 
-    if sim.raceSessionType == 3 then
-        -- Initialize the session
-        if not sim.isSessionStarted then
-            if not INITIALIZED then INITIALIZED = initialize() end
-        -- Race session has started
-        else
-            INITIALIZED = false
-        end
-        if sim.timeToSessionStart < 5000 then 
-            if INITIALIZED or sim.isSessionStarted then
-                controlSystems()
-            end
-        end
+    -- Initialize the session
+    if not sim.isSessionStarted then
+        if not INITIALIZED then INITIALIZED = initialize(sim) end
+    -- Race session has started
+    else INITIALIZED = false end
+
+    if sim.timeToSessionStart < 5000 and INITIALIZED then
+        controlSystems(sim)
     end
 end
 
@@ -524,25 +516,20 @@ function script.windowMain(dt)
         local rules = F1R_CONFIG.data.RULES
 
         ui.pushFont(ui.Font.Small)
-        ui.treeNode("["..sessionTypeString().." SESSION]", ui.TreeNodeFlags.DefaultOpen, function ()
+        ui.treeNode("["..sessionTypeString(sim).." SESSION]", ui.TreeNodeFlags.DefaultOpen, function ()
             ui.text("- Race Started: "..tostring(sim.isSessionStarted))
             ui.text("- Leader Laps: "..LEADER_LAPS)
             ui.text("- Laps: "..driver.lapsCompleted.."/"..ac.getSession(sim.currentSessionIndex).laps)
             ui.text("- Race Position: "..driver.car.racePosition.."/"..sim.carsCount)
+
             ui.text("- Track Position: "..driver.trackPosition.."/"..DRIVERS_ON_TRACK)
-            ui.text("- Driver: "..driver.name)
-            if not inPits(driver) then
-                ui.text("- Driver Ahead: "..tostring(ac.getDriverName(driver.carAhead)))
-                ui.text("- Delta: "..math.round(getDelta(driver),3))
-            else
-                ui.text("- IN PITS")
-            end
+
             ui.text("\n")
         end)
 
         ui.treeNode("[MGUK]", ui.TreeNodeFlags.DefaultOpen, function ()
             if driver.mgukPresent then
-                ui.text("- ERS Spent: "..string.format("%2.1f", driver.car.kersCurrentKJ).."/"..rules.MAX_ERS)
+                ui.text("- ERS Spent: "..string.format("%2.1f", driver.car.kersCurrentKJ).."/"..rules.MAX_ERS.." KJ")
                 ui.text("- MGUK Mode: "..driver.mgukDelivery)
                 ui.text("- MGUK Switch Count: "..driver.mgukDeliveryCount.."/"..rules.MGUK_CHANGE_LIMIT)
             else
@@ -564,16 +551,19 @@ function script.windowMain(dt)
                 ui.text("- Available: "..tostring(driver.drsAvailable))
                 ui.text("- Active: "..tostring(driver.drsActive))
                 ui.text("- Deploy Zone: "..tostring(driver.drsZone))
+                ui.text("- Track Prog: "..tostring(math.round(getTrackPositionM(driver.index),5)).." m")
                 ui.text("- Detection Zone: "..tostring(inActivationZone(driver)))
-                ui.text("- Detection: "..tostring(getDetectionDistanceM(driver)).." m")
-                ui.text("- Track Prog: "..tostring(math.round(driver.trackProgress,5)).." m")
-
+                ui.text("- Detection: "..tostring(getDetectionDistanceM(sim,driver)).." m")
+                if not inPits(driver) then ui.text("- Delta: "..math.round(getDelta(driver),3))
+                else ui.text("- IN PITS") end
+                ui.text("- Ahead : ["..driver.carAhead.."] "..tostring(ac.getDriverName(driver.carAhead)))
+                ui.text("- Driver:  ["..driver.index.."] "..driver.name)
             else
                 ui.text("DRS not present")
             end
         end)
     else
         ui.pushFont(ui.Font.Main)
-        ui.text("This is a "..sessionTypeString().." not a RACE session")
+        ui.text("This is a "..sessionTypeString(sim).." not a RACE session")
     end
 end
