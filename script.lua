@@ -8,27 +8,27 @@ if not car.isAIControlled then
 end
 
 local function temp_drag_reset()
-    ac.setWingGain(9, 1, 1)
+    --ac.setWingGain(9, 1, 1)
 end
 
 local function temp_drag_reduction(data)
     data.brake = 0.1001
 
-    if car.speedKmh < 100 then
-        ac.setWingGain(9, 100, 0)
-    elseif car.speedKmh < 160 then
-        ac.setWingGain(9, 100, 0)
-    elseif car.speedKmh < 200 then
-        ac.setWingGain(9, 50, 0)
-    elseif car.speedKmh < 250 then
-        ac.setWingGain(9, 25, 0)
-    elseif car.speedKmh < 280 then
-        ac.setWingGain(9, 15, 0)
-    elseif car.speedKmh < 340 then
-        ac.setWingGain(9, 14, 0)
-    else
-        temp_drag_reset()
-    end
+    -- if car.speedKmh < 100 then
+    --     ac.setWingGain(9, 100, 0)
+    -- elseif car.speedKmh < 160 then
+    --     ac.setWingGain(9, 100, 0)
+    -- elseif car.speedKmh < 200 then
+    --     ac.setWingGain(9, 50, 0)
+    -- elseif car.speedKmh < 250 then
+    --     ac.setWingGain(9, 25, 0)
+    -- elseif car.speedKmh < 280 then
+    --     ac.setWingGain(9, 15, 0)
+    -- elseif car.speedKmh < 340 then
+    --     ac.setWingGain(9, 14, 0)
+    -- else
+    --     temp_drag_reset()
+    -- end
 end
 
 local function car_control(data, launch)
