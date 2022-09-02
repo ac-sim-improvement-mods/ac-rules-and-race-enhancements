@@ -297,7 +297,7 @@ local function getDelta(driver)
         end
     end
 
-    return math.round((getTrackPositionM(driver.carAhead) - getTrackPositionM(driver.index)) / (driver.car.speedKmh / 3.6),5)
+    return ac.getGapBetweenCars(driver.index,driver.carAhead)
 end
 
 --- Checks if delta is within 1 second
@@ -553,7 +553,8 @@ function script.windowMain(dt)
                 if not inPits(driver) then
                     ui.text("- Ahead : ["..driver.carAhead.."] "..tostring(ac.getDriverName(driver.carAhead)))
                     ui.text("- Driver:  ["..driver.index.."] "..driver.name)
-                    ui.text("- Delta: "..math.round(getDelta(driver),3))
+                    if driver.car.speedKmh >= 1 then ui.text("- Delta: "..math.round(getDelta(driver),3))
+                    else ui.text("- Delta: ---") end
                     ui.text("- In Gap: "..tostring(checkGap(driver)))
                     ui.text("- Locked: "..tostring(driver.drsLocked))
                     ui.text("- Available: "..tostring(driver.drsAvailable))
