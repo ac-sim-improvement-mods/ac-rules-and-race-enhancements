@@ -12,6 +12,10 @@ local DRS_LAPS = 0
 local WET_TRACK = false
 local DRS_ENABLED = false
 
+local function log(msg)
+    ac.log("[F1Regs] "..msg)
+end
+
 ---@class MappedConfig
 ---@field filename string
 ---@field ini ac.INIConfig
@@ -45,7 +49,7 @@ local Driver = class('Driver', function(carIndex)
 
     local racePosition = car.racePosition
     local trackPosition = -1
-    local trackProgress = 0
+    local trackProgress = -1
     local carAhead = -1
     local carAheadDelta = -1
 
@@ -73,7 +77,7 @@ local Driver = class('Driver', function(carIndex)
     local returnRacePosition = -1
     local returnPostionTimer = -1
 
-    return {returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackProgress = trackProgress,
+    return {trackProgress = trackProgress, returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
         mgukPresent = mgukPresent, mgukLocked = mgukLocked, mgukDelivery = mgukDelivery, mgukDeliveryCount = mgukDeliveryCount}
 end, class.NoInitialize)
@@ -112,7 +116,7 @@ local DRS_Points = class('DRS_Points', function(fileName)
         startZones[index] = tonumber(sData)
         endZones[index] = tonumber(eData)
 
-        ac.log("[Loaded] DRS Zone "..index.." ["..dData..","..sData..","..eData.."]")
+        log("[Loaded] DRS Zone "..index.." ["..dData..","..sData..","..eData.."]")
 
         index = index + 1
     end
@@ -152,10 +156,10 @@ local function rainCheck(sim)
 
         if not WET_TRACK then
             ui.toast(ui.Icons.Bell, "DRS Disabled | Conditions too wet")
-            ac.log("Track is too wet, DRS disabled until conditions improve")
-            ac.log("Puddles: "..track_puddles)
-            ac.log("Wetness: "..track_wetness)
-            ac.log("Intensity: "..track_rain_intensity)
+            log("[Race Control] DRS Disabled | Conditions too wet")
+            log("[Race Control] Puddles: "..track_puddles)
+            log("[Race Control] Wetness: "..track_wetness)
+            log("[Race Control] Intensity: "..track_rain_intensity)
         end
 
         WET_TRACK = true
@@ -172,7 +176,7 @@ local function rainCheck(sim)
                 WET_TRACK = false
 
                 ui.toast(ui.Icons.Bell, "DRS Enabled in "..DRS_LAPS.." laps")
-                ac.log("Track is drying. DRS enabled in 2 laps on lap "..DRS_LAPS)
+                log("[Race Control] Track is drying. DRS enabled in "..F1R_CONFIG.data.RULES.DRS_LAPS.." laps on lap "..DRS_LAPS)
                 return false
             end
         end
@@ -186,6 +190,7 @@ local function enableDRS(sim)
         if LEADER_LAPS >= DRS_LAPS then
             if not DRS_ENABLED then
                 ui.toast(ui.Icons.Bell, "DRS Enabled")
+                log("[Race Control] DRS Enabled")
             end
             return true
         else
@@ -199,8 +204,6 @@ end
 function Driver:refresh()
     local car = self.car
     self.lapsCompleted = car.lapCount
-    self.isInPit = car.isInPit
-    self.isInPitLane = car.isInPitlane
     self.drsZone = car.drsAvailable
     self.drsActive = car.drsActive
     self.racePosition = car.racePosition
@@ -253,34 +256,24 @@ end
 ---@param driver Driver
 ---@return boolean
 local function inPits(driver)
-    return ((driver.isInPitlane or driver.isInPit) and true or false)
+    return ((driver.car.isInPitlane or driver.car.isInPit) and true or false)
 end
 
 --- Check if driver is on track or in pits
 ---@return table
 local function getTrackOrder()
     local track_order = {}
-    local driver_count = #DRIVERS
-    for index=0, driver_count do
-        track_order[index+1] = DRIVERS[index]
-    end
-
-    local drivers_on_track = #track_order
-    
-    -- Remove drivers in the pits from the track order
-    for index=1, #track_order+1 do
-        if index <= drivers_on_track then
-            if inPits(track_order[index]) then
-                table.remove(track_order, index)
-                drivers_on_track = drivers_on_track - 1
-            end
+    local drivers_in_pit = {}
+    for index=0, #DRIVERS do
+        if not inPits(DRIVERS[index]) then
+            table.insert(track_order,DRIVERS[index])
         end
     end
 
-    DRIVERS_ON_TRACK = drivers_on_track
+    DRIVERS_ON_TRACK = #track_order
 
     -- Sort drivers by position on track, and ignore drivers in the pits
-    table.sort(track_order, function (a,b) return getTrackPositionM(a.index) > getTrackPositionM(b.index) end)
+    table.sort(track_order, function (a,b) return a.trackProgress > b.trackProgress end)
 
     return track_order
 end
@@ -413,7 +406,7 @@ end
 --     end
 -- end
 
---- Controls all the regulated systems
+--- Controls all of the regulated systems
 local function controlSystems(sim)
     local drivers = DRIVERS
     local leader_laps = LEADER_LAPS
@@ -439,7 +432,7 @@ local function controlSystems(sim)
 
     -- Example of how to load the data
     -- local test = stringify.parse(ac.load("F1Reg"))["0.carAheadDelta"]
-    -- ac.log(test)
+    -- log(test)
 
     LEADER_LAPS = leader_laps
 end
@@ -448,11 +441,20 @@ end
 local function initialize(sim)
     RACE_STARTED = false
     LEADER_LAPS = 0
+    local csp_version = tonumber(string.split(string.sub(ac.getPatchVersion(),3),"-")[1])
 
-    ac.log(sessionTypeString(sim).." session detected")
+    log("CSP version: "..csp_version)
+
+    if csp_version < 1.78 then
+        ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP v0.1.78 required!")
+        log("[WARN] Incompatible CSP version")
+        return false
+    end
+
+    log("[Race Control] "..sessionTypeString(sim).." session detected")
 
     if not sim.raceSessionType == 3 then
-        ac.log("Not a race session")
+        log("[Race Control] Not a race session")
         return false
     end
 
@@ -469,7 +471,7 @@ local function initialize(sim)
         WET_DRS_LIMIT = ac.INIConfig.OptionalNumber },
 
     })
-    ac.log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings_defaults.ini")
+    log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings_defaults.ini")
 
     -- Get DRS Zones from track data folder
     DRS_ZONES = DRS_Points("drs_zones.ini")
@@ -483,12 +485,13 @@ local function initialize(sim)
         driver.trackPosition = driver.racePosition
         driver.mgukDeliveryCount = 0
 
-        ac.log("[Loaded] Driver "..driver.index..": "..driver.name)
+        log("[Loaded] Driver "..driver.index..": "..driver.name)
     end
 
     ui.toast(ui.Icons.Bell, "DRS Enabled in "..DRS_LAPS.." laps")
+    log("[Race Control] DRS Enabled in "..DRS_LAPS.." laps")
 
-    ac.log("[F1Regs Initialized]")
+    log("[Initialized]")
 
     return true
 end
@@ -500,9 +503,8 @@ function script.update()
     if not sim.isSessionStarted then
         if not INITIALIZED then INITIALIZED = initialize(sim) end
     -- Race session has started
-    else INITIALIZED = false end
-
-    if sim.timeToSessionStart < 5000 and INITIALIZED then
+    else 
+        INITIALIZED = false
         controlSystems(sim)
     end
 end
@@ -538,26 +540,30 @@ function script.windowMain(dt)
             ui.text("\n")
         end)
 
-        ui.treeNode("[DRS]", ui.TreeNodeFlags.DefaultOpen, function ()
+        local drs_title = ""
+
+        if DRS_ENABLED == true then
+            drs_title = "[DRS Enabled]"
+        else
+            drs_title = "[DRS enabled in "..DRS_LAPS-LEADER_LAPS.." laps]"
+        end
+
+        ui.treeNode(drs_title, ui.TreeNodeFlags.DefaultOpen, function ()
             if driver.drsPresent then
-                if DRS_ENABLED == true then
-                    ui.text("- DRS: Enabled")
-                else
-                    ui.text("- DRS: in ".. rules.DRS_LAPS-driver.lapsCompleted.." laps")
-                end
-                ui.text("- Zone ID: "..tostring(driver.drsZoneId))
-                ui.text("- Locked: "..tostring(driver.drsLocked))
-                if not inPits(driver) then ui.text("- In Gap: "..tostring(checkGap(driver))) end
-                ui.text("- Available: "..tostring(driver.drsAvailable))
-                ui.text("- Active: "..tostring(driver.drsActive))
-                ui.text("- Deploy Zone: "..tostring(driver.drsZone))
-                ui.text("- Track Prog: "..tostring(math.round(getTrackPositionM(driver.index),5)).." m")
-                ui.text("- Detection Zone: "..tostring(inActivationZone(driver)))
-                ui.text("- Detection: "..tostring(getDetectionDistanceM(sim,driver)).." m")
-                if not inPits(driver) then ui.text("- Delta: "..math.round(getDelta(driver),3))
+                if not inPits(driver) then
+                    ui.text("- Ahead : ["..driver.carAhead.."] "..tostring(ac.getDriverName(driver.carAhead)))
+                    ui.text("- Driver:  ["..driver.index.."] "..driver.name)
+                    ui.text("- Delta: "..math.round(getDelta(driver),3))
+                    ui.text("- In Gap: "..tostring(checkGap(driver)))
+                    ui.text("- Locked: "..tostring(driver.drsLocked))
+                    ui.text("- Available: "..tostring(driver.drsAvailable))
+                    ui.text("- Deploy Zone: "..tostring(driver.drsZone))
+                    ui.text("- Active: "..tostring(driver.drsActive))
+                    ui.text("- Detect Zone ID: "..tostring(driver.drsZoneId))
+                    ui.text("- Detection Zone: "..tostring(inActivationZone(driver)))
+                    ui.text("- Detection Line: "..tostring(getDetectionDistanceM(sim,driver)).." m")
+                    ui.text("- Track Prog: "..tostring(math.round(getTrackPositionM(driver.index),5)).." m")
                 else ui.text("- IN PITS") end
-                ui.text("- Ahead : ["..driver.carAhead.."] "..tostring(ac.getDriverName(driver.carAhead)))
-                ui.text("- Driver:  ["..driver.index.."] "..driver.name)
             else
                 ui.text("DRS not present")
             end
