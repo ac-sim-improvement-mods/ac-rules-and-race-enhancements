@@ -34,15 +34,15 @@ end
 local function car_control(data, launch)
     local rear_slip = data.wheels[2].ndSlip + data.wheels[3].ndSlip / 2
     
-    if car.index == 1 then
-        ac.log(rear_slip)
-    end
+    -- if car.index == 1 then
+    --     ac.log(rear_slip)
+    -- end
 
     ac.setWingGain(9, 250, 0)
 
     if data.brake <= 0.11 then
         if launch then
-            data.gas = math.clamp(1/math.clamp((rear_slip),1,100),0.55,1)
+            data.gas = math.clamp(1/rear_slip,0.25,1)
             data.steer = math.clamp(data.steer, -0.15, 0.15)
         else
             data.gas = math.clamp(1/(rear_slip*2),0,0.5)
@@ -57,11 +57,9 @@ function script.update(dt)
 
     if sim.raceSessionType == 3 then
         if sim.isSessionStarted then
-            local drs_available = stringify.parse(ac.load("F1Reg"))[car.index..".drsAvailable"]
+            local drs_available = stringify.tryParse(ac.load("F1Regs"))[car.index..".drsAvailable"]
 
-            if sim.timeToSessionStart < 5000 and sim.timeToSessionStart > 0 then
-                data.gas = 0.55
-            elseif sim.timeToSessionStart > -1500 then
+            if sim.timeToSessionStart > -3000 then
                 car_control(data, true)
             elseif sim.timeToSessionStart > -5000 then
                 data.steer = math.clamp(data.steer, -0.15, 0.15)
@@ -69,7 +67,7 @@ function script.update(dt)
 
             if drs_available == false then
                 if car.drsAvailable then
-                    if sim.timeToSessionStart < -1500 and data.brake <= 0.11 and data.steer < 0.05 and data.steer > -0.05 then
+                    if sim.timeToSessionStart < -3000 and data.brake <= 0.11 and data.steer < 0.05 and data.steer > -0.05 then
                         data.gas = 1
                     end
                 end
@@ -91,6 +89,11 @@ function script.update(dt)
                 end
             else
                 OFF_TRACK_TIMER = 0
+            end
+        else
+            if sim.timeToSessionStart < 7000 then
+                data.gas = 0.3
+                data.brake = 0.1001
             end
         end
     end
