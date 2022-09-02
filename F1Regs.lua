@@ -68,7 +68,12 @@ local Driver = class('Driver', function(carIndex)
     local mgukChangeTime = 5
     local mgukLapCheck = 0
 
-    return {carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackProgress = trackProgress,
+    local timePenalty = 0
+    local illegalOvertake = false
+    local returnRacePosition = -1
+    local returnPostionTimer = -1
+
+    return {returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted, trackProgress = trackProgress,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
         mgukPresent = mgukPresent, mgukLocked = mgukLocked, mgukDelivery = mgukDelivery, mgukDeliveryCount = mgukDeliveryCount}
 end, class.NoInitialize)
@@ -396,6 +401,25 @@ local function controlDRS(driver)
     end
 end
 
+-- local function overtake_check(driver)
+--     if driver.illegalOvertake then
+--         if driver.returnPostionTimer == -1 then
+--             ui.toast(ui.Icons.Bell, "Illegal overtake, give back that position in 30 seconds")
+--             driver.returnPostionTimer = ac.getSim().timeSeconds + 30
+--         elseif driver.car.racePosition >= driver.returnRacePosition then
+--             ui.toast(ui.Icons.Bell, "You returned the race position")
+--             driver.illegalOvertake = false
+--             driver.returnPostionTimer = -1
+--         elseif driver.returnPostionTimer >= ac.getSim().timeSeconds then
+--             ui.toast(ui.Icons.Bell, "Failed to return the position, driver through penalty receieved")
+--             driver.car.currentPenaltyType = 3
+--             driver.car.currentPenaltyParameter = 5
+--             driver.illegalOvertake = false
+--             driver.returnPostionTimer = -1
+--         end
+--     end
+-- end
+
 --- Controls all the regulated systems
 local function controlSystems()
     local drivers = DRIVERS
@@ -411,12 +435,16 @@ local function controlSystems()
         controlERS(driver)
         controlDRS(driver)
 
+        physics.setAITopSpeed(driver.index, 5)
+
+        -- overtake_check(driver)
+
         data[index..".drsAvailable"] = driver.drsAvailable
         data[index..".carAhead"] = driver.carAhead
         data[index..".carAheadDelta"] = driver.carAheadDelta
     end
 
-    ac.store("F1Reg",stringify(data, true))
+    ac.store("F1Regs",stringify(data, true))
 
     -- Example of how to load the data
     -- local test = stringify.parse(ac.load("F1Reg"))["0.carAheadDelta"]
@@ -429,7 +457,7 @@ end
 local function initialize()
     RACE_STARTED = false
     LEADER_LAPS = 0
-    
+
     ac.log(sessionTypeString().." session detected")
 
     for index in pairs(DRIVERS) do
@@ -459,13 +487,13 @@ local function initialize()
         driver.trackPosition = driver.racePosition
         driver.mgukDeliveryCount = 0
 
-        ac.log("Driver "..driver.index..": "..driver.name)
+        ac.log("[Loaded] driver "..driver.index..": "..driver.name)
     end
 
     ui.toast(ui.Icons.Bell, "DRS Enabled in "..DRS_LAPS.." laps")
-
-    INITIALIZED = true
     ac.log("Initialized")
+
+    return true
 end
 
 function script.update()
@@ -473,17 +501,15 @@ function script.update()
 
     if sim.raceSessionType == 3 then
         -- Initialize the session
-        if sim.timeToSessionStart < 7000 then 
-            if not sim.isSessionStarted then
-                if not INITIALIZED then initialize() end
-            -- Race session has started
-            else
-                INITIALIZED = false
-            end
-            if sim.timeToSessionStart < 5000 then 
-                if INITIALIZED or sim.isSessionStarted then
-                    controlSystems()
-                end
+        if not sim.isSessionStarted then
+            if not INITIALIZED then INITIALIZED = initialize() end
+        -- Race session has started
+        else
+            INITIALIZED = false
+        end
+        if sim.timeToSessionStart < 5000 then 
+            if INITIALIZED or sim.isSessionStarted then
+                controlSystems()
             end
         end
     end
@@ -527,8 +553,8 @@ function script.windowMain(dt)
 
         ui.treeNode("[DRS]", ui.TreeNodeFlags.DefaultOpen, function ()
             if driver.drsPresent then
-                if driver.drsEnabled == true then
-                    ui.text("- DRS: enabled")
+                if DRS_ENABLED == true then
+                    ui.text("- DRS: Enabled")
                 else
                     ui.text("- DRS: in ".. rules.DRS_LAPS-driver.lapsCompleted.." laps")
                 end
