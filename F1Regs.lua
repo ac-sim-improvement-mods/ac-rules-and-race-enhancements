@@ -297,7 +297,7 @@ local function getDelta(driver)
         end
     end
 
-    return ac.getGapBetweenCars(driver.index,driver.carAhead)
+    return math.round((getTrackPositionM(driver.carAhead) - getTrackPositionM(driver.index)) / (driver.car.speedKmh / 3.6),5)
 end
 
 --- Checks if delta is within 1 second
@@ -441,11 +441,11 @@ end
 local function initialize(sim)
     RACE_STARTED = false
     LEADER_LAPS = 0
-    local csp_version = tonumber(string.split(string.sub(ac.getPatchVersion(),3),"-")[1])
+    local csp_version = ac.getPatchVersionCode()
 
     log("CSP version: "..csp_version)
 
-    if csp_version < 1.78 then
+    if csp_version < 2051 then
         ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP v0.1.78 required!")
         log("[WARN] Incompatible CSP version")
         return false
