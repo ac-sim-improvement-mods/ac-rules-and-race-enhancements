@@ -2,7 +2,7 @@ $build_dir = "$PSScriptRoot\build"
 
 Copy-Item "$PSScriptRoot\F1Regs.lua" -Destination "$build_dir\apps\lua\F1Regs"
 Copy-Item "$PSScriptRoot\manifest.ini" -Destination "$build_dir\apps\lua\F1Regs"
-Copy-Item "$PSScriptRoot\settings_defaults.ini" -Destination "$build_dir\apps\lua\F1Regs"
+Copy-Item "$PSScriptRoot\settings.ini" -Destination "$build_dir\apps\lua\F1Regs"
 Copy-Item "$PSScriptRoot\icon.png" -Destination "$build_dir\apps\lua\F1Regs"
 
 $folders = Get-ChildItem "$build_dir\content\cars"

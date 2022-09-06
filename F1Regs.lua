@@ -263,7 +263,6 @@ end
 ---@return table
 local function getTrackOrder()
     local track_order = {}
-    local drivers_in_pit = {}
     for index=0, #DRIVERS do
         if not inPits(DRIVERS[index]) then
             table.insert(track_order,DRIVERS[index])
@@ -465,7 +464,7 @@ local function initialize(sim)
     DRIVERS = {}
 
     -- Load config file
-    F1R_CONFIG = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings_defaults.ini", {
+    F1R_CONFIG = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings.ini", {
         RULES = { DRS_LAPS = ac.INIConfig.OptionalNumber, DRS_DELTA = ac.INIConfig.OptionalNumber,
         MGUK_CHANGE_LIMIT = ac.INIConfig.OptionalNumber, MAX_ERS = ac.INIConfig.OptionalNumber,
         WET_DRS_LIMIT = ac.INIConfig.OptionalNumber },
@@ -542,11 +541,16 @@ function script.windowMain(dt)
 
         local drs_title = ""
 
-        if DRS_ENABLED == true then
-            drs_title = "[DRS Enabled]"
+        if not WET_TRACK then
+            if DRS_ENABLED == true then
+                drs_title = "[DRS Enabled]"
+            else
+                drs_title = "[DRS Enabled in "..DRS_LAPS-LEADER_LAPS.." laps]"
+            end
         else
-            drs_title = "[DRS enabled in "..DRS_LAPS-LEADER_LAPS.." laps]"
+            drs_title = "[DRS Disabled | Wet Conditions]"
         end
+
 
         ui.treeNode(drs_title, ui.TreeNodeFlags.DefaultOpen, function ()
             if driver.drsPresent then

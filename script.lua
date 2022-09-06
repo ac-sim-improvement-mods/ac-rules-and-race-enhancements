@@ -8,7 +8,7 @@ if not car.isAIControlled then
 end
 
 local function temp_drag_reset()
-    --ac.setWingGain(9, 1, 1)
+    ac.setWingGain(9, 1, 1)
 end
 
 local function temp_drag_reduction(data)
@@ -38,7 +38,7 @@ local function car_control(data, launch)
     --     ac.log(rear_slip)
     -- end
 
-    ac.setWingGain(9, 250, 0)
+    --ac.setWingGain(9, 250, 0)
 
     if data.brake <= 0.11 then
         if launch then
@@ -58,7 +58,7 @@ function script.update(dt)
     if sim.raceSessionType == 3 then
         if sim.isSessionStarted then
             local drs_available = stringify.tryParse(ac.load("F1Regs"))[car.index..".drsAvailable"]
-
+            
             if sim.timeToSessionStart > -3000 then
                 car_control(data, true)
             elseif sim.timeToSessionStart > -5000 then
