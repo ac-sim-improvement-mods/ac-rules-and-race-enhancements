@@ -248,8 +248,9 @@ local function lockDRS(driver)
     driver.drsLocked = true
     driver.drsAvailable = false
     driver.drsCheck = false
-    -- Need SDK update
-    if driver.index == 0 then ac.setDRS(false) end
+
+    physics.allowCarDRS(driver.index, false)
+    physics.setCarDRS(driver.index, false)
 end
 
 --- Check if driver is on track or in pits
@@ -380,9 +381,7 @@ end
 local function controlDRS(sim,driver)
     DRS_ENABLED = enableDRS(sim)
     if sim.isSessionStarted then
-        drsAvailable(driver)
-    else
-        lockDRS(driver)
+        physics.allowCarDRS(driver.index, drsAvailable(driver))
     end
 end
 
@@ -444,7 +443,7 @@ local function initialize(sim)
 
     log("CSP version: "..csp_version)
 
-    if csp_version < 2051 then
+    if csp_version < 2066 then
         ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP v0.1.78 required!")
         log("[WARN] Incompatible CSP version")
         return false
@@ -483,6 +482,10 @@ local function initialize(sim)
         driver:refresh()
         driver.trackPosition = driver.racePosition
         driver.mgukDeliveryCount = 0
+        
+        if driver.car.isAIControlled then
+            physics.setCarFuel(driver.index, 140)
+        end
 
         log("[Loaded] Driver "..driver.index..": "..driver.name)
     end
@@ -498,13 +501,15 @@ end
 function script.update()
     local sim = ac.getSim()
 
-    -- Initialize the session
-    if not sim.isSessionStarted then
-        if not INITIALIZED then INITIALIZED = initialize(sim) end
-    -- Race session has started
-    else 
-        INITIALIZED = false
-        controlSystems(sim)
+    if sim.raceSessionType == 3 then
+                -- Initialize the session
+        if not sim.isSessionStarted then
+            if not INITIALIZED then INITIALIZED = initialize(sim) end
+        -- Race session has started
+        else 
+            INITIALIZED = false
+            controlSystems(sim)
+        end
     end
 end
 
@@ -518,6 +523,7 @@ function script.windowMain(dt)
 
         ui.pushFont(ui.Font.Small)
         ui.treeNode("["..sessionTypeString(sim).." SESSION]", ui.TreeNodeFlags.DefaultOpen, function ()
+            ui.text("- Physics: "..tostring(physics.allowed()))
             ui.text("- Race Started: "..tostring(sim.isSessionStarted))
             ui.text("- Leader Laps: "..LEADER_LAPS)
             ui.text("- Laps: "..driver.lapsCompleted.."/"..ac.getSession(sim.currentSessionIndex).laps)
