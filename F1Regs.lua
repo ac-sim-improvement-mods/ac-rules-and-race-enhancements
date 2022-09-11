@@ -323,6 +323,9 @@ local function drsAvailable(driver)
                 driver.drsAvailable = false
             elseif driver.drsCheck then
                 driver.drsAvailable = true
+                if driver.car.drsAvailable then
+                    physics.setCarDRS(driver.index, true)
+                end
             else
                 lockDRS(driver)
             end
@@ -381,7 +384,8 @@ end
 local function controlDRS(sim,driver)
     DRS_ENABLED = enableDRS(sim)
     if sim.isSessionStarted then
-        physics.allowCarDRS(driver.index, drsAvailable(driver))
+        local drs_available = drsAvailable(driver)
+        physics.allowCarDRS(driver.index, drs_available)
     end
 end
 
@@ -485,6 +489,7 @@ local function initialize(sim)
         
         if driver.car.isAIControlled then
             physics.setCarFuel(driver.index, 140)
+            physics.setCarDRS(driver.index, false)
         end
 
         log("[Loaded] Driver "..driver.index..": "..driver.name)
