@@ -220,7 +220,7 @@ end
 --- Converts session type number to the corresponding session type string 
 ---@param driver Driver
 ---@return boolean
-local function inActivationZone(driver)
+local function inDetectionZone(driver)
     local track_pos = ac.worldCoordinateToTrackProgress(driver.car.position)
     local drs_zones = DRS_ZONES
 
@@ -232,9 +232,8 @@ local function inActivationZone(driver)
             prev_zone = drs_zones.zoneCount-1
         end
         -- If driver is between the end zone of the previous DRS zone, and the detection line of the upcoming DRS zone
-        if track_pos <= drs_zones.detectionZones[zone_index] and track_pos >= drs_zones.endZones[prev_zone] then
+        if track_pos <= drs_zones.detectionZones[zone_index] and track_pos >= drs_zones.startZones[prev_zone] then
             driver.drsZoneId = zone_index
-            driver.drsLocked = false
             return true
         end
     end
@@ -314,21 +313,25 @@ end
 ---@param driver Driver
 local function drsAvailable(driver)
     if not inPits(driver) then
-        local bInActivationZone = inActivationZone(driver)
+        local binDetectionZone = inDetectionZone(driver)
         local bCheckGap = checkGap(driver)
 
-        if DRS_ENABLED and not driver.drsLocked then
-            if bInActivationZone then
-                driver.drsCheck = bCheckGap
-                driver.drsAvailable = false
-            elseif driver.drsCheck then
-                driver.drsAvailable = true
-                if driver.car.drsAvailable then
-                    physics.setCarDRS(driver.index, true)
-                end
-            else
-                lockDRS(driver)
+        if binDetectionZone or not DRS_ENABLED then
+            driver.drsCheck = bCheckGap
+            if not driver.drsZone then
+                driver.drsLocked = false
             end
+            
+            if not bCheckGap and not driver.drsZone then
+                driver.drsAvailable = false
+            elseif not driver.drsZone then
+                driver.drsAvailable = true
+            end
+        elseif not driver.drsZone and driver.drsCheck then
+            driver.drsAvailable = true
+        elseif driver.drsZone and driver.drsAvailable then
+            driver.drsAvailable = true
+            physics.setCarDRS(driver.index, true)
         else
             lockDRS(driver)
         end
@@ -473,7 +476,7 @@ local function initialize(sim)
         WET_DRS_LIMIT = ac.INIConfig.OptionalNumber },
 
     })
-    log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings_defaults.ini")
+    log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings.ini")
 
     -- Get DRS Zones from track data folder
     DRS_ZONES = DRS_Points("drs_zones.ini")
@@ -575,8 +578,8 @@ function script.windowMain(dt)
                     ui.text("- Available: "..tostring(driver.drsAvailable))
                     ui.text("- Deploy Zone: "..tostring(driver.drsZone))
                     ui.text("- Active: "..tostring(driver.drsActive))
-                    ui.text("- Detect Zone ID: "..tostring(driver.drsZoneId))
-                    ui.text("- Detection Zone: "..tostring(inActivationZone(driver)))
+                    ui.text("- Next Detect Zone ID: "..tostring(driver.drsZoneId))
+                    ui.text("- Detection Zone: "..tostring(inDetectionZone(driver)))
                     ui.text("- Detection Line: "..tostring(getDetectionDistanceM(sim,driver)).." m")
                     ui.text("- Track Prog: "..tostring(math.round(getTrackPositionM(driver.index),5)).." m")
                 else ui.text("- IN PITS") end
