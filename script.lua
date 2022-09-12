@@ -37,6 +37,15 @@ function script.update(dt)
                 car_control(data, true)
             elseif sim.timeToSessionStart > -5000 then
                 data.steer = math.clamp(data.steer, -0.15, 0.15)
+            else
+                if car.drsAvailable and data.speedKmh > 150 then
+                    if data.clutch < 0.1 then
+                        data.brake = 0
+                        if car.brake < 0.1 then
+                            data.gas = 1
+                        end
+                    end
+                end
             end
 
             if drs_available == false then
