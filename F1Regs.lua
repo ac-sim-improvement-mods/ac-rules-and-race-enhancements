@@ -1,5 +1,5 @@
 ---
---- Script v0.8.0-alpha
+--- Script v0.8.1-alpha
 ---
 local INITIALIZED = false
 

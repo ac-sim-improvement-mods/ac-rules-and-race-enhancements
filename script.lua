@@ -1,5 +1,5 @@
 ---
---- Script v0.8.0-alpha
+--- Script v0.8.1-alpha
 ---
 local OFF_TRACK_TIMER = 0
 
