@@ -1,34 +1,10 @@
 ---
---- Script v0.8.1-alpha
+--- Script v0.9.0-alpha
 ---
 local OFF_TRACK_TIMER = 0
 
 if not car.isAIControlled then
    return nil
-end
-
-local function temp_drag_reset()
-    ac.setWingGain(9, 1, 1)
-end
-
-local function temp_drag_reduction(data)
-    data.brake = 0.1001
-
-    -- if car.speedKmh < 100 then
-    --     ac.setWingGain(9, 100, 0)
-    -- elseif car.speedKmh < 160 then
-    --     ac.setWingGain(9, 100, 0)
-    -- elseif car.speedKmh < 200 then
-    --     ac.setWingGain(9, 50, 0)
-    -- elseif car.speedKmh < 250 then
-    --     ac.setWingGain(9, 25, 0)
-    -- elseif car.speedKmh < 280 then
-    --     ac.setWingGain(9, 15, 0)
-    -- elseif car.speedKmh < 340 then
-    --     ac.setWingGain(9, 14, 0)
-    -- else
-    --     temp_drag_reset()
-    -- end
 end
 
 local function car_control(data, launch)
@@ -37,8 +13,6 @@ local function car_control(data, launch)
     -- if car.index == 1 then
     --     ac.log(rear_slip)
     -- end
-
-    --ac.setWingGain(9, 250, 0)
 
     if data.brake <= 0.11 then
         if launch then
@@ -71,7 +45,6 @@ function script.update(dt)
                             data.gas = 1
                         end
                     end
-
                 end
             end
 
@@ -81,15 +54,6 @@ function script.update(dt)
                         data.gas = 1
                     end
                 end
-
-                if car.drsActive then
-                    temp_drag_reduction(data)
-                else
-                    temp_drag_reset()
-                end
-            else
-
-                temp_drag_reset()
             end
 
             if car.wheelsOutside == 4 then
