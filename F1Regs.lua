@@ -42,6 +42,8 @@ end
 ---@return Driver
 local Driver = class('Driver', function(carIndex)
     local car = ac.getCar(carIndex)
+    local aiLevel = car.aiLevel
+    local aiAggression = car.aiAggression
     local index = carIndex
     local aiControlled = car.isAIControlled
     local lapsCompleted = car.lapCount
@@ -77,7 +79,7 @@ local Driver = class('Driver', function(carIndex)
     local returnRacePosition = -1
     local returnPostionTimer = -1
 
-    return {trackProgress = trackProgress, returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted,
+    return {aiLevel = aiLevel, aiAggression = aiAggression, trackProgress = trackProgress, returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
         mgukPresent = mgukPresent, mgukLocked = mgukLocked, mgukDelivery = mgukDelivery, mgukDeliveryCount = mgukDeliveryCount}
 end, class.NoInitialize)
@@ -315,28 +317,31 @@ local function drsAvailable(driver)
     if not inPits(driver) then
         local binDetectionZone = inDetectionZone(driver)
         local bCheckGap = checkGap(driver)
+        local bInDrsZone = driver.car.drsAvailable
 
-        if binDetectionZone or not DRS_ENABLED then
+        if binDetectionZone then
             driver.drsCheck = bCheckGap
-            if not driver.drsZone then
+            if not bInDrsZone then
                 driver.drsLocked = false
+            elseif driver.drsLocked then
+                return false
             end
-            
-            if not bCheckGap and not driver.drsZone then
-                driver.drsAvailable = false
-            elseif not driver.drsZone then
-                driver.drsAvailable = true
+            if driver.drsAvailable and bInDrsZone then
+                return true
+            elseif bCheckGap then
+                return true
+            elseif not bCheckGap and bInDrsZone then
+                return false
             end
-        elseif not driver.drsZone and driver.drsCheck then
-            driver.drsAvailable = true
-        elseif driver.drsZone and driver.drsAvailable then
-            driver.drsAvailable = true
-            physics.setCarDRS(driver.index, true)
         else
-            lockDRS(driver)
+            if driver.drsCheck and not driver.drsLocked then
+                return true
+            else
+                return false
+            end
         end
     else
-        lockDRS(driver)
+        return false
     end
 end
 
@@ -387,8 +392,15 @@ end
 local function controlDRS(sim,driver)
     DRS_ENABLED = enableDRS(sim)
     if sim.isSessionStarted then
-        local drs_available = drsAvailable(driver)
-        physics.allowCarDRS(driver.index, drs_available)
+        driver.drsAvailable = drsAvailable(driver)
+        
+        if driver.drsAvailable then
+            if driver.drsZone and driver.car.gas > 0.8 and driver.car.isAIControlled then
+                physics.setCarDRS(driver.index, true)
+            end
+        else
+            lockDRS(driver)
+        end
     end
 end
 
@@ -425,6 +437,23 @@ local function controlSystems(sim)
         controlMGUK(sim,driver)
         controlERS(driver)
         controlDRS(sim,driver)
+
+        local delta = driver.carAheadDelta
+        if delta < 0.3 and delta >= 0 then
+            physics.setAIAggression(driver.index, driver.aiAggression/2)
+            physics.setAILevel(driver.index, 1)
+
+        elseif delta < 0.1 and delta >= 0 then
+            physics.setAIAggression(driver.index, 0)
+            physics.setAILevel(driver.index, 1)
+        else
+            physics.setAIAggression(driver.index, 1)
+        end
+        if driver.car.drsAvailable then
+            physics.setAILevel(driver.index, 1)
+        else
+            physics.setAILevel(driver.index, driver.aiLevel)
+        end
 
         -- overtake_check(driver)
 
@@ -493,6 +522,8 @@ local function initialize(sim)
         if driver.car.isAIControlled then
             physics.setCarFuel(driver.index, 140)
             physics.setCarDRS(driver.index, false)
+            physics.setAIThrottleLimit(driver.index, 1)
+            physics.setExtraAIGrip(driver.index,1.25)
         end
 
         log("[Loaded] Driver "..driver.index..": "..driver.name)
@@ -508,7 +539,11 @@ end
 
 function script.update()
     local sim = ac.getSim()
+    local error = ac.getLastError()
 
+    if error then
+        ac.log(ac.getLastError())
+    end
     if sim.raceSessionType == 3 then
                 -- Initialize the session
         if not sim.isSessionStarted then
@@ -576,7 +611,7 @@ function script.windowMain(dt)
                     ui.text("- In Gap: "..tostring(checkGap(driver)))
                     ui.text("- Locked: "..tostring(driver.drsLocked))
                     ui.text("- Available: "..tostring(driver.drsAvailable))
-                    ui.text("- Deploy Zone: "..tostring(driver.drsZone))
+                    ui.text("- Deploy Zone: "..tostring(driver.car.drsAvailable))
                     ui.text("- Active: "..tostring(driver.drsActive))
                     ui.text("- Next Detect Zone ID: "..tostring(driver.drsZoneId))
                     ui.text("- Detection Zone: "..tostring(inDetectionZone(driver)))
