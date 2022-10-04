@@ -423,6 +423,23 @@ end
 --     end
 -- end
 
+local function alternateAIAttack(driver)
+    local delta = driver.carAheadDelta
+    local defaultAgression = driver.aiAggression
+    local defaultLevel = driver.aiLevel
+
+    if delta < 0.3 and delta >= 0 then
+        physics.setAIAggression(driver.index, defaultAgression + 10)
+        physics.setAILevel(driver.index, defaultLevel + 10)
+    elseif delta < 0.1 and delta >= 0 then
+        physics.setAIAggression(driver.index, defaultAgression + 15)
+        physics.setAILevel(driver.index, defaultLevel + 15)
+    else
+        physics.setAIAggression(driver.index, defaultAgression)
+        physics.setAILevel(driver.index, defaultLevel)
+    end
+end
+
 --- Controls all of the regulated systems
 local function controlSystems(sim)
     local drivers = DRIVERS
@@ -433,27 +450,12 @@ local function controlSystems(sim)
         if driver.car.racePosition == 1 then
             leader_laps = driver.lapsCompleted
         end
+
         driver:refresh()
         controlMGUK(sim,driver)
         controlERS(driver)
         controlDRS(sim,driver)
-
-        local delta = driver.carAheadDelta
-        if delta < 0.3 and delta >= 0 then
-            physics.setAIAggression(driver.index, driver.aiAggression/2)
-            physics.setAILevel(driver.index, 1)
-
-        elseif delta < 0.1 and delta >= 0 then
-            physics.setAIAggression(driver.index, 0)
-            physics.setAILevel(driver.index, 1)
-        else
-            physics.setAIAggression(driver.index, 1)
-        end
-        if driver.car.drsAvailable then
-            physics.setAILevel(driver.index, 1)
-        else
-            physics.setAILevel(driver.index, driver.aiLevel)
-        end
+        alternateAIAttack(driver)
 
         -- overtake_check(driver)
 
