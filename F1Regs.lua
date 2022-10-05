@@ -1,5 +1,5 @@
 ---
---- Script v0.9.0-alpha
+--- Script v0.8.1-alpha
 ---
 local INITIALIZED = false
 
@@ -42,8 +42,6 @@ end
 ---@return Driver
 local Driver = class('Driver', function(carIndex)
     local car = ac.getCar(carIndex)
-    local aiLevel = car.aiLevel
-    local aiAggression = car.aiAggression
     local index = carIndex
     local aiControlled = car.isAIControlled
     local lapsCompleted = car.lapCount
@@ -79,7 +77,7 @@ local Driver = class('Driver', function(carIndex)
     local returnRacePosition = -1
     local returnPostionTimer = -1
 
-    return {aiLevel = aiLevel, aiAggression = aiAggression, trackProgress = trackProgress, returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted,
+    return {trackProgress = trackProgress, returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
         mgukPresent = mgukPresent, mgukLocked = mgukLocked, mgukDelivery = mgukDelivery, mgukDeliveryCount = mgukDeliveryCount}
 end, class.NoInitialize)
@@ -249,9 +247,8 @@ local function lockDRS(driver)
     driver.drsLocked = true
     driver.drsAvailable = false
     driver.drsCheck = false
-
-    physics.allowCarDRS(driver.index, false)
-    physics.setCarDRS(driver.index, false)
+    -- Need SDK update
+    if driver.car.index == 0 then ac.setDRS(false) end
 end
 
 --- Check if driver is on track or in pits
@@ -394,11 +391,7 @@ local function controlDRS(sim,driver)
     if sim.isSessionStarted then
         driver.drsAvailable = drsAvailable(driver)
         
-        if driver.drsAvailable then
-            if driver.drsZone and driver.car.gas > 0.8 and driver.car.isAIControlled then
-                physics.setCarDRS(driver.index, true)
-            end
-        else
+        if not driver.drsAvailable then
             lockDRS(driver)
         end
     end
@@ -414,7 +407,7 @@ end
 --             driver.illegalOvertake = false
 --             driver.returnPostionTimer = -1
 --         elseif driver.returnPostionTimer >= ac.getSim().timeSeconds then
---             ui.toast(ui.Icons.Bell, "Failed to return the position, driver through penalty receieved")
+--             ui.toast(ui.Icons.Bell, "Failed to return the position, driver through penalty receieved")   
 --             driver.car.currentPenaltyType = 3
 --             driver.car.currentPenaltyParameter = 5
 --             driver.illegalOvertake = false
@@ -422,23 +415,6 @@ end
 --         end
 --     end
 -- end
-
-local function alternateAIAttack(driver)
-    local delta = driver.carAheadDelta
-    local defaultAgression = driver.aiAggression
-    local defaultLevel = driver.aiLevel
-
-    if delta < 0.3 and delta >= 0 then
-        physics.setAIAggression(driver.index, defaultAgression + 10)
-        physics.setAILevel(driver.index, defaultLevel + 10)
-    elseif delta < 0.1 and delta >= 0 then
-        physics.setAIAggression(driver.index, defaultAgression + 15)
-        physics.setAILevel(driver.index, defaultLevel + 15)
-    else
-        physics.setAIAggression(driver.index, defaultAgression)
-        physics.setAILevel(driver.index, defaultLevel)
-    end
-end
 
 --- Controls all of the regulated systems
 local function controlSystems(sim)
@@ -450,12 +426,10 @@ local function controlSystems(sim)
         if driver.car.racePosition == 1 then
             leader_laps = driver.lapsCompleted
         end
-
         driver:refresh()
         controlMGUK(sim,driver)
         controlERS(driver)
         controlDRS(sim,driver)
-        alternateAIAttack(driver)
 
         -- overtake_check(driver)
 
@@ -481,7 +455,7 @@ local function initialize(sim)
 
     log("CSP version: "..csp_version)
 
-    if csp_version < 2066 then
+    if csp_version < 2051 then
         ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP v0.1.78 required!")
         log("[WARN] Incompatible CSP version")
         return false
@@ -520,13 +494,6 @@ local function initialize(sim)
         driver:refresh()
         driver.trackPosition = driver.racePosition
         driver.mgukDeliveryCount = 0
-        
-        if driver.car.isAIControlled then
-            physics.setCarFuel(driver.index, 140)
-            physics.setCarDRS(driver.index, false)
-            physics.setAIThrottleLimit(driver.index, 1)
-            physics.setExtraAIGrip(driver.index,1.25)
-        end
 
         log("[Loaded] Driver "..driver.index..": "..driver.name)
     end
@@ -541,20 +508,14 @@ end
 
 function script.update()
     local sim = ac.getSim()
-    local error = ac.getLastError()
 
-    if error then
-        ac.log(ac.getLastError())
-    end
-    if sim.raceSessionType == 3 then
-                -- Initialize the session
-        if not sim.isSessionStarted then
-            if not INITIALIZED then INITIALIZED = initialize(sim) end
-        -- Race session has started
-        else 
-            INITIALIZED = false
-            controlSystems(sim)
-        end
+    -- Initialize the session
+    if not sim.isSessionStarted then
+        if not INITIALIZED then INITIALIZED = initialize(sim) end
+    -- Race session has started
+    else 
+        INITIALIZED = false
+        controlSystems(sim)
     end
 end
 
@@ -568,7 +529,6 @@ function script.windowMain(dt)
 
         ui.pushFont(ui.Font.Small)
         ui.treeNode("["..sessionTypeString(sim).." SESSION]", ui.TreeNodeFlags.DefaultOpen, function ()
-            ui.text("- Physics: "..tostring(physics.allowed()))
             ui.text("- Race Started: "..tostring(sim.isSessionStarted))
             ui.text("- Leader Laps: "..LEADER_LAPS)
             ui.text("- Laps: "..driver.lapsCompleted.."/"..ac.getSession(sim.currentSessionIndex).laps)
@@ -613,7 +573,7 @@ function script.windowMain(dt)
                     ui.text("- In Gap: "..tostring(checkGap(driver)))
                     ui.text("- Locked: "..tostring(driver.drsLocked))
                     ui.text("- Available: "..tostring(driver.drsAvailable))
-                    ui.text("- Deploy Zone: "..tostring(driver.car.drsAvailable))
+                    ui.text("- Deploy Zone: "..tostring(driver.drsZone))
                     ui.text("- Active: "..tostring(driver.drsActive))
                     ui.text("- Next Detect Zone ID: "..tostring(driver.drsZoneId))
                     ui.text("- Detection Zone: "..tostring(inDetectionZone(driver)))
