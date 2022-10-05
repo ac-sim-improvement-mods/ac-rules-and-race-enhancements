@@ -12,6 +12,13 @@ local DRS_LAPS = 0
 local WET_TRACK = false
 local DRS_ENABLED = false
 
+local VSC_CALLED = false
+local VSC_DEPLOYED = false
+local VSC_START_TIMER = 5
+local VSC_END_TIMER = 30
+
+local VSC_NORMAL_LAP = {}
+
 local function log(msg)
     ac.log("[F1Regs] "..msg)
 end
@@ -428,7 +435,7 @@ local function alternateAIAttack(driver)
     local defaultAgression = driver.aiAggression
     local defaultLevel = driver.aiLevel
 
-    if delta < 0.3 and delta >= 0 then
+    if delta < 0.3 and delta >= 0.1 then
         physics.setAIAggression(driver.index, defaultAgression + 10)
         physics.setAILevel(driver.index, defaultLevel + 10)
     elseif delta < 0.1 and delta >= 0 then
@@ -440,28 +447,86 @@ local function alternateAIAttack(driver)
     end
 end
 
+local function enableVSC(sim)
+    if not VSC_CALLED and not VSC_DEPLOYED then
+        if VSC_START_TIMER > 0 then
+            VSC_START_TIMER = VSC_START_TIMER - 1
+        else
+            VSC_CALLED = true
+        end
+    elseif VSC_DEPLOYED
+        VSC_CALLED = false
+        VSC_START_TIMER = 5
+
+        if VSC_END_TIMER < 10 and VSC_END_TIMER > 5 then
+            ui.toast(ui.Icons.Warning, "[F1Regs] Virtual Safety Car is ending soon!")
+        elseif VSC_END_TIMER > 0 then
+            VSC_END_TIMER = VSC_END_TIMER - 1
+        else
+            if sim.raceFlagType is not ac.FlagType.Caution then
+                ui.toast(ui.Icons.Warning, "[F1Regs] Virtual Safety Car ended!")
+                VSC_DEPLOYED = false
+                VSC_END_TIMER = 30
+            end
+        end
+    end
+end
+
+local function controlVSC(sim,driver)
+    local current_splits = driver.car.currentSplits
+    local split_index = current_splits[#current_splits]
+    local normal_lap_splits = lap
+    local vsc_lap_splits = normal_lap_splits{:,:} / 0.30
+    if current_splits[split_index] >= vsc_lap_splits[split_index] then
+        ui.toast(ui.Icons.Warning, "[F1Regs] Exceeding the pace of the Virtual Safety Car!")
+    end
+end
+
 --- Controls all of the regulated systems
 local function controlSystems(sim)
     local drivers = DRIVERS
     local leader_laps = LEADER_LAPS
     local data = {}
+    local best_splits_average = {}
+
+    enableVSC(sim)
+
     for index=0, #drivers do
         local driver = drivers[index]
+        driver:refresh()
+
         if driver.car.racePosition == 1 then
             leader_laps = driver.lapsCompleted
         end
 
-        driver:refresh()
-        controlMGUK(sim,driver)
-        controlERS(driver)
-        controlDRS(sim,driver)
-        alternateAIAttack(driver)
+        if not VSC_CALLED and not VSC_DEPLOYED then
+            controlMGUK(sim,driver)
+            controlERS(driver)
+            controlDRS(sim,driver)
+            alternateAIAttack(driver)
+        elseif VSC_CALLED and not VSC_DEPLOYED then
+            for split_index=0, #sim.lapSplits do
+                if best_splits_average[split_index] then
+                    best_splits_average[split_index] =  (driver.car.bestLapSplits[split_index] + best_splits_average[split_index]) / 2
+                else
+                    best_splits_average[split_index] = driver.car.bestLapSplits[split_index]
+                end
+            end
+        else
+            controlVSC(sim,driver)
+        end
 
         -- overtake_check(driver)
 
         data[index..".drsAvailable"] = driver.drsAvailable
         data[index..".carAhead"] = driver.carAhead
         data[index..".carAheadDelta"] = driver.carAheadDelta
+    end
+
+    if VSC_CALLED and not VSC_DEPLOYED then
+        VSC_NORMAL_LAP = best_splits_average{:,:} / 0.01
+        VSC_DEPLOYED = true
+        ui.toast(ui.Icons.Warning, "[F1Regs] Virtual Safety Car Deployed. No overtaking!")
     end
 
     ac.store("F1Regs",stringify(data, true))
@@ -544,10 +609,11 @@ function script.update()
     local error = ac.getLastError()
 
     if error then
-        ac.log(ac.getLastError())
+        ac.log(error)
     end
+
     if sim.raceSessionType == 3 then
-                -- Initialize the session
+        -- Initialize the session
         if not sim.isSessionStarted then
             if not INITIALIZED then INITIALIZED = initialize(sim) end
         -- Race session has started
