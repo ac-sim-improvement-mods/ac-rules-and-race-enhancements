@@ -476,7 +476,7 @@ local function controlVSC(sim,driver)
     local current_splits = driver.car.currentSplits
     local split_index = current_splits[#current_splits]
     local normal_lap_splits = lap
-    local vsc_lap_splits = normal_lap_splits{:,:} / 0.30
+    local vsc_lap_splits = VSC_NORMAL_LAP{:,:} / 0.30
     if current_splits[split_index] >= vsc_lap_splits[split_index] then
         ui.toast(ui.Icons.Warning, "[F1Regs] Exceeding the pace of the Virtual Safety Car!")
     end
