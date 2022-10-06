@@ -85,7 +85,9 @@ local Driver = class('Driver', function(carIndex)
     local returnRacePosition = -1
     local returnPostionTimer = -1
 
-    return {aiLevel = aiLevel, aiAggression = aiAggression, trackProgress = trackProgress, returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted,
+    local prePitFuel = 0
+
+    return {prePitFuel = prePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, trackProgress = trackProgress, returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
         mgukPresent = mgukPresent, mgukLocked = mgukLocked, mgukDelivery = mgukDelivery, mgukDeliveryCount = mgukDeliveryCount}
 end, class.NoInitialize)
@@ -505,8 +507,7 @@ local function controlVSC(sim,driver)
         vsc_lap_time = 180000
     end
 
-    ac.log("VSC lap: "..vsc_lap_time)
-    if driver.car. < vsc_lap_time then
+    if driver.car.estimatedLapTimeMs < vsc_lap_time then
         ac.log(driver.index.." estimated: "..driver.car.estimatedLapTimeMs)
         ui.toast(ui.Icons.Warning, "[F1Regs] Exceeding the pace of the Virtual Safety Car!")
     end
@@ -520,11 +521,15 @@ end
 
 local function aiPitNewTires(sim,driver)
     if driver.aiControlled then
-        if LEADER_LAPS < sim.laps - 5 then
-            local wheels = driver.car.wheels
-            for index=0, #wheels do
-                if wheels[index].tyreWear < 0.5 then
-                    ac.setCarPenalty(ac.PenaltyType.MandatoryPits,1)
+        if LEADER_LAPS < ac.getSession(sim.currentSessionIndex).laps - 5 and driver.prePitFuel == 0 then
+            for index=0, 3 do
+                if driver.car.wheels[index].tyreWear > 0.5 then
+                    ac.log(driver.car.wheels[index].tyreWear)
+                    
+                    --physics.setCarPenalty(ac.PenaltyType.MandatoryPits,1)
+                    driver.prePitFuel = driver.car.fuel - 2
+                    physics.setCarFuel(driver.index, 2)
+                    break
                 end
             end
         end
@@ -546,7 +551,6 @@ end
 --- Controls all of the regulated systems
 local function controlSystems(sim)
     local drivers = DRIVERS
-    local data = {}
     local best_lap_times = {}
     local vsc_deployed = VSC_DEPLOYED
     local vsc_called = VSC_CALLED
@@ -556,7 +560,14 @@ local function controlSystems(sim)
         local driver = drivers[index]
         driver:refresh()
         setLeaderLaps(driver)
-        aiPitNewTires(sim,driver)
+
+        if not inPits(driver) then
+            aiPitNewTires(sim,driver)
+        elseif driver.prePitFuel > 0 then
+            physics.setCarFuel(driver.index, driver.prePitFuel)
+            ac.log(driver.prePitFuel)
+            driver.prePitFuel = 0
+        end
 
         if not vsc_deployed then
             controlMGUK(sim,driver)
