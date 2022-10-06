@@ -450,6 +450,7 @@ local function enableVSC(sim,best_lap_times)
     if VSC_CALLED and not VSC_DEPLOYED then
         VSC_LAP_TIME = math.average(best_lap_times) / 0.31
         VSC_DEPLOYED = true
+        physics.overrideRacingFlag(physics.overrideRacingFlag(ac.FlagType.Caution))
         ui.toast(ui.Icons.Warning, "[F1Regs] Virtual Safety Car Deployed. No overtaking!")
     end
 
@@ -472,6 +473,7 @@ local function enableVSC(sim,best_lap_times)
         elseif VSC_END_TIMER > 0 then
             VSC_END_TIMER = VSC_END_TIMER - 1
         else
+            physics.overrideRacingFlag(ac.FlagType.None)
             if sim.raceFlagType == not ac.FlagType.Caution then
                 ui.toast(ui.Icons.Warning, "[F1Regs] Virtual Safety Car ended!")
                 VSC_DEPLOYED = false
@@ -629,7 +631,7 @@ local function initialize(sim)
         driver.trackPosition = driver.racePosition
         driver.mgukDeliveryCount = 0
         lockDRS(driver)
-        
+
         if driver.car.isAIControlled then
             physics.setCarFuel(driver.index, 140)
             physics.setAIThrottleLimit(driver.index, 1)
