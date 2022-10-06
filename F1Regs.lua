@@ -628,12 +628,12 @@ local function initialize(sim)
         driver:refresh()
         driver.trackPosition = driver.racePosition
         driver.mgukDeliveryCount = 0
+        lockDRS(driver)
         
         if driver.car.isAIControlled then
             physics.setCarFuel(driver.index, 140)
-            physics.setCarDRS(driver.index, false)
             physics.setAIThrottleLimit(driver.index, 1)
-            physics.setExtraAIGrip(driver.index,1.25)
+            --physics.setExtraAIGrip(driver.index,1.25)
         end
 
         log("[Loaded] Driver "..driver.index..": "..driver.name)
