@@ -449,12 +449,16 @@ end
 
 local function enableVSC(sim)
     if not VSC_CALLED and not VSC_DEPLOYED then
-        if VSC_START_TIMER > 0 then
-            VSC_START_TIMER = VSC_START_TIMER - 1
+        if sim.raceFlagType == ac.FlagType.Caution then
+            if VSC_START_TIMER > 0 then
+                VSC_START_TIMER = VSC_START_TIMER - 1
+            else
+                VSC_CALLED = true
+            end
         else
-            VSC_CALLED = true
+            VSC_START_TIMER = 5
         end
-    elseif VSC_DEPLOYED
+    elseif VSC_DEPLOYED then
         VSC_CALLED = false
         VSC_START_TIMER = 5
 
@@ -463,7 +467,7 @@ local function enableVSC(sim)
         elseif VSC_END_TIMER > 0 then
             VSC_END_TIMER = VSC_END_TIMER - 1
         else
-            if sim.raceFlagType is not ac.FlagType.Caution then
+            if sim.raceFlagType == not ac.FlagType.Caution then
                 ui.toast(ui.Icons.Warning, "[F1Regs] Virtual Safety Car ended!")
                 VSC_DEPLOYED = false
                 VSC_END_TIMER = 30
@@ -472,12 +476,21 @@ local function enableVSC(sim)
     end
 end
 
+function math.average(t)
+    local sum = 0
+    for _,v in pairs(t) do -- Get the sum of all numbers in t
+      sum = sum + v
+    end
+    return sum / #t
+  end
+  
+
 local function controlVSC(sim,driver)
-    local current_splits = driver.car.currentSplits
-    local split_index = current_splits[#current_splits]
-    local normal_lap_splits = lap
-    local vsc_lap_splits = VSC_NORMAL_LAP{:,:} / 0.30
-    if current_splits[split_index] >= vsc_lap_splits[split_index] then
+    local vsc_lap_time = math.average(VSC_NORMAL_LAP) / 0.31
+
+    ac.log("VSC lap: "..vsc_lap_time)
+    if driver.car. < vsc_lap_time then
+        ac.log(driver.index.." estimated: "..driver.car.estimatedLapTimeMs)
         ui.toast(ui.Icons.Warning, "[F1Regs] Exceeding the pace of the Virtual Safety Car!")
     end
 end
@@ -489,7 +502,10 @@ local function controlSystems(sim)
     local data = {}
     local best_splits_average = {}
 
-    enableVSC(sim)
+    physics.overrideRacingFlag(ac.FlagType.Caution)
+    if leader_laps > 0 then
+        enableVSC(sim)
+    end
 
     for index=0, #drivers do
         local driver = drivers[index]
@@ -505,13 +521,12 @@ local function controlSystems(sim)
             controlDRS(sim,driver)
             alternateAIAttack(driver)
         elseif VSC_CALLED and not VSC_DEPLOYED then
-            for split_index=0, #sim.lapSplits do
-                if best_splits_average[split_index] then
-                    best_splits_average[split_index] =  (driver.car.bestLapSplits[split_index] + best_splits_average[split_index]) / 2
-                else
-                    best_splits_average[split_index] = driver.car.bestLapSplits[split_index]
-                end
+            if driver.car.bestLapTimeMs then
+                best_splits_average[index] = driver.car.bestLapTimeMs
+            else
+                best_splits_average[index] = 500000
             end
+            
         else
             controlVSC(sim,driver)
         end
@@ -524,7 +539,7 @@ local function controlSystems(sim)
     end
 
     if VSC_CALLED and not VSC_DEPLOYED then
-        VSC_NORMAL_LAP = best_splits_average{:,:} / 0.01
+        VSC_NORMAL_LAP = best_splits_average
         VSC_DEPLOYED = true
         ui.toast(ui.Icons.Warning, "[F1Regs] Virtual Safety Car Deployed. No overtaking!")
     end
