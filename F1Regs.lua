@@ -535,6 +535,12 @@ local F1RegsData = ac.connect{
     carAheadDelta = ac.StructItem.float()
 }
 
+local function storeData(driver)
+    F1RegsData.drsAvailable = driver.drsAvailable
+    F1RegsData.carAhead = driver.carAhead
+    F1RegsData.carAheadDelta = driver.carAheadDelta
+end
+
 --- Controls all of the regulated systems
 local function controlSystems(sim)
     local drivers = DRIVERS
@@ -565,11 +571,9 @@ local function controlSystems(sim)
 
         -- overtake_check(driver)
 
-        F1RegsData.drsAvailable = driver.drsAvailable
-        F1RegsData.carAhead = driver.carAhead
-        F1RegsData.carAheadDelta = driver.carAheadDelta
-
-        ac.log("Car ahead delta: "..F1RegsData.carAheadDelta)
+        if driver.index == 0 then
+            storeData(driver)
+        end
     end
 
     if LEADER_LAPS > 0 then
