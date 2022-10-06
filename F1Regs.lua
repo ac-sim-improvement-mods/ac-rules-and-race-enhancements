@@ -584,7 +584,7 @@ local function initialize(sim)
     log("CSP version: "..csp_version)
 
     if csp_version < 2066 then
-        ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP v0.1.78 required!")
+        ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP v0.1.79 required!")
         log("[WARN] Incompatible CSP version")
         return false
     end
