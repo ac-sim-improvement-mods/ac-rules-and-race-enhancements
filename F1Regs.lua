@@ -498,6 +498,7 @@ function math.average(t)
 
 local function controlVSC(sim,driver)
     local vsc_lap_time = VSC_LAP_TIME
+    lockDRS(driver)
     if vsc_lap_time == 0 or vsc_lap_time == nil then
         vsc_lap_time = 180000
     end
