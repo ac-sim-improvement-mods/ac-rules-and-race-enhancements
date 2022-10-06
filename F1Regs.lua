@@ -516,6 +516,19 @@ local function setLeaderLaps(driver)
     end
 end
 
+local function aiPitNewTires(sim,driver)
+    if driver.aiControlled then
+        if LEADER_LAPS < sim.laps - 5 then
+            local wheels = driver.car.wheels
+            for index=0, #wheels do
+                if wheels[index].tyreWear < 0.5 then
+                    ac.setCarPenalty(ac.PenaltyType.MandatoryPits,1)
+                end
+            end
+        end
+    end
+end
+
 --- Controls all of the regulated systems
 local function controlSystems(sim)
     local drivers = DRIVERS
@@ -529,6 +542,7 @@ local function controlSystems(sim)
         local driver = drivers[index]
         driver:refresh()
         setLeaderLaps(driver)
+        aiPitNewTires(sim,driver)
 
         if not vsc_deployed then
             controlMGUK(sim,driver)
