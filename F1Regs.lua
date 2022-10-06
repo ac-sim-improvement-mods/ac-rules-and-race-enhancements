@@ -529,6 +529,12 @@ local function aiPitNewTires(sim,driver)
     end
 end
 
+local F1RegsData = ac.connect{
+    drsAvailable = ac.StructItem.boolean(),
+    carAhead = ac.StructItem.int16(),
+    carAheadDelta = ac.StructItem.float()
+}
+
 --- Controls all of the regulated systems
 local function controlSystems(sim)
     local drivers = DRIVERS
@@ -559,20 +565,16 @@ local function controlSystems(sim)
 
         -- overtake_check(driver)
 
-        data[index..".drsAvailable"] = driver.drsAvailable
-        data[index..".carAhead"] = driver.carAhead
-        data[index..".carAheadDelta"] = driver.carAheadDelta
+        F1RegsData.drsAvailable = driver.drsAvailable
+        F1RegsData.carAhead = driver.carAhead
+        F1RegsData.carAheadDelta = driver.carAheadDelta
+
+        ac.log("Car ahead delta: "..F1RegsData.carAheadDelta)
     end
 
     if LEADER_LAPS > 0 then
         enableVSC(sim,best_lap_times)
     end
-
-    ac.store("F1Regs",stringify(data, true))
-
-    -- Example of how to load the data
-    -- local test = stringify.parse(ac.load("F1Reg"))["0.carAheadDelta"]
-    -- log(test)
 end
 
 --- Initialize
@@ -659,6 +661,10 @@ function script.update()
             controlSystems(sim)
         end
     end
+end
+
+function script.windowNotifications(dt)
+
 end
 
 function script.windowMain(dt)
