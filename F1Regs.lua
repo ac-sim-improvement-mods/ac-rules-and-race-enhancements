@@ -48,12 +48,15 @@ end
 ---@return Driver
 local Driver = class('Driver', function(carIndex)
     local car = ac.getCar(carIndex)
-    local aiLevel = car.aiLevel
-    local aiAggression = car.aiAggression
+
     local index = carIndex
-    local aiControlled = car.isAIControlled
     local lapsCompleted = car.lapCount
     local name = ac.getDriverName(carIndex)
+
+    local aiControlled = car.isAIControlled
+    local aiLevel = car.aiLevel
+    local aiAggression = car.aiAggression
+    local aiPrePitFuel = 0
 
     local racePosition = car.racePosition
     local trackPosition = -1
@@ -85,9 +88,9 @@ local Driver = class('Driver', function(carIndex)
     local returnRacePosition = -1
     local returnPostionTimer = -1
 
-    local prePitFuel = 0
 
-    return {prePitFuel = prePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, trackProgress = trackProgress, returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted,
+
+    return {aiPrePitFuel = aiPrePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, trackProgress = trackProgress, returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
         mgukPresent = mgukPresent, mgukLocked = mgukLocked, mgukDelivery = mgukDelivery, mgukDeliveryCount = mgukDeliveryCount}
 end, class.NoInitialize)
@@ -465,6 +468,7 @@ local function enableVSC(sim,best_lap_times)
         VSC_DEPLOYED = true
         ac.log("Virtual Safety Car Deployed. No overtaking!")
         ui.toast(ui.Icons.Warning, "[F1Regs] Virtual Safety Car Deployed. No overtaking!")
+        physics.overrideRacingFlag(ac.FlagType.Caution)
     end
 
     if not VSC_CALLED and not VSC_DEPLOYED then
@@ -482,8 +486,8 @@ local function enableVSC(sim,best_lap_times)
         VSC_START_TIMER = 5
 
         if VSC_END_TIMER > 0 then
-            physics.overrideRacingFlag(ac.FlagType.Caution)
-            if VSC_END_TIMER == 1000 then
+            
+            if VSC_END_TIMER == 1000 and sim.raceFlagType == not ac.FlagType.Caution then
                 ac.log("Virtual Safety Car is ending soon!")
                 ui.toast(ui.Icons.Warning, "[F1Regs] Virtual Safety Car is ending soon!")
             end
@@ -495,7 +499,7 @@ local function enableVSC(sim,best_lap_times)
                 ui.toast(ui.Icons.Warning, "[F1Regs] Virtual Safety Car ended!")
                 VSC_DEPLOYED = false
             else
-                VSC_END_TIMER = 3000
+                VSC_END_TIMER = 500
             end
         end
     end
@@ -524,14 +528,14 @@ end
 
 local function aiPitNewTires(sim,driver)
     if driver.aiControlled then
-        if LEADER_LAPS < ac.getSession(sim.currentSessionIndex).laps - 5 and driver.prePitFuel == 0 then
+        if LEADER_LAPS < ac.getSession(sim.currentSessionIndex).laps - 5 and driver.aiPrePitFuel == 0 then
             local avg_tyre_wear = ((driver.car.wheels[0].tyreWear + 
                                     driver.car.wheels[1].tyreWear +
                                     driver.car.wheels[2].tyreWear +
                                     driver.car.wheels[3].tyreWear) / 4)
             if avg_tyre_wear > 0.4 then                  
                 --physics.setCarPenalty(ac.PenaltyType.MandatoryPits,1)
-                driver.prePitFuel = driver.car.fuel
+                driver.aiPrePitFuel = driver.car.fuel
                 physics.setCarFuel(driver.index, 0.5)
             end
         end
@@ -566,8 +570,8 @@ local function controlSystems(sim)
             aiPitNewTires(sim,driver)
         else
             if driver.car.isInPit then
-                physics.setCarFuel(driver.index, driver.prePitFuel + 2)
-                ac.log(driver.name.." "..driver.prePitFuel)
+                physics.setCarFuel(driver.index, driver.aiPrePitFuel + 2)
+                ac.log(driver.name.." "..driver.aiPrePitFuel)
             end
         end
         
@@ -661,7 +665,6 @@ local function initialize(sim)
     log("[Race Control] DRS Enabled in "..DRS_LAPS.." laps")
 
     log("[Initialized]")
-
     return true
 end
 
@@ -671,15 +674,19 @@ function script.update()
 
     if error then
         ac.log(error)
+        INITIALIZED = initialize(sim)
+    end
+
+    if sim.timeToSessionStart >= 10000 then
+        INITIALIZED = false
     end
 
     if sim.raceSessionType == 3 then
         -- Initialize the session
-        if not sim.isSessionStarted then
-            if not INITIALIZED then INITIALIZED = initialize(sim) end
+        if sim.timeToSessionStart < 10000 and not INITIALIZED then INITIALIZED = initialize(sim)
         -- Race session has started
-        else 
-            INITIALIZED = false
+        elseif sim.isSessionStarted and not INITIALIZED then INITIALIZED = initialize(sim)
+        elseif INITIALIZED then
             controlSystems(sim)
         end
     end
@@ -692,7 +699,7 @@ end
 function script.windowMain(dt)
     local sim = ac.getSim()
 
-    if sim.raceSessionType == 3 then
+    if sim.raceSessionType == 3 and INITIALIZED then
         local driver = DRIVERS[sim.focusedCar]
         local math = math
         local rules = F1R_CONFIG.data.RULES
