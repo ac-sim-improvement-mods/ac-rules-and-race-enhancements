@@ -12,6 +12,12 @@ local DRS_LAPS = 0
 local WET_TRACK = false
 local DRS_ENABLED = false
 
+local VSC_CALLED = false
+local VSC_DEPLOYED = false
+local VSC_LAP_TIME = 180000
+local VSC_START_TIMER = 1000
+local VSC_END_TIMER = 3000
+
 local function log(msg)
     ac.log("[F1Regs] "..msg)
 end
@@ -77,7 +83,9 @@ local Driver = class('Driver', function(carIndex)
     local returnRacePosition = -1
     local returnPostionTimer = -1
 
-    return {trackProgress = trackProgress, returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted,
+    local prePitFuel = 0
+
+    return {prePitFuel = prePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, trackProgress = trackProgress, returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
         mgukPresent = mgukPresent, mgukLocked = mgukLocked, mgukDelivery = mgukDelivery, mgukDeliveryCount = mgukDeliveryCount}
 end, class.NoInitialize)
@@ -391,7 +399,12 @@ local function controlDRS(sim,driver)
     if sim.isSessionStarted then
         driver.drsAvailable = drsAvailable(driver)
         
-        if not driver.drsAvailable then
+        if driver.drsAvailable then
+            physics.setAIThrottleLimit(driver.index, 1)
+            if driver.drsZone and driver.car.gas > 0.8 and driver.car.isAIControlled then
+                physics.setCarDRS(driver.index, true)
+            end
+        else
             lockDRS(driver)
         end
     end
@@ -416,47 +429,184 @@ end
 --     end
 -- end
 
+local function alternateAIAttack(driver)
+    local delta = driver.carAheadDelta
+    local defaultAgression = driver.aiAggression
+    local defaultLevel = driver.aiLevel
+
+    if delta < 0.6 and delta >= 0.3 then
+        physics.setAIAggression(driver.index, defaultAgression + 0.15)
+    elseif delta < 0.3 and delta >= 0 then
+        physics.setAIAggression(driver.index, defaultAgression + 0.05)
+    else
+        physics.setAIAggression(driver.index, defaultAgression - 0.10)
+    end
+end
+
+function math.average(t)
+    local sum = 0
+    for _,v in pairs(t) do -- Get the sum of all numbers in t
+      sum = sum + v
+    end
+    return sum / #t
+  end
+  
+
+local function enableVSC(sim,best_lap_times)
+    if VSC_CALLED and not VSC_DEPLOYED then
+        VSC_LAP_TIME = math.average(best_lap_times) / 0.31
+        if VSC_LAP_TIME == 0 or VSC_LAP_TIME == nil then
+            VSC_LAP_TIME = 180000
+        end
+        ac.log(VSC_LAP_TIME)
+        VSC_DEPLOYED = true
+        ac.log("Virtual Safety Car Deployed. No overtaking!")
+        ui.toast(ui.Icons.Warning, "[F1Regs] Virtual Safety Car Deployed. No overtaking!")
+    end
+
+    if not VSC_CALLED and not VSC_DEPLOYED then
+        if sim.raceFlagType == ac.FlagType.Caution then
+            if VSC_START_TIMER > 0 then
+                VSC_START_TIMER = VSC_START_TIMER - 1
+            else
+                VSC_CALLED = true
+            end
+        else
+            VSC_START_TIMER = 1000
+        end
+    elseif VSC_DEPLOYED then
+        VSC_CALLED = false
+        VSC_START_TIMER = 5
+
+        if VSC_END_TIMER > 0 then
+            physics.overrideRacingFlag(ac.FlagType.Caution)
+            if VSC_END_TIMER == 1000 then
+                ac.log("Virtual Safety Car is ending soon!")
+                ui.toast(ui.Icons.Warning, "[F1Regs] Virtual Safety Car is ending soon!")
+            end
+            VSC_END_TIMER = VSC_END_TIMER - 1
+        else
+            physics.overrideRacingFlag(ac.FlagType.None)
+            if sim.raceFlagType == not ac.FlagType.Caution then
+                ac.log("Virtual Safety Car ended!")
+                ui.toast(ui.Icons.Warning, "[F1Regs] Virtual Safety Car ended!")
+                VSC_DEPLOYED = false
+            else
+                VSC_END_TIMER = 3000
+            end
+        end
+    end
+end
+
+local function controlVSC(sim,driver)
+    local vsc_lap_time = VSC_LAP_TIME
+    lockDRS(driver)
+
+    if driver.car.estimatedLapTimeMs < vsc_lap_time then
+        ac.log(driver.index.." estimated: "..driver.car.estimatedLapTimeMs)
+
+        if driver.aiControlled then
+            physics.setAIThrottleLimit(driver.index, 0.3)
+        else
+            ui.toast(ui.Icons.Warning, "[F1Regs] Exceeding the pace of the Virtual Safety Car!")
+        end
+    end
+end
+
+local function setLeaderLaps(driver)
+    if driver.car.racePosition == 1 then
+        LEADER_LAPS = driver.lapsCompleted
+    end
+end
+
+local function aiPitNewTires(sim,driver)
+    if driver.aiControlled then
+        if LEADER_LAPS < ac.getSession(sim.currentSessionIndex).laps - 5 and driver.prePitFuel == 0 then
+            local avg_tyre_wear = ((driver.car.wheels[0].tyreWear + 
+                                    driver.car.wheels[1].tyreWear +
+                                    driver.car.wheels[2].tyreWear +
+                                    driver.car.wheels[3].tyreWear) / 4)
+            if avg_tyre_wear > 0.4 then                  
+                --physics.setCarPenalty(ac.PenaltyType.MandatoryPits,1)
+                driver.prePitFuel = driver.car.fuel
+                physics.setCarFuel(driver.index, 0.5)
+            end
+        end
+    end
+end
+
+local F1RegsData = ac.connect{
+    drsAvailable = ac.StructItem.boolean(),
+    carAhead = ac.StructItem.int16(),
+    carAheadDelta = ac.StructItem.float()
+}
+
+local function storeData(driver)
+    F1RegsData.drsAvailable = driver.drsAvailable
+    F1RegsData.carAhead = driver.carAhead
+    F1RegsData.carAheadDelta = driver.carAheadDelta
+end
+
 --- Controls all of the regulated systems
 local function controlSystems(sim)
     local drivers = DRIVERS
-    local leader_laps = LEADER_LAPS
-    local data = {}
+    local best_lap_times = {}
+    local vsc_deployed = VSC_DEPLOYED
+    local vsc_called = VSC_CALLED
+
     for index=0, #drivers do
         local driver = drivers[index]
-        if driver.car.racePosition == 1 then
-            leader_laps = driver.lapsCompleted
-        end
         driver:refresh()
-        controlMGUK(sim,driver)
-        controlERS(driver)
-        controlDRS(sim,driver)
+        setLeaderLaps(driver)
+
+        if not inPits(driver) then
+            aiPitNewTires(sim,driver)
+        else
+            if driver.car.isInPit then
+                physics.setCarFuel(driver.index, driver.prePitFuel + 2)
+                ac.log(driver.name.." "..driver.prePitFuel)
+            end
+        end
+        
+        if not vsc_deployed then
+            controlMGUK(sim,driver)
+            controlERS(driver)
+            controlDRS(sim,driver)
+            alternateAIAttack(driver)
+        elseif vsc_called and not vsc_deployed then
+            if driver.car.bestLapTimeMs then
+                best_lap_times[index] = driver.car.bestLapTimeMs
+            end
+        else
+            controlVSC(sim,driver)
+        end
 
         -- overtake_check(driver)
 
-        data[index..".drsAvailable"] = driver.drsAvailable
-        data[index..".carAhead"] = driver.carAhead
-        data[index..".carAheadDelta"] = driver.carAheadDelta
+        if driver.index == 0 then
+            storeData(driver)
+        end
     end
 
-    ac.store("F1Regs",stringify(data, true))
-
-    -- Example of how to load the data
-    -- local test = stringify.parse(ac.load("F1Reg"))["0.carAheadDelta"]
-    -- log(test)
-
-    LEADER_LAPS = leader_laps
+    if LEADER_LAPS >= 0 then
+        enableVSC(sim,best_lap_times)
+    end
 end
 
 --- Initialize
 local function initialize(sim)
     RACE_STARTED = false
     LEADER_LAPS = 0
+    VSC_DEPLOYED = false
+    VSC_CALLED = false
     local csp_version = ac.getPatchVersionCode()
+
+    physics.overrideRacingFlag(ac.FlagType.None)
 
     log("CSP version: "..csp_version)
 
-    if csp_version < 2051 then
-        ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP v0.1.78 required!")
+    if csp_version < 2066 then
+        ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP v0.1.79 required!")
         log("[WARN] Incompatible CSP version")
         return false
     end
@@ -494,6 +644,12 @@ local function initialize(sim)
         driver:refresh()
         driver.trackPosition = driver.racePosition
         driver.mgukDeliveryCount = 0
+        lockDRS(driver)
+
+        if driver.car.isAIControlled then
+            physics.setCarFuel(driver.index, 140)
+            physics.setExtraAIGrip(driver.index,1.5)
+        end
 
         log("[Loaded] Driver "..driver.index..": "..driver.name)
     end
@@ -509,14 +665,24 @@ end
 function script.update()
     local sim = ac.getSim()
 
-    -- Initialize the session
-    if not sim.isSessionStarted then
-        if not INITIALIZED then INITIALIZED = initialize(sim) end
-    -- Race session has started
-    else 
-        INITIALIZED = false
-        controlSystems(sim)
+    if error then
+        ac.log(error)
     end
+
+    if sim.raceSessionType == 3 then
+        -- Initialize the session
+        if not sim.isSessionStarted then
+            if not INITIALIZED then INITIALIZED = initialize(sim) end
+        -- Race session has started
+        else 
+            INITIALIZED = false
+            controlSystems(sim)
+        end
+    end
+end
+
+function script.windowNotifications(dt)
+
 end
 
 function script.windowMain(dt)
@@ -536,6 +702,22 @@ function script.windowMain(dt)
 
             ui.text("- Track Position: "..driver.trackPosition.."/"..DRIVERS_ON_TRACK)
 
+            ui.text("\n")
+        end)
+
+        if driver.aiControlled then
+            ui.treeNode("[AI]", ui.TreeNodeFlags.DefaultOpen, function ()
+                ui.text("- AI Level: ["..math.round(driver.aiLevel*100,2).."] "..math.round(driver.car.aiLevel*100,2))
+                ui.text("- AI Aggr : ["..math.round(driver.aiAggression*100,2).."] "..math.round(driver.car.aiAggression*100,2))
+                ui.text("\n")
+            end)
+        end
+
+        ui.treeNode("[Tyres]", ui.TreeNodeFlags.DefaultOpen, function ()
+            ui.text("- Wear [FL]: "..math.round(100-(driver.car.wheels[0].tyreWear*100),5))
+            ui.text("- Wear [RL]: "..math.round(100-(driver.car.wheels[2].tyreWear*100),5))
+            ui.text("- Wear [FR]: "..math.round(100-(driver.car.wheels[1].tyreWear*100),5))
+            ui.text("- Wear [RR: "..math.round(100-(driver.car.wheels[3].tyreWear*100),5))
             ui.text("\n")
         end)
 
