@@ -15,8 +15,8 @@ local DRS_ENABLED = false
 local VSC_CALLED = false
 local VSC_DEPLOYED = false
 local VSC_LAP_TIME = 180000
-local VSC_START_TIMER = 5
-local VSC_END_TIMER = 30
+local VSC_START_TIMER = 1000
+local VSC_END_TIMER = 3000
 
 local function log(msg)
     ac.log("[F1Regs] "..msg)
@@ -403,6 +403,7 @@ local function controlDRS(sim,driver)
         driver.drsAvailable = drsAvailable(driver)
         
         if driver.drsAvailable then
+            physics.setAIThrottleLimit(driver.index, 1)
             if driver.drsZone and driver.car.gas > 0.8 and driver.car.isAIControlled then
                 physics.setCarDRS(driver.index, true)
             end
@@ -436,23 +437,33 @@ local function alternateAIAttack(driver)
     local defaultAgression = driver.aiAggression
     local defaultLevel = driver.aiLevel
 
-    if delta < 0.3 and delta >= 0.1 then
-        physics.setAIAggression(driver.index, defaultAgression + 10)
-        physics.setAILevel(driver.index, defaultLevel + 10)
-    elseif delta < 0.1 and delta >= 0 then
-        physics.setAIAggression(driver.index, defaultAgression + 15)
-        physics.setAILevel(driver.index, defaultLevel + 15)
+    if delta < 0.6 and delta >= 0.3 then
+        physics.setAIAggression(driver.index, defaultAgression + 0.15)
+    elseif delta < 0.3 and delta >= 0 then
+        physics.setAIAggression(driver.index, defaultAgression + 0.05)
     else
-        physics.setAIAggression(driver.index, defaultAgression)
-        physics.setAILevel(driver.index, defaultLevel)
+        physics.setAIAggression(driver.index, defaultAgression - 0.10)
     end
 end
+
+function math.average(t)
+    local sum = 0
+    for _,v in pairs(t) do -- Get the sum of all numbers in t
+      sum = sum + v
+    end
+    return sum / #t
+  end
+  
 
 local function enableVSC(sim,best_lap_times)
     if VSC_CALLED and not VSC_DEPLOYED then
         VSC_LAP_TIME = math.average(best_lap_times) / 0.31
+        if VSC_LAP_TIME == 0 or VSC_LAP_TIME == nil then
+            VSC_LAP_TIME = 180000
+        end
+        ac.log(VSC_LAP_TIME)
         VSC_DEPLOYED = true
-        physics.overrideRacingFlag(physics.overrideRacingFlag(ac.FlagType.Caution))
+        ac.log("Virtual Safety Car Deployed. No overtaking!")
         ui.toast(ui.Icons.Warning, "[F1Regs] Virtual Safety Car Deployed. No overtaking!")
     end
 
@@ -464,52 +475,44 @@ local function enableVSC(sim,best_lap_times)
                 VSC_CALLED = true
             end
         else
-            VSC_START_TIMER = 5
+            VSC_START_TIMER = 1000
         end
     elseif VSC_DEPLOYED then
         VSC_CALLED = false
         VSC_START_TIMER = 5
 
-        if VSC_END_TIMER < 10 and VSC_END_TIMER > 5 then
-            ui.toast(ui.Icons.Warning, "[F1Regs] Virtual Safety Car is ending soon!")
-        elseif VSC_END_TIMER > 0 then
+        if VSC_END_TIMER > 0 then
+            physics.overrideRacingFlag(ac.FlagType.Caution)
+            if VSC_END_TIMER == 1000 then
+                ac.log("Virtual Safety Car is ending soon!")
+                ui.toast(ui.Icons.Warning, "[F1Regs] Virtual Safety Car is ending soon!")
+            end
             VSC_END_TIMER = VSC_END_TIMER - 1
         else
             physics.overrideRacingFlag(ac.FlagType.None)
             if sim.raceFlagType == not ac.FlagType.Caution then
+                ac.log("Virtual Safety Car ended!")
                 ui.toast(ui.Icons.Warning, "[F1Regs] Virtual Safety Car ended!")
                 VSC_DEPLOYED = false
+            else
+                VSC_END_TIMER = 3000
             end
-
-            VSC_END_TIMER = 30
         end
     end
 end
 
-function math.average(t)
-    local sum = 0
-    local count = #t
-    for _,v in pairs(t) do -- Get the sum of all numbers in t
-        if not v == nil then
-            sum = sum + v
-        else
-            count = count - 1
-        end
-    end
-    return sum / count
-  end
-  
-
 local function controlVSC(sim,driver)
     local vsc_lap_time = VSC_LAP_TIME
     lockDRS(driver)
-    if vsc_lap_time == 0 or vsc_lap_time == nil then
-        vsc_lap_time = 180000
-    end
 
     if driver.car.estimatedLapTimeMs < vsc_lap_time then
         ac.log(driver.index.." estimated: "..driver.car.estimatedLapTimeMs)
-        ui.toast(ui.Icons.Warning, "[F1Regs] Exceeding the pace of the Virtual Safety Car!")
+
+        if driver.aiControlled then
+            physics.setAIThrottleLimit(driver.index, 0.3)
+        else
+            ui.toast(ui.Icons.Warning, "[F1Regs] Exceeding the pace of the Virtual Safety Car!")
+        end
     end
 end
 
@@ -522,15 +525,14 @@ end
 local function aiPitNewTires(sim,driver)
     if driver.aiControlled then
         if LEADER_LAPS < ac.getSession(sim.currentSessionIndex).laps - 5 and driver.prePitFuel == 0 then
-            for index=0, 3 do
-                if driver.car.wheels[index].tyreWear > 0.5 then
-                    ac.log(driver.car.wheels[index].tyreWear)
-                    
-                    --physics.setCarPenalty(ac.PenaltyType.MandatoryPits,1)
-                    driver.prePitFuel = driver.car.fuel - 2
-                    physics.setCarFuel(driver.index, 2)
-                    break
-                end
+            local avg_tyre_wear = ((driver.car.wheels[0].tyreWear + 
+                                    driver.car.wheels[1].tyreWear +
+                                    driver.car.wheels[2].tyreWear +
+                                    driver.car.wheels[3].tyreWear) / 4)
+            if avg_tyre_wear > 0.4 then                  
+                --physics.setCarPenalty(ac.PenaltyType.MandatoryPits,1)
+                driver.prePitFuel = driver.car.fuel
+                physics.setCarFuel(driver.index, 0.5)
             end
         end
     end
@@ -555,7 +557,6 @@ local function controlSystems(sim)
     local vsc_deployed = VSC_DEPLOYED
     local vsc_called = VSC_CALLED
 
-    physics.overrideRacingFlag(ac.FlagType.Caution)
     for index=0, #drivers do
         local driver = drivers[index]
         driver:refresh()
@@ -563,12 +564,13 @@ local function controlSystems(sim)
 
         if not inPits(driver) then
             aiPitNewTires(sim,driver)
-        elseif driver.prePitFuel > 0 then
-            physics.setCarFuel(driver.index, driver.prePitFuel)
-            ac.log(driver.prePitFuel)
-            driver.prePitFuel = 0
+        else
+            if driver.car.isInPit then
+                physics.setCarFuel(driver.index, driver.prePitFuel + 2)
+                ac.log(driver.name.." "..driver.prePitFuel)
+            end
         end
-
+        
         if not vsc_deployed then
             controlMGUK(sim,driver)
             controlERS(driver)
@@ -589,7 +591,7 @@ local function controlSystems(sim)
         end
     end
 
-    if LEADER_LAPS > 0 then
+    if LEADER_LAPS >= 0 then
         enableVSC(sim,best_lap_times)
     end
 end
@@ -598,7 +600,11 @@ end
 local function initialize(sim)
     RACE_STARTED = false
     LEADER_LAPS = 0
+    VSC_DEPLOYED = false
+    VSC_CALLED = false
     local csp_version = ac.getPatchVersionCode()
+
+    physics.overrideRacingFlag(ac.FlagType.None)
 
     log("CSP version: "..csp_version)
 
@@ -645,8 +651,7 @@ local function initialize(sim)
 
         if driver.car.isAIControlled then
             physics.setCarFuel(driver.index, 140)
-            physics.setAIThrottleLimit(driver.index, 1)
-            --physics.setExtraAIGrip(driver.index,1.25)
+            physics.setExtraAIGrip(driver.index,1.5)
         end
 
         log("[Loaded] Driver "..driver.index..": "..driver.name)
@@ -702,6 +707,22 @@ function script.windowMain(dt)
 
             ui.text("- Track Position: "..driver.trackPosition.."/"..DRIVERS_ON_TRACK)
 
+            ui.text("\n")
+        end)
+
+        if driver.aiControlled then
+            ui.treeNode("[AI]", ui.TreeNodeFlags.DefaultOpen, function ()
+                ui.text("- AI Level: ["..math.round(driver.aiLevel*100,2).."] "..math.round(driver.car.aiLevel*100,2))
+                ui.text("- AI Aggr : ["..math.round(driver.aiAggression*100,2).."] "..math.round(driver.car.aiAggression*100,2))
+                ui.text("\n")
+            end)
+        end
+
+        ui.treeNode("[Tyres]", ui.TreeNodeFlags.DefaultOpen, function ()
+            ui.text("- Wear [FL]: "..math.round(100-(driver.car.wheels[0].tyreWear*100),5))
+            ui.text("- Wear [RL]: "..math.round(100-(driver.car.wheels[2].tyreWear*100),5))
+            ui.text("- Wear [FR]: "..math.round(100-(driver.car.wheels[1].tyreWear*100),5))
+            ui.text("- Wear [RR: "..math.round(100-(driver.car.wheels[3].tyreWear*100),5))
             ui.text("\n")
         end)
 
