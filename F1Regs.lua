@@ -1,5 +1,5 @@
 ---
---- Script v0.8.1-alpha
+--- Script v0.9.0-alpha
 ---
 local INITIALIZED = false
 
@@ -48,15 +48,12 @@ end
 ---@return Driver
 local Driver = class('Driver', function(carIndex)
     local car = ac.getCar(carIndex)
-    local index = carIndex
-
-    local lapsCompleted = car.lapCount
-    local name = ac.getDriverName(carIndex)
-
-    local aiControlled = car.isAIControlled
     local aiLevel = car.aiLevel
     local aiAggression = car.aiAggression
-    local aiPrePitFuel = 0
+    local index = carIndex
+    local aiControlled = car.isAIControlled
+    local lapsCompleted = car.lapCount
+    local name = ac.getDriverName(carIndex)
 
     local racePosition = car.racePosition
     local trackPosition = -1
@@ -88,7 +85,9 @@ local Driver = class('Driver', function(carIndex)
     local returnRacePosition = -1
     local returnPostionTimer = -1
 
-    return {aiPrePitFuel = aiPrePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, trackProgress = trackProgress, returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted,
+    local prePitFuel = 0
+
+    return {prePitFuel = prePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, trackProgress = trackProgress, returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
         mgukPresent = mgukPresent, mgukLocked = mgukLocked, mgukDelivery = mgukDelivery, mgukDeliveryCount = mgukDeliveryCount}
 end, class.NoInitialize)
@@ -258,8 +257,9 @@ local function lockDRS(driver)
     driver.drsLocked = true
     driver.drsAvailable = false
     driver.drsCheck = false
-    -- Need SDK update
-    if driver.car.index == 0 then ac.setDRS(false) end
+
+    physics.allowCarDRS(driver.index, false)
+    physics.setCarDRS(driver.index, false)
 end
 
 --- Check if driver is on track or in pits
@@ -423,7 +423,7 @@ end
 --             driver.illegalOvertake = false
 --             driver.returnPostionTimer = -1
 --         elseif driver.returnPostionTimer >= ac.getSim().timeSeconds then
---             ui.toast(ui.Icons.Bell, "Failed to return the position, driver through penalty receieved")   
+--             ui.toast(ui.Icons.Bell, "Failed to return the position, driver through penalty receieved")
 --             driver.car.currentPenaltyType = 3
 --             driver.car.currentPenaltyParameter = 5
 --             driver.illegalOvertake = false
@@ -524,14 +524,14 @@ end
 
 local function aiPitNewTires(sim,driver)
     if driver.aiControlled then
-        if LEADER_LAPS < ac.getSession(sim.currentSessionIndex).laps - 5 and driver.aiPrePitFuel == 0 then
+        if LEADER_LAPS < ac.getSession(sim.currentSessionIndex).laps - 5 and driver.prePitFuel == 0 then
             local avg_tyre_wear = ((driver.car.wheels[0].tyreWear + 
                                     driver.car.wheels[1].tyreWear +
                                     driver.car.wheels[2].tyreWear +
                                     driver.car.wheels[3].tyreWear) / 4)
             if avg_tyre_wear > 0.4 then                  
                 --physics.setCarPenalty(ac.PenaltyType.MandatoryPits,1)
-                driver.aiPrePitFuel = driver.car.fuel
+                driver.prePitFuel = driver.car.fuel
                 physics.setCarFuel(driver.index, 0.5)
             end
         end
@@ -566,8 +566,8 @@ local function controlSystems(sim)
             aiPitNewTires(sim,driver)
         else
             if driver.car.isInPit then
-                physics.setCarFuel(driver.index, driver.aiPrePitFuel + 2)
-                ac.log(driver.name.." "..driver.aiPrePitFuel)
+                physics.setCarFuel(driver.index, driver.prePitFuel + 2)
+                ac.log(driver.name.." "..driver.prePitFuel)
             end
         end
         
@@ -667,6 +667,7 @@ end
 
 function script.update()
     local sim = ac.getSim()
+    local error = ac.getLastError()
 
     if error then
         ac.log(error)
@@ -698,6 +699,7 @@ function script.windowMain(dt)
 
         ui.pushFont(ui.Font.Small)
         ui.treeNode("["..sessionTypeString(sim).." SESSION]", ui.TreeNodeFlags.DefaultOpen, function ()
+            ui.text("- Physics: "..tostring(physics.allowed()))
             ui.text("- Race Started: "..tostring(sim.isSessionStarted))
             ui.text("- Leader Laps: "..LEADER_LAPS)
             ui.text("- Laps: "..driver.lapsCompleted.."/"..ac.getSession(sim.currentSessionIndex).laps)
@@ -758,7 +760,7 @@ function script.windowMain(dt)
                     ui.text("- In Gap: "..tostring(checkGap(driver)))
                     ui.text("- Locked: "..tostring(driver.drsLocked))
                     ui.text("- Available: "..tostring(driver.drsAvailable))
-                    ui.text("- Deploy Zone: "..tostring(driver.drsZone))
+                    ui.text("- Deploy Zone: "..tostring(driver.car.drsAvailable))
                     ui.text("- Active: "..tostring(driver.drsActive))
                     ui.text("- Next Detect Zone ID: "..tostring(driver.drsZoneId))
                     ui.text("- Detection Zone: "..tostring(inDetectionZone(driver)))
