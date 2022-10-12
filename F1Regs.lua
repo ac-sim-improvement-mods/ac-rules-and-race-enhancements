@@ -31,7 +31,7 @@ end
 local MappedConfig = class('MappedConfig', function(filename, map)
   local ini = ac.INIConfig.load(filename)
   local data = ini:mapConfig(map)
-  local key = 'app.ControllerTweaks:'..filename
+  local key = 'app.F1Regs:'..filename
   -- local original = stringify.tryParse(ac.load(key))
   local original = nil -- TODO: REMOVE THIS LINE
   if not original then
@@ -50,22 +50,14 @@ end
 ---@param key string
 ---@param value number|boolean
 ---@param triggerControlReload boolean?
-function MappedConfig:set(section, key, value, triggerControlReload, hexFormat)
+function MappedConfig:set(section, key, value, hexFormat)
   if not self.data[section] then self.data[section] = {} end
   if type(value) == 'number' and not (value > -1e9 and value < 1e9) then error('Sanity check failed: '..tostring(value)) end
   if self.data[section][key] == value then return end
   self.data[section][key] = value
   setTimeout(function ()
-    ac.log('Saving updated value: '..tostring(value))
-    if onConfigChange then onConfigChange() end
+    log('Saving updated ['..section..']['..key..']: '..tostring(value))
     self.ini:setAndSave(section, key, hexFormat and string.format('0x%x', self.data[section][key]) or self.data[section][key])
-    if triggerControlReload ~= false then
-      setTimeout(function ()
-        ac.log('Reloading control settings now')
-        ac.reloadControlSettings()
-      end, 0.02, 'reload')
-    end
-    ignoreChangesUntil = ui.time() + 4
   end, 0.02, section..key)
 end
 
@@ -642,7 +634,7 @@ local function initialize(sim)
         SURFACE_0 = { WAV_PITCH = 'bullshit' }
     })
 
-    trackSurfaces:set('_SCRIPTING_PHYSICS', 'ALLOW_APPS', 1)
+    trackSurfaces:set('_SCRIPTING_PHYSICS', 'ALLOW_APPS', '1')
     trackSurfaces:set('SURFACE_0', 'WAV_PITCH', 'extended-0')
 
     physics.overrideRacingFlag(ac.FlagType.None)
@@ -738,6 +730,10 @@ function script.windowNotifications(dt)
 
 end
 
+local function upperBool(s)
+    return string.upper(tostring(s))
+end
+
 function script.windowMain(dt)
     local sim = ac.getSim()
 
@@ -748,10 +744,10 @@ function script.windowMain(dt)
 
         ui.pushFont(ui.Font.Small)
         ui.treeNode("["..sessionTypeString(sim).." SESSION]", ui.TreeNodeFlags.DefaultOpen, function ()
-            ui.text("- Physics: "..tostring(physics.allowed()))
-            ui.text("- Race Started: "..tostring(sim.isSessionStarted))
-            ui.text("- Leader Laps: "..LEADER_LAPS)
-            ui.text("- Laps: "..driver.lapsCompleted.."/"..ac.getSession(sim.currentSessionIndex).laps)
+            ui.text("- Physics: "..upperBool(physics.allowed()))
+            ui.text("- Race Started: "..upperBool(sim.isSessionStarted))
+            ui.text("- Leader Lap: "..LEADER_LAPS+1)
+            ui.text("- Lap: "..(driver.lapsCompleted+1).."/"..ac.getSession(sim.currentSessionIndex).laps)
             ui.text("- Race Position: "..driver.car.racePosition.."/"..sim.carsCount)
 
             ui.text("- Track Position: "..driver.trackPosition.."/"..DRIVERS_ON_TRACK)
@@ -806,14 +802,14 @@ function script.windowMain(dt)
                     ui.text("- Driver:  ["..driver.index.."] "..driver.name)
                     if driver.car.speedKmh >= 1 then ui.text("- Delta: "..math.round(getDelta(driver),3))
                     else ui.text("- Delta: ---") end
-                    ui.text("- In Gap: "..tostring(checkGap(driver)))
-                    ui.text("- Locked: "..tostring(driver.drsLocked))
-                    ui.text("- Available: "..tostring(driver.drsAvailable))
-                    ui.text("- Deploy Zone: "..tostring(driver.car.drsAvailable))
-                    ui.text("- Active: "..tostring(driver.drsActive))
-                    ui.text("- Next Detect Zone ID: "..tostring(driver.drsZoneId))
-                    ui.text("- Detection Zone: "..tostring(inDetectionZone(driver)))
+                    ui.text("- In Gap: "..upperBool(checkGap(driver)))
+                    ui.text("- Locked: "..upperBool(driver.drsLocked))
+                    ui.text("- Available: "..upperBool(driver.drsAvailable))
+                    ui.text("- Deploy Zone: "..upperBool(driver.car.drsAvailable))
+                    ui.text("- Active: "..upperBool(driver.drsActive))
+                    ui.text("- Detection Zone: "..upperBool(inDetectionZone(driver)))
                     ui.text("- Detection Line: "..tostring(getDetectionDistanceM(sim,driver)).." m")
+                    ui.text("- Next Detect Zone ID: "..upperBool(driver.drsZoneId))
                     ui.text("- Track Prog: "..tostring(math.round(getTrackPositionM(driver.index),5)).." m")
                 else ui.text("- IN PITS") end
             else
