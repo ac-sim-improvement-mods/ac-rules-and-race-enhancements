@@ -28,19 +28,45 @@ end
 ---@field data table
 ---@field original table
 ---@field map table
----@generic T
----@param filename string
----@param map T
----@return MappedConfig|{data: T, original: T}
 local MappedConfig = class('MappedConfig', function(filename, map)
   local ini = ac.INIConfig.load(filename)
   local data = ini:mapConfig(map)
-  return {filename = filename, ini = ini, map = map, data = data}
+  local key = 'app.ControllerTweaks:'..filename
+  -- local original = stringify.tryParse(ac.load(key))
+  local original = nil -- TODO: REMOVE THIS LINE
+  if not original then
+    ac.store(key, stringify(data))
+    original = stringify.parse(stringify(data))
+  end
+  return {filename = filename, ini = ini, map = map, data = data, original = original}
 end, class.NoInitialize)
 
 function MappedConfig:reload()
   self.ini = ac.INIConfig.load(self.filename) or self.ini
   self.data = self.ini:mapConfig(self.map)
+end
+
+---@param section string
+---@param key string
+---@param value number|boolean
+---@param triggerControlReload boolean?
+function MappedConfig:set(section, key, value, triggerControlReload, hexFormat)
+  if not self.data[section] then self.data[section] = {} end
+  if type(value) == 'number' and not (value > -1e9 and value < 1e9) then error('Sanity check failed: '..tostring(value)) end
+  if self.data[section][key] == value then return end
+  self.data[section][key] = value
+  setTimeout(function ()
+    ac.log('Saving updated value: '..tostring(value))
+    if onConfigChange then onConfigChange() end
+    self.ini:setAndSave(section, key, hexFormat and string.format('0x%x', self.data[section][key]) or self.data[section][key])
+    if triggerControlReload ~= false then
+      setTimeout(function ()
+        ac.log('Reloading control settings now')
+        ac.reloadControlSettings()
+      end, 0.02, 'reload')
+    end
+    ignoreChangesUntil = ui.time() + 4
+  end, 0.02, section..key)
 end
 
 ---@class Driver
@@ -87,8 +113,6 @@ local Driver = class('Driver', function(carIndex)
     local illegalOvertake = false
     local returnRacePosition = -1
     local returnPostionTimer = -1
-
-
 
     return {aiPrePitFuel = aiPrePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, trackProgress = trackProgress, returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
@@ -309,6 +333,7 @@ local function getDelta(driver)
         end
     end
 
+---@diagnostic disable-next-line: return-type-mismatch
     return math.round((getTrackPositionM(driver.carAhead) - getTrackPositionM(driver.index)) / (driver.car.speedKmh / 3.6),5)
 end
 
@@ -405,8 +430,7 @@ local function controlDRS(sim,driver)
     if sim.isSessionStarted then
         driver.drsAvailable = drsAvailable(driver)
         
-        if driver.drsAvailable then
-            physics.setAIThrottleLimit(driver.index, 1)
+        if driver.drsAvailable and DRS_ENABLED then
             if driver.drsZone and driver.car.gas > 0.8 and driver.car.isAIControlled then
                 physics.setCarDRS(driver.index, true)
             end
@@ -439,13 +463,13 @@ local function alternateAIAttack(driver)
     local delta = driver.carAheadDelta
     local defaultAgression = driver.aiAggression
     local defaultLevel = driver.aiLevel
-
+    
     if delta < 0.6 and delta >= 0.3 then
-        physics.setAIAggression(driver.index, defaultAgression + 0.15)
+        physics.setAIAggression(driver.index, math.clamp(defaultAgression + 0.15,0,0.60))
     elseif delta < 0.3 and delta >= 0 then
-        physics.setAIAggression(driver.index, defaultAgression + 0.05)
+        physics.setAIAggression(driver.index, math.clamp(defaultAgression + 0.05,0,0.60))
     else
-        physics.setAIAggression(driver.index, defaultAgression - 0.10)
+        physics.setAIAggression(driver.index, 0)
     end
 end
 
@@ -542,13 +566,18 @@ local function aiPitNewTires(sim,driver)
     end
 end
 
-local F1RegsData = ac.connect{
+local F1RegsData = ac.connect({
+    ac.StructItem.key('F1RegsData'),
+    connected = ac.StructItem.boolean(),
+    drsEnabled = ac.StructItem.boolean(),
     drsAvailable = ac.StructItem.boolean(),
     carAhead = ac.StructItem.int16(),
-    carAheadDelta = ac.StructItem.float()
-}
+    carAheadDelta = ac.StructItem.float(),
+},false,ac.SharedNamespace.Shared)
 
 local function storeData(driver)
+    F1RegsData.connected = true
+    F1RegsData.drsEnabled = DRS_ENABLED
     F1RegsData.drsAvailable = driver.drsAvailable
     F1RegsData.carAhead = driver.carAhead
     F1RegsData.carAheadDelta = driver.carAheadDelta
@@ -571,7 +600,6 @@ local function controlSystems(sim)
         else
             if driver.car.isInPit then
                 physics.setCarFuel(driver.index, driver.aiPrePitFuel + 2)
-                ac.log(driver.name.." "..driver.aiPrePitFuel)
             end
         end
         
@@ -606,7 +634,16 @@ local function initialize(sim)
     LEADER_LAPS = 0
     VSC_DEPLOYED = false
     VSC_CALLED = false
+    F1RegsData.connected = false
     local csp_version = ac.getPatchVersionCode()
+
+    local trackSurfaces = MappedConfig(ac.getTrackDataFilename('surfaces.ini'), {
+        _SCRIPTING_PHYSICS = { ALLOW_APPS = 'bullshit' },
+        SURFACE_0 = { WAV_PITCH = 'bullshit' }
+    })
+
+    trackSurfaces:set('_SCRIPTING_PHYSICS', 'ALLOW_APPS', 1)
+    trackSurfaces:set('SURFACE_0', 'WAV_PITCH', 'extended-0')
 
     physics.overrideRacingFlag(ac.FlagType.None)
 
@@ -636,7 +673,6 @@ local function initialize(sim)
         RULES = { DRS_LAPS = ac.INIConfig.OptionalNumber, DRS_DELTA = ac.INIConfig.OptionalNumber,
         MGUK_CHANGE_LIMIT = ac.INIConfig.OptionalNumber, MAX_ERS = ac.INIConfig.OptionalNumber,
         WET_DRS_LIMIT = ac.INIConfig.OptionalNumber },
-
     })
     log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings.ini")
 
@@ -649,13 +685,18 @@ local function initialize(sim)
         table.insert(DRIVERS, driverIndex, Driver(driverIndex))
         local driver = DRIVERS[driverIndex]
         driver:refresh()
+        driver.drsAvailable = false
+        driver.drsLocked = true
         driver.trackPosition = driver.racePosition
         driver.mgukDeliveryCount = 0
         lockDRS(driver)
 
         if driver.car.isAIControlled then
             physics.setCarFuel(driver.index, 140)
-            physics.setExtraAIGrip(driver.index,1.5)
+        end
+
+        if driver.index == 0 then
+            storeData(driver)
         end
 
         log("[Loaded] Driver "..driver.index..": "..driver.name)
@@ -684,6 +725,7 @@ function script.update()
     if sim.raceSessionType == 3 then
         -- Initialize the session
         if sim.timeToSessionStart < 10000 and not INITIALIZED then INITIALIZED = initialize(sim)
+        elseif sim.timeToSessionStart < 7000 and INITIALIZED and not physics.allowed() then ac.restartAssettoCorsa()
         -- Race session has started
         elseif sim.isSessionStarted and not INITIALIZED then INITIALIZED = initialize(sim)
         elseif INITIALIZED then
@@ -736,7 +778,7 @@ function script.windowMain(dt)
         ui.treeNode("[MGUK]", ui.TreeNodeFlags.DefaultOpen, function ()
             if driver.mgukPresent then
                 ui.text("- ERS Spent: "..string.format("%2.1f", driver.car.kersCurrentKJ).."/"..rules.MAX_ERS.." KJ")
-                ui.text("- MGUK Mode: "..driver.mgukDelivery)
+                ui.text("- MGUK Mode: "..string.upper(ac.getMGUKDeliveryName(driver.index)))
                 ui.text("- MGUK Switch Count: "..driver.mgukDeliveryCount.."/"..rules.MGUK_CHANGE_LIMIT)
             else
                 ui.text("MGUK not present")
