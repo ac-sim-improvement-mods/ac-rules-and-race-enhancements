@@ -706,7 +706,7 @@ function script.update()
     local error = ac.getLastError()
 
     if error then
-        ac.log(error)
+        log(error)
         INITIALIZED = initialize(sim)
     end
 
@@ -734,7 +734,21 @@ local function upperBool(s)
     return string.upper(tostring(s))
 end
 
-function script.windowMain(dt)
+
+function script.windowSettings(dt)
+    local current = 1
+    local keys = { [0] = 'None', 'Left', 'Right', 'Middle', 'Fourth', 'Fifth' }
+    ui.combo("test", keys[0] or 'None', ui.ComboFlags.None, function ()
+      for i = 0, #keys do
+        local v = keys[i]
+        if ui.selectable(v, i == 0 and current < 1 or i == current) then
+          
+        end
+      end
+    end)
+end
+
+function script.windowDebug(dt)
     local sim = ac.getSim()
 
     if sim.raceSessionType == 3 and INITIALIZED then
