@@ -22,12 +22,12 @@ local function log(msg)
     ac.log("[F1Regs] "..msg)
 end
 
----@class MappedConfig
----@field filename string
----@field ini ac.INIConfig
----@field data table
----@field original table
----@field map table
+---@param MappedConfig
+---@param filename string
+---@param ini ac.INIConfig
+---@param data table
+---@param original table
+---@param map table
 local MappedConfig = class('MappedConfig', function(filename, map)
   local ini = ac.INIConfig.load(filename)
   local data = ini:mapConfig(map)
@@ -49,7 +49,6 @@ end
 ---@param section string
 ---@param key string
 ---@param value number|boolean
----@param triggerControlReload boolean?
 function MappedConfig:set(section, key, value, hexFormat)
   if not self.data[section] then self.data[section] = {} end
   if type(value) == 'number' and not (value > -1e9 and value < 1e9) then error('Sanity check failed: '..tostring(value)) end
@@ -734,6 +733,9 @@ local function upperBool(s)
     return string.upper(tostring(s))
 end
 
+function script.windowMain(dt)
+    -- JUST TO KEEP THE SCRIPT ALIVE
+end
 
 function script.windowSettings(dt)
     local current = 1
