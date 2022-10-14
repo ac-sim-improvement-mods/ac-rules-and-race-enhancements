@@ -262,11 +262,10 @@ end
 
 --- Returns the main driver's distance to the detection line in meters
 ---@param driver Driver
----@return number
+---@return numberW
 local function getStartDistanceM(sim,driver)
-    local distance = (DRS_ZONES.startZones[driver.drsZoneId]*sim.trackLengthM)-getTrackPositionM(driver.index)
+    local distance = (DRS_ZONES.startZones[driver.drsZoneId]*sim.trackLengthM)-driver.trackProgress
     if distance <= 0 then distance = distance + sim.trackLengthM end
-
     return math.round(math.clamp(distance,0,10000), 5)
 end
 
@@ -274,7 +273,7 @@ end
 ---@param driver Driver
 ---@return number
 local function getEndDistanceM(sim,driver)
-    local distance = (DRS_ZONES.endZones[driver.drsZonePrevId]*sim.trackLengthM)-getTrackPositionM(driver.index)
+    local distance = (DRS_ZONES.endZones[driver.drsZonePrevId]*sim.trackLengthM)-driver.trackProgress
     if distance <= 0 then distance = distance + sim.trackLengthM end
 
     return math.round(math.clamp(distance,0,10000), 5)
@@ -284,7 +283,7 @@ end
 ---@param driver Driver
 ---@return number
 local function getDetectionDistanceM(sim,driver)
-    local distance = (DRS_ZONES.detectionZones[driver.drsZoneId]*sim.trackLengthM)-getTrackPositionM(driver.index)
+    local distance = (DRS_ZONES.detectionZones[driver.drsZoneId]*sim.trackLengthM)-driver.trackProgress
     if distance <= 0 then distance = distance + sim.trackLengthM end
 
     return math.round(math.clamp(distance,0,10000), 5)
@@ -301,7 +300,7 @@ local function getNextDetectionLine(sim,driver)
 
     --- Get next detection line
     for zone_index=0, drs_zones.zoneCount-1 do
-        local startDistance = (DRS_ZONES.startZones[zone_index]*sim.trackLengthM)-getTrackPositionM(driver.index)
+        local startDistance = (DRS_ZONES.startZones[zone_index]*sim.trackLengthM)-driver.trackProgress
         if startDistance <= 0 then startDistance = startDistance + sim.trackLengthM end
 
         if zone_index == 0 then
@@ -353,11 +352,14 @@ end
 
 --- Check if driver is on track or in pits
 ---@return table
-local function getTrackOrder()
+local function setTrackOrder()
     local track_order = {}
-    for index=0, #DRIVERS do
-        if not inPits(DRIVERS[index]) then
-            table.insert(track_order,DRIVERS[index])
+    local drivers = DRIVERS
+    for index=0, #drivers do
+        if not inPits(drivers[index]) then
+            table.insert(track_order,drivers[index])
+        else
+            DRIVERS[index].trackPosition = -1
         end
     end
 
@@ -366,30 +368,23 @@ local function getTrackOrder()
     -- Sort drivers by position on track, and ignore drivers in the pits
     table.sort(track_order, function (a,b) return a.trackProgress > b.trackProgress end)
 
-    return track_order
+    for index=1, #track_order do
+        DRIVERS[track_order[index].index].trackPosition = index
+
+        if index == 1 then
+            DRIVERS[track_order[index].index].carAhead = track_order[#track_order].index
+        else
+            DRIVERS[track_order[index].index].carAhead = track_order[index - 1].index
+        end
+    end
 end
 
 --- Returns time delta between the driver and driver ahead on track
 ---@param driver Driver
 ---@return number
 local function getDelta(driver)
-    local track_order = getTrackOrder()
-
-    -- Determine the driver ahead's driver index
-    -- If the driver has the most track progress, then the next driver is the driver with the least track progress
-    for index=1, #track_order do 
-        if driver.index == track_order[index].index then
-            driver.trackPosition = index
-            if index == 1 then
-                driver.carAhead = track_order[#track_order].index
-            else
-                driver.carAhead = track_order[index - 1].index
-            end
-        end
-    end
-
 ---@diagnostic disable-next-line: return-type-mismatch
-    return math.round((getTrackPositionM(driver.carAhead) - getTrackPositionM(driver.index)) / (driver.car.speedKmh / 3.6),5)
+    return math.round((DRIVERS[driver.carAhead].trackProgress - driver.trackProgress) / (driver.car.speedKmh / 3.6),5)
 end
 
 --- Checks if delta is within 1 second
@@ -611,7 +606,6 @@ local function aiPitNewTires(sim,driver)
     end
 end
 
-
 --- Controls all of the regulated systems
 local function controlSystems(sim)
     local drivers = DRIVERS
@@ -619,6 +613,7 @@ local function controlSystems(sim)
     local vsc_deployed = VSC_DEPLOYED
     local vsc_called = VSC_CALLED
 
+    setTrackOrder()
     for index=0, #drivers do
         local driver = drivers[index]
         driver:refresh()
@@ -652,7 +647,6 @@ local function controlSystems(sim)
             storeData(driver)
         end
     end
-
     if LEADER_LAPS >= 0 then
         enableVSC(sim,best_lap_times)
     end
@@ -803,6 +797,9 @@ function script.windowDebug(dt)
     local sim = ac.getSim()
 
     if sim.raceSessionType == 3 and INITIALIZED then
+        if not sim.isSessionStarted then
+            return
+        end
         local driver = DRIVERS[sim.focusedCar]
         local math = math
         local rules = F1R_CONFIG.data.RULES
@@ -884,7 +881,7 @@ function script.windowDebug(dt)
                     ui.bulletText("End: "..tostring(getEndDistanceM(sim,driver)).." m")
                     ui.bulletText("Detect Zone ID: "..upperBool(driver.drsZonePrevId))
                     ui.bulletText("Next Detect Zone ID: "..upperBool(driver.drsZoneId))
-                    ui.bulletText("Track Prog: "..tostring(math.round(getTrackPositionM(driver.index),5)).." m")
+                    ui.bulletText("Track Prog: "..tostring(math.round(driver.trackProgress,5)).." m")
                 else ui.bulletText("IN PITS") end
             else
                 ui.bulletText("DRS not present")
