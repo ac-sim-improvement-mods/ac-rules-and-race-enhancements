@@ -1,7 +1,6 @@
 ---
 --- Script v0.9.0-alpha
 ---
-require("f1r_util")
 
 local INITIALIZED = false
 
@@ -19,6 +18,29 @@ local VSC_DEPLOYED = false
 local VSC_LAP_TIME = 180000
 local VSC_START_TIMER = 1000
 local VSC_END_TIMER = 3000
+
+function log(message)
+    ac.log("[F1Regs] "..message)
+end
+
+local F1RegsData = ac.connect({
+    ac.StructItem.key('F1RegsData'),
+    connected = ac.StructItem.boolean(),
+    drsEnabled = ac.StructItem.boolean(),
+    drsLocked = ac.StructItem.boolean(),
+    drsAvailable = ac.StructItem.boolean(),
+    carAhead = ac.StructItem.int16(),
+    carAheadDelta = ac.StructItem.float(),
+},false,ac.SharedNamespace.Shared)
+
+local function storeData(driver)
+    F1RegsData.connected = true
+    F1RegsData.drsEnabled = DRS_ENABLED
+    F1RegsData.drsAvailable = driver.drsAvailable
+    F1RegsData.carAheadDelta = driver.drsLocked
+    F1RegsData.carAhead = driver.carAhead
+    F1RegsData.carAheadDelta = driver.carAheadDelta
+end
 
 ---@param MappedConfig
 ---@param filename string
@@ -83,13 +105,15 @@ local Driver = class('Driver', function(carIndex)
     local isInPitLane = car.isInPitlane
 
     local drsPresent = car.drsPresent
-    local drsLocked = true
+    local drsLocked = false
     local drsActivationZone = false
     local drsZone = car.drsAvailable
     local drsZoneId = 0
+    local drsZonePrevId = 0
     local drsActive = car.drsActive
     local drsCheck = false
     local drsAvailable = false
+    local drsDeployable = false
 
     local mgukPresent = car.hasCockpitERSDelivery
     local mgukLocked = false
@@ -103,7 +127,7 @@ local Driver = class('Driver', function(carIndex)
     local returnRacePosition = -1
     local returnPostionTimer = -1
 
-    return {aiPrePitFuel = aiPrePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, trackProgress = trackProgress, returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted,
+    return {drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, aiPrePitFuel = aiPrePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, trackProgress = trackProgress, returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted,
         drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
         mgukPresent = mgukPresent, mgukLocked = mgukLocked, mgukDelivery = mgukDelivery, mgukDeliveryCount = mgukDeliveryCount}
 end, class.NoInitialize)
@@ -239,40 +263,82 @@ end
 --- Returns the main driver's distance to the detection line in meters
 ---@param driver Driver
 ---@return number
+local function getStartDistanceM(sim,driver)
+    local distance = (DRS_ZONES.startZones[driver.drsZoneId]*sim.trackLengthM)-getTrackPositionM(driver.index)
+    if distance <= 0 then distance = distance + sim.trackLengthM end
+
+    return math.round(math.clamp(distance,0,10000), 5)
+end
+
+--- Returns the main driver's distance to the detection line in meters
+---@param driver Driver
+---@return number
+local function getEndDistanceM(sim,driver)
+    local distance = (DRS_ZONES.endZones[driver.drsZonePrevId]*sim.trackLengthM)-getTrackPositionM(driver.index)
+    if distance <= 0 then distance = distance + sim.trackLengthM end
+
+    return math.round(math.clamp(distance,0,10000), 5)
+end
+
+--- Returns the main driver's distance to the detection line in meters
+---@param driver Driver
+---@return number
 local function getDetectionDistanceM(sim,driver)
-    return math.round(math.clamp((DRS_ZONES.detectionZones[driver.drsZoneId]*sim.trackLengthM)-getTrackPositionM(driver.index),0,10000), 5)
+    local distance = (DRS_ZONES.detectionZones[driver.drsZoneId]*sim.trackLengthM)-getTrackPositionM(driver.index)
+    if distance <= 0 then distance = distance + sim.trackLengthM end
+
+    return math.round(math.clamp(distance,0,10000), 5)
 end
 
 --- Converts session type number to the corresponding session type string 
 ---@param driver Driver
 ---@return boolean
-local function inDetectionZone(driver)
-    local track_pos = ac.worldCoordinateToTrackProgress(driver.car.position)
+local function getNextDetectionLine(sim,driver)
     local drs_zones = DRS_ZONES
+    local closestStart = 0
+    local drsZone = 0
+    local drsZonePrev = 0
 
     --- Get next detection line
     for zone_index=0, drs_zones.zoneCount-1 do
-        local prev_zone = zone_index-1
-        -- Sets the previous DRS zone to the last DRS zone
+        local startDistance = (DRS_ZONES.startZones[zone_index]*sim.trackLengthM)-getTrackPositionM(driver.index)
+        if startDistance <= 0 then startDistance = startDistance + sim.trackLengthM end
+
         if zone_index == 0 then
-            prev_zone = drs_zones.zoneCount-1
-        end
-        -- If driver is between the end zone of the previous DRS zone, and the detection line of the upcoming DRS zone
-        if track_pos <= drs_zones.detectionZones[zone_index] and track_pos >= drs_zones.startZones[prev_zone] then
-            driver.drsZoneId = zone_index
-            return true
+            closestStart = startDistance
+            drsZone = 0
+            drsZonePrev = drs_zones.zoneCount-1
+        else
+            if startDistance < closestStart then
+                closestStart = startDistance
+                drsZone = zone_index
+                drsZonePrev = zone_index - 1
+            end
         end
     end
 
+    driver.drsZoneId = drsZone
+    driver.drsZonePrevId = drsZonePrev
+
     return false
+end
+
+local function crossedDetectionLine(driver)
+    local drs_zones = DRS_ZONES
+    local track_pos = ac.worldCoordinateToTrackProgress(driver.car.position)
+
+    -- If driver is between the end zone of the previous DRS zone, and the detection line of the upcoming DRS zone
+    if track_pos >= drs_zones.detectionZones[driver.drsZoneId] and track_pos < drs_zones.startZones[driver.drsZoneId] then
+        return true
+    else
+        return false
+    end
 end
 
 --- Locks the specified driver's DRS
 ---@param driver Driver
 local function lockDRS(driver)
-    driver.drsLocked = true
     driver.drsAvailable = false
-    driver.drsCheck = false
 
     physics.allowCarDRS(driver.index, false)
     physics.setCarDRS(driver.index, false)
@@ -311,7 +377,7 @@ local function getDelta(driver)
 
     -- Determine the driver ahead's driver index
     -- If the driver has the most track progress, then the next driver is the driver with the least track progress
-    for index=1, #track_order do
+    for index=1, #track_order do 
         if driver.index == track_order[index].index then
             driver.trackPosition = index
             if index == 1 then
@@ -340,33 +406,23 @@ end
 ---@param driver Driver
 local function drsAvailable(driver)
     if not inPits(driver) then
-        local binDetectionZone = inDetectionZone(driver)
-        local bCheckGap = checkGap(driver)
-        local bInDrsZone = driver.car.drsAvailable
+        local inGap = checkGap(driver)
+        local inDrsZone = driver.car.drsAvailable
 
-        if binDetectionZone then
-            driver.drsCheck = bCheckGap
-            if not bInDrsZone then
-                driver.drsLocked = false
-            elseif driver.drsLocked then
-                return false
-            end
-            if driver.drsAvailable and bInDrsZone then
-                return true
-            elseif bCheckGap then
-                return true
-            elseif not bCheckGap and bInDrsZone then
-                return false
+        if crossedDetectionLine(driver) == false then
+            driver.drsCheck = inGap
+            if driver.drsAvailable and inDrsZone and driver.drsActive then 
+                driver.drsDeployable = true
+            elseif driver.drsAvailable and not inDrsZone and driver.drsDeployable then
+                driver.drsAvailable = false
+                driver.drsDeployable = false
             end
         else
-            if driver.drsCheck and not driver.drsLocked then
-                return true
-            else
-                return false
-            end
+            driver.drsAvailable = driver.drsCheck
+            driver.drsDeployable = false
         end
     else
-        return false
+        driver.drsAvailable = false
     end
 end
 
@@ -417,7 +473,7 @@ end
 local function controlDRS(sim,driver)
     DRS_ENABLED = enableDRS(sim)
     if sim.isSessionStarted then
-        driver.drsAvailable = drsAvailable(driver)
+        drsAvailable(driver)
         
         if driver.drsAvailable and DRS_ENABLED then
             if driver.drsZone and driver.car.gas > 0.8 and driver.car.isAIControlled then
@@ -555,22 +611,6 @@ local function aiPitNewTires(sim,driver)
     end
 end
 
-local F1RegsData = ac.connect({
-    ac.StructItem.key('F1RegsData'),
-    connected = ac.StructItem.boolean(),
-    drsEnabled = ac.StructItem.boolean(),
-    drsAvailable = ac.StructItem.boolean(),
-    carAhead = ac.StructItem.int16(),
-    carAheadDelta = ac.StructItem.float(),
-},false,ac.SharedNamespace.Shared)
-
-local function storeData(driver)
-    F1RegsData.connected = true
-    F1RegsData.drsEnabled = DRS_ENABLED
-    F1RegsData.drsAvailable = driver.drsAvailable
-    F1RegsData.carAhead = driver.carAhead
-    F1RegsData.carAheadDelta = driver.carAheadDelta
-end
 
 --- Controls all of the regulated systems
 local function controlSystems(sim)
@@ -583,6 +623,7 @@ local function controlSystems(sim)
         local driver = drivers[index]
         driver:refresh()
         setLeaderLaps(driver)
+        getNextDetectionLine(sim,driver)
 
         if not inPits(driver) then
             aiPitNewTires(sim,driver)
@@ -626,13 +667,15 @@ local function initialize(sim)
     F1RegsData.connected = false
     local csp_version = ac.getPatchVersionCode()
 
-    local trackSurfaces = MappedConfig(ac.getTrackDataFilename('surfaces.ini'), {
-        _SCRIPTING_PHYSICS = { ALLOW_APPS = 'bullshit' },
-        SURFACE_0 = { WAV_PITCH = 'bullshit' }
-    })
-
-    trackSurfaces:set('_SCRIPTING_PHYSICS', 'ALLOW_APPS', '1')
-    trackSurfaces:set('SURFACE_0', 'WAV_PITCH', 'extended-0')
+    if not physics.allowed() then
+        local trackSurfaces = MappedConfig(ac.getTrackDataFilename('surfaces.ini'), {
+            _SCRIPTING_PHYSICS = { ALLOW_APPS = 'bullshit' },
+            SURFACE_0 = { WAV_PITCH = 'bullshit' }
+        })
+    
+        trackSurfaces:set('_SCRIPTING_PHYSICS', 'ALLOW_APPS', '1')
+        trackSurfaces:set('SURFACE_0', 'WAV_PITCH', 'extended-0')
+    end
 
     physics.overrideRacingFlag(ac.FlagType.None)
 
@@ -675,7 +718,6 @@ local function initialize(sim)
         local driver = DRIVERS[driverIndex]
         driver:refresh()
         driver.drsAvailable = false
-        driver.drsLocked = true
         driver.trackPosition = driver.racePosition
         driver.mgukDeliveryCount = 0
         lockDRS(driver)
@@ -703,23 +745,6 @@ local BRAKEBIAS = ac.getCar(0).brakeBias
 function script.update()
     local sim = ac.getSim()
     local error = ac.getLastError()
-
-    local lowbb = ac.getCar(0).brakesBiasLimitDown
-    local highbb = ac.getCar(0).brakesBiasLimitUp
-    local brakeforce = ac.getCar(0).brake
-    local bb = 0
-    local bmig = 0.09
-    local altbb = BRAKEBIAS + (BRAKEBIAS*brakeforce*bmig)
-    if brakeforce > 0 then
-        bb = math.clamp(altbb,lowbb,highbb)
-        ac.setBrakeBias(bb)
-        ac.debug("altbb",altbb)
-        ac.debug("bb",bb)
-        ac.debug("brakebias",BRAKEBIAS)
-    else
-        BRAKEBIAS = ac.getCar(0).brakeBias
-    end
-
 
     if error then
         log(error)
@@ -847,12 +872,17 @@ function script.windowDebug(dt)
                     if driver.car.speedKmh >= 1 then ui.bulletText("Delta: "..math.round(getDelta(driver),3))
                     else ui.bulletText("Delta: ---") end
                     ui.bulletText("In Gap: "..upperBool(checkGap(driver)))
-                    ui.bulletText("Locked: "..upperBool(driver.drsLocked))
-                    ui.bulletText("Available: "..upperBool(driver.drsAvailable))
-                    ui.bulletText("Deploy Zone: "..upperBool(driver.car.drsAvailable))
-                    ui.bulletText("Active: "..upperBool(driver.drsActive))
-                    ui.bulletText("Detection Zone: "..upperBool(inDetectionZone(driver)))
-                    ui.bulletText("Detection Line: "..tostring(getDetectionDistanceM(sim,driver)).." m")
+                    ui.bulletText("Check: "..upperBool(driver.drsCheck))
+                    ui.bulletText("Crossed Detection: "..upperBool(crossedDetectionLine(driver)))
+                    ui.bulletText("DRS Available: "..upperBool(driver.drsAvailable))
+                    ui.bulletText("DRS Deploy Zone: "..upperBool(driver.car.drsAvailable))
+                    ui.bulletText("DRS Deployable: "..upperBool(driver.drsDeployable))
+                    ui.bulletText("DRS Active: "..upperBool(driver.drsActive))
+                    ui.bulletText("DRS Locked: "..upperBool(driver.drsLocked))
+                    ui.bulletText("Detection: "..tostring(getDetectionDistanceM(sim,driver)).." m")
+                    ui.bulletText("Start: "..tostring(getStartDistanceM(sim,driver)).." m")
+                    ui.bulletText("End: "..tostring(getEndDistanceM(sim,driver)).." m")
+                    ui.bulletText("Detect Zone ID: "..upperBool(driver.drsZonePrevId))
                     ui.bulletText("Next Detect Zone ID: "..upperBool(driver.drsZoneId))
                     ui.bulletText("Track Prog: "..tostring(math.round(getTrackPositionM(driver.index),5)).." m")
                 else ui.bulletText("IN PITS") end
