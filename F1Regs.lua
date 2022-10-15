@@ -793,6 +793,26 @@ function script.windowSettings(dt)
     end)
 end
 
+local function inLineBulletText(label,text,space)
+    ui.bulletText(label)
+    ui.sameLine(space, 0)
+    if text == "TRUE" then
+        ui.textColored(text, rgbm(0,1,0,1))
+    elseif text == "FALSE" then
+        ui.textColored(text, rgbm(1,0,0,1))
+    elseif label == "Delta" then
+        if text == "---" then
+        ui.textColored("---", rgbm(1,1,1,1))
+        elseif text <= 1 and text > 0 then
+            ui.textColored(text, rgbm(0,1,0,1))
+        else
+            ui.textColored(text, rgbm(1,0,0,1))
+        end
+    else
+        ui.text(text)
+    end
+end
+
 function script.windowDebug(dt)
     local sim = ac.getSim()
 
@@ -806,48 +826,59 @@ function script.windowDebug(dt)
 
         ui.pushFont(ui.Font.Small)
 
-        ui.separator()
-        ui.treeNode("["..sessionTypeString(sim).." SESSION]", ui.TreeNodeFlags.DefaultOpen, function ()
-            ui.bulletText("Physics: "..upperBool(physics.allowed()))
-            ui.bulletText("Race Started: "..upperBool(sim.isSessionStarted))
-            ui.bulletText("Leader Lap: "..LEADER_LAPS+1)
-            ui.bulletText("Lap: "..(driver.lapsCompleted+1).."/"..ac.getSession(sim.currentSessionIndex).laps)
-            ui.bulletText("Race Position: "..driver.car.racePosition.."/"..sim.carsCount)
-
-            ui.bulletText("Track Position: "..driver.trackPosition.."/"..DRIVERS_ON_TRACK)
-
-
+        ui.treeNode("["..sessionTypeString(sim).." SESSION]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            local space = 170
+            inLineBulletText("Physics", upperBool(physics.allowed()),space)
+            inLineBulletText("Race Started", upperBool(sim.isSessionStarted),space)
+            inLineBulletText("Leader Lap", LEADER_LAPS+1,space)
+            inLineBulletText("VSC Called", upperBool(VSC_CALLED),space)
+            inLineBulletText("VSC Deployed", upperBool(VSC_DEPLOYED),space)
+            inLineBulletText("VSC Lap TIme", upperBool(VSC_LAP_TIME),space)
         end)
 
 
         if driver.aiControlled then
-            ui.separator()
-            ui.treeNode("[AI]", ui.TreeNodeFlags.DefaultOpen, function ()
-                ui.bulletText("AI Level: ["..math.round(driver.aiLevel*100,2).."] "..math.round(driver.car.aiLevel*100,2))
-                ui.bulletText("AI Aggr : ["..math.round(driver.aiAggression*100,2).."] "..math.round(driver.car.aiAggression*100,2))
+            ui.treeNode("[AI]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+                local space = 170
+                inLineBulletText("Driver ["..driver.index.."]", driver.name,space)
+                inLineBulletText("Ahead ["..driver.carAhead.."]", tostring(ac.getDriverName(driver.carAhead)),space)
+                inLineBulletText("Track Position", driver.trackPosition.."/"..DRIVERS_ON_TRACK,space)
+                inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
+                inLineBulletText("Lap", (driver.lapsCompleted+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
+                inLineBulletText("Fuel", math.round(driver.car.fuel,5),space)
+                inLineBulletText("AI Level", "["..math.round(driver.aiLevel*100,2).."] "..math.round(driver.car.aiLevel*100,2),space)
+                inLineBulletText("AI Aggr", "["..math.round(driver.aiAggression*100,2).."] "..math.round(driver.car.aiAggression*100,2),space)
+            end)
+        else
+            ui.treeNode("[Driver]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+                local space = 170
+                inLineBulletText("Driver ["..driver.index.."]", driver.name,space)
+                if not inPits(driver) then
+                    inLineBulletText("Ahead ["..driver.carAhead.."]", tostring(ac.getDriverName(driver.carAhead)),space)
+                    inLineBulletText("Track Position", driver.trackPosition.."/"..DRIVERS_ON_TRACK,space)
+                end
+                inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
+                inLineBulletText("Lap", (driver.lapsCompleted+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
+                inLineBulletText("Fuel", math.round(driver.car.fuel,5),space)
             end)
         end
 
-        ui.separator()
-        ui.treeNode("[Tyres]", ui.TreeNodeFlags.DefaultOpen, function ()
-            ui.bulletText("Wear [FL]: "..math.round(100-(driver.car.wheels[0].tyreWear*100),5))
-            ui.bulletText("Wear [RL]: "..math.round(100-(driver.car.wheels[2].tyreWear*100),5))
-            ui.bulletText("Wear [FR]: "..math.round(100-(driver.car.wheels[1].tyreWear*100),5))
-            ui.bulletText("Wear [RR: "..math.round(100-(driver.car.wheels[3].tyreWear*100),5))
-
+        ui.treeNode("[Tyres]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            local space = 170
+            inLineBulletText("Wear [FL]", math.round(100-(driver.car.wheels[0].tyreWear*100),5),space)
+            inLineBulletText("Wear [RL]", math.round(100-(driver.car.wheels[2].tyreWear*100),5),space)
+            inLineBulletText("Wear [FR]", math.round(100-(driver.car.wheels[1].tyreWear*100),5),space)
+            inLineBulletText("Wear [RR]", math.round(100-(driver.car.wheels[3].tyreWear*100),5),space)
         end)
 
-        ui.separator()
-        ui.treeNode("[MGUK]", ui.TreeNodeFlags.DefaultOpen, function ()
-            if driver.mgukPresent then
-                ui.bulletText("ERS Spent: "..string.format("%2.1f", driver.car.kersCurrentKJ).."/"..rules.MAX_ERS.." KJ")
-                ui.bulletText("MGUK Mode: "..string.upper(ac.getMGUKDeliveryName(driver.index)))
-                ui.bulletText("MGUK Switch Count: "..driver.mgukDeliveryCount.."/"..rules.MGUK_CHANGE_LIMIT)
-            else
-                ui.bulletText("MGUK not present")
-            end
-
-        end)
+        if driver.mgukPresent then
+            ui.treeNode("[MGUK]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+                local space = 170
+                inLineBulletText("ERS Spent", string.format("%2.1f", driver.car.kersCurrentKJ).."/"..rules.MAX_ERS.." KJ",space)
+                inLineBulletText("Mode", string.upper(ac.getMGUKDeliveryName(driver.index)),space)
+                inLineBulletText("Switch Count", driver.mgukDeliveryCount.."/"..rules.MGUK_CHANGE_LIMIT,space)
+            end)
+        end
 
         local drs_title = ""
         if not WET_TRACK then
@@ -860,40 +891,31 @@ function script.windowDebug(dt)
             drs_title = "[DRS Disabled | Wet Conditions]"
         end
 
-        ui.separator()
-        ui.treeNode(drs_title, ui.TreeNodeFlags.DefaultOpen, function ()
+        ui.treeNode(drs_title, ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            local space = 170
             if driver.drsPresent then
                 if not inPits(driver) then
-                    ui.bulletText("Ahead : ["..driver.carAhead.."] "..tostring(ac.getDriverName(driver.carAhead)))
-                    ui.bulletText("Driver:  ["..driver.index.."] "..driver.name)
-                    if driver.car.speedKmh >= 1 then ui.bulletText("Delta: "..math.round(getDelta(driver),3))
-                    else ui.bulletText("Delta: ---") end
-                    ui.bulletText("In Gap: "..upperBool(checkGap(driver)))
-                    ui.bulletText("Check: "..upperBool(driver.drsCheck))
-                    ui.bulletText("Crossed Detection: "..upperBool(crossedDetectionLine(driver)))
-                    ui.bulletText("DRS Available: "..upperBool(driver.drsAvailable))
-                    ui.bulletText("DRS Deploy Zone: "..upperBool(driver.car.drsAvailable))
-                    ui.bulletText("DRS Deployable: "..upperBool(driver.drsDeployable))
-                    ui.bulletText("DRS Active: "..upperBool(driver.drsActive))
-                    ui.bulletText("DRS Locked: "..upperBool(driver.drsLocked))
-                    ui.bulletText("Detection: "..tostring(getDetectionDistanceM(sim,driver)).." m")
-                    ui.bulletText("Start: "..tostring(getStartDistanceM(sim,driver)).." m")
-                    ui.bulletText("End: "..tostring(getEndDistanceM(sim,driver)).." m")
-                    ui.bulletText("Detect Zone ID: "..upperBool(driver.drsZonePrevId))
-                    ui.bulletText("Next Detect Zone ID: "..upperBool(driver.drsZoneId))
-                    ui.bulletText("Track Prog: "..tostring(math.round(driver.trackProgress,5)).." m")
+                    if driver.car.speedKmh >= 1 then inLineBulletText("Delta", math.round(getDelta(driver),3),space)
+                    else inLineBulletText("Delta","---",space )end
+                    inLineBulletText("In Gap", upperBool(checkGap(driver)),space)
+                    inLineBulletText("Check", upperBool(driver.drsCheck),space)
+                    inLineBulletText("Crossed Detection", upperBool(crossedDetectionLine(driver)),space)
+                    inLineBulletText("DRS Available", upperBool(driver.drsAvailable),space)
+                    inLineBulletText("DRS Deploy Zone", upperBool(driver.car.drsAvailable),space)
+                    inLineBulletText("DRS Deployable", upperBool(driver.drsDeployable),space)
+                    inLineBulletText("DRS Active", upperBool(driver.drsActive),space)
+                    inLineBulletText("DRS Locked", upperBool(driver.drsLocked),space)
+                    inLineBulletText("Detection", tostring(getDetectionDistanceM(sim,driver)).." m",space)
+                    inLineBulletText("Start", tostring(getStartDistanceM(sim,driver)).." m",space)
+                    inLineBulletText("End", tostring(getEndDistanceM(sim,driver)).." m",space)
+                    inLineBulletText("DRS Zone ID", driver.drsZonePrevId,space)
+                    inLineBulletText("DRS Zone Next ID", driver.drsZoneId,space)
+                    inLineBulletText("Track Progress", tostring(math.round(driver.trackProgress,5)),space)
                 else ui.bulletText("IN PITS") end
             else
                 ui.bulletText("DRS not present")
             end
         end)
-        ui.separator()
-
-        if ui.button("Reload App", vec2(100,30), ui.ButtonFlags.PressedOnClick) then
-            log("[DEBUG] Reinitializing the script!")
-            INITIALIZED = false
-            initialize(sim)
-        end
     else
         ui.pushFont(ui.Font.Main)
         ui.text("This is a "..sessionTypeString(sim).." not a RACE session")
