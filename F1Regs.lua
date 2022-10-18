@@ -2,6 +2,7 @@ local SCRIPT_VERSION = "v0.9.5-alpha"
 local SCRIPT_VERSION_ID = 9500
 
 local INITIALIZED = false
+local REBOOTED = false
 
 local F1R_CONFIG = nil
 local DRS_ZONES = nil
@@ -97,41 +98,30 @@ local Driver = class('Driver', function(carIndex)
     local aiAggression = car.aiAggression
     local aiPrePitFuel = 0
 
-    local racePosition = car.racePosition
     local trackPosition = -1
-    local trackProgress = -1
     local carAhead = -1
     local carAheadDelta = -1
 
-    local isInPit = car.isInPit
-    local isInPitLane = car.isInPitlane
-
-    local drsPresent = car.drsPresent
     local drsLocked = false
     local drsActivationZone = false
-    local drsZone = car.drsAvailable
     local drsZoneId = 0
     local drsZonePrevId = 0
-    local drsActive = car.drsActive
     local drsCheck = false
     local drsAvailable = false
     local drsDeployable = false
-
-    local mgukPresent = car.hasCockpitERSDelivery
-    local mgukLocked = false
-    local mgukDelivery = 0
-    local mgukDeliveryCount = 0
-    local mgukChangeTime = 5
-    local mgukLapCheck = 0
 
     local timePenalty = 0
     local illegalOvertake = false
     local returnRacePosition = -1
     local returnPostionTimer = -1
 
-    return {drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, aiPrePitFuel = aiPrePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, trackProgress = trackProgress, returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, mgukLapCheck = mgukLapCheck, racePosition = racePosition, trackPosition = trackPosition, mgukChangeTime = mgukChangeTime, drsZoneId = drsZoneId, name = name, car = car, carAhead = carAhead, index = index, isInPit = isInPit, isInPitLane = isInPitLane, aiControlled = aiControlled, lapsCompleted = lapsCompleted,
-        drsPresent = drsPresent, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsZone = drsZone, drsActive = drsActive, drsAvailable = drsAvailable,
-        mgukPresent = mgukPresent, mgukLocked = mgukLocked, mgukDelivery = mgukDelivery, mgukDeliveryCount = mgukDeliveryCount}
+    return {
+    drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, drsZoneId = drsZoneId, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsAvailable = drsAvailable,
+    aiControlled = aiControlled, aiPrePitFuel = aiPrePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, 
+    returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, 
+    timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, 
+    trackPosition = trackPosition, name = name, car = car, carAhead = carAhead, index = index, lapsCompleted = lapsCompleted,
+    }
 end, class.NoInitialize)
 
 ---@class DRS_Points
@@ -253,22 +243,11 @@ local function enableDRS(sim)
     end
 end
 
-function Driver:refresh()
-    ac.perfBegin("refresh")
-    local car = self.car
-    self.lapsCompleted = car.lapCount
-    self.drsZone = car.drsAvailable
-    self.drsActive = car.drsActive
-    self.racePosition = car.racePosition
-    self.trackProgress = getTrackPositionM(car.index)
-    ac.perfEnd("refresh")
-end
-
 --- Returns the main driver's distance to the detection line in meters
 ---@param driver Driver
 ---@return numberW
 local function getStartDistanceM(sim,driver)
-    local distance = (DRS_ZONES.startZones[driver.drsZoneId]*sim.trackLengthM)-driver.trackProgress
+    local distance = (DRS_ZONES.startZones[driver.drsZoneId]*sim.trackLengthM)-driver.car.splinePosition
     if distance <= 0 then distance = distance + sim.trackLengthM end
     return math.round(math.clamp(distance,0,10000), 5)
 end
@@ -277,7 +256,7 @@ end
 ---@param driver Driver
 ---@return number
 local function getEndDistanceM(sim,driver)
-    local distance = (DRS_ZONES.endZones[driver.drsZonePrevId]*sim.trackLengthM)-driver.trackProgress
+    local distance = (DRS_ZONES.endZones[driver.drsZonePrevId]*sim.trackLengthM)-driver.car.splinePosition
     if distance <= 0 then distance = distance + sim.trackLengthM end
 
     return math.round(math.clamp(distance,0,10000), 5)
@@ -287,7 +266,7 @@ end
 ---@param driver Driver
 ---@return number
 local function getDetectionDistanceM(sim,driver)
-    local distance = (DRS_ZONES.detectionZones[driver.drsZoneId]*sim.trackLengthM)-driver.trackProgress
+    local distance = (DRS_ZONES.detectionZones[driver.drsZoneId]*sim.trackLengthM)-driver.car.splinePosition
     if distance <= 0 then distance = distance + sim.trackLengthM end
 
     return math.round(math.clamp(distance,0,10000), 5)
@@ -330,7 +309,7 @@ end
 
 local function crossedDetectionLine(driver)
     local drs_zones = DRS_ZONES
-    local track_pos = ac.worldCoordinateToTrackProgress(driver.car.position)
+    local track_pos = driver.car.splinePosition
 
     -- If driver is between the end zone of the previous DRS zone, and the detection line of the upcoming DRS zone
     if track_pos >= drs_zones.detectionZones[driver.drsZoneId] and track_pos < drs_zones.startZones[driver.drsZoneId] then
@@ -358,14 +337,14 @@ end
 
 --- Check if driver is on track or in pits
 local function setTrackOrder()
-    ac.perfBegin("setTrackOrder")
+    ac.perfBegin("3.setTrackOrder")
     local track_order = {}
     local drivers = DRIVERS
     for index=0, #drivers do
         if not inPits(drivers[index]) then
             table.insert(track_order,drivers[index])
         else
-            DRIVERS[index].trackPosition = -1
+            drivers[index].trackPosition = -1
         end
     end
 
@@ -375,16 +354,18 @@ local function setTrackOrder()
     table.sort(track_order, function (a,b) return a.car.splinePosition > b.car.splinePosition end)
 
     for index=1, #track_order do
-        DRIVERS[track_order[index].index].trackPosition = index
+        drivers[track_order[index].index].trackPosition = index
 
         if index == 1 then
-            DRIVERS[track_order[index].index].carAhead = track_order[#track_order].index
+            drivers[track_order[index].index].carAhead = track_order[#track_order].index
         else
-            DRIVERS[track_order[index].index].carAhead = track_order[index - 1].index
+            drivers[track_order[index].index].carAhead = track_order[index - 1].index
         end
     end
 
-    ac.perfEnd("setTrackOrder")
+    DRIVERS = drivers
+
+    ac.perfEnd("3.setTrackOrder")
 end
 
 --- Returns time delta between the driver and driver ahead on track
@@ -392,7 +373,7 @@ end
 ---@return number
 local function getDelta(driver)
 ---@diagnostic disable-next-line: return-type-mismatch
-    return math.round((DRIVERS[driver.carAhead].trackProgress - driver.trackProgress) / (driver.car.speedKmh / 3.6),5)
+    return math.round((DRIVERS[driver.carAhead].car.splinePosition - driver.car.splinePosition) / (driver.car.speedKmh / 3.6) * ac.getSim().trackLengthM,5)
 end
 
 --- Checks if delta is within 1 second
@@ -414,7 +395,7 @@ local function drsAvailable(driver)
 
         if crossedDetectionLine(driver) == false then
             driver.drsCheck = inGap
-            if driver.drsAvailable and inDrsZone and driver.drsActive then 
+            if driver.drsAvailable and inDrsZone and driver.car.drsActive then 
                 driver.drsDeployable = true
             elseif driver.drsAvailable and not inDrsZone and driver.drsDeployable then
                 driver.drsAvailable = false
@@ -438,7 +419,7 @@ local function controlDRS(sim,driver)
         drsAvailable(driver)
         
         if driver.drsAvailable and DRS_ENABLED then
-            if driver.drsZone and driver.car.gas > 0.8 and driver.car.isAIControlled then
+            if driver.car.drsAvailable and driver.car.gas > 0.8 and driver.isAIControlled then
                 physics.setCarDRS(driver.index, true)
             end
         else
@@ -559,7 +540,7 @@ end
 local function setLeaderLaps(driver)
     ac.perfBegin("5.leaderlaps")
     if driver.car.racePosition == 1 then
-        LEADER_LAPS = driver.lapsCompleted
+        LEADER_LAPS = driver.car.lapCount
     end
     ac.perfEnd("5.leaderlaps")
 end
@@ -586,12 +567,10 @@ end
 --- Controls all of the regulated systems
 local function controlSystems(sim)
     ac.perfBegin("2.controlSystems")
-    ac.perfBegin("3.Assignment")
     local drivers = DRIVERS
     local best_lap_times = {}
     local vsc_deployed = VSC_DEPLOYED
     local vsc_called = VSC_CALLED
-    ac.perfEnd("3.Assignment")
 
     setTrackOrder()
 
@@ -599,7 +578,6 @@ local function controlSystems(sim)
     for index=0, #drivers do
         ac.perfBegin("4.driver")
         local driver = drivers[index]
-        driver:refresh()
         setLeaderLaps(driver)
         getNextDetectionLine(sim,driver)
 
@@ -684,7 +662,6 @@ local function initialize(sim)
     -- Load config file
     F1R_CONFIG = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings.ini", {
         RULES = { DRS_LAPS = ac.INIConfig.OptionalNumber, DRS_DELTA = ac.INIConfig.OptionalNumber,
-        MGUK_CHANGE_LIMIT = ac.INIConfig.OptionalNumber, MAX_ERS = ac.INIConfig.OptionalNumber,
         WET_DRS_LIMIT = ac.INIConfig.OptionalNumber },
     })
     log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings.ini")
@@ -697,13 +674,11 @@ local function initialize(sim)
     for driverIndex = 0, sim.carsCount-1 do
         table.insert(DRIVERS, driverIndex, Driver(driverIndex))
         local driver = DRIVERS[driverIndex]
-        driver:refresh()
         driver.drsAvailable = false
-        driver.trackPosition = driver.racePosition
-        driver.mgukDeliveryCount = 0
+        driver.trackPosition = driver.car.racePosition
         lockDRS(driver)
 
-        if driver.car.isAIControlled then
+        if driver.isAIControlled then
             physics.setCarFuel(driver.index, 140)
         end
 
@@ -721,8 +696,6 @@ local function initialize(sim)
     return true
 end
 
-local BRAKEBIAS = ac.getCar(0).brakeBias
-
 function script.update()
     ac.perfBegin("1.main")
     local sim = ac.getSim()
@@ -733,19 +706,19 @@ function script.update()
         INITIALIZED = initialize(sim)
     end
 
-    if sim.timeToSessionStart >= 10000 then
-        INITIALIZED = false
-    end
-
     if sim.raceSessionType == 3 then
-        -- Initialize the session
-        if sim.timeToSessionStart < 10000 and not INITIALIZED then INITIALIZED = initialize(sim)
-        elseif sim.timeToSessionStart < 7000 and INITIALIZED and not physics.allowed() then ac.restartAssettoCorsa()
-        -- Race session has started
-        elseif sim.isSessionStarted and not INITIALIZED then INITIALIZED = initialize(sim)
-        elseif INITIALIZED then
-            controlSystems(sim)
+        if not REBOOTED and sim.isInMainMenu then
+            REBOOTED = true
+            INITIALIZED = false
         end
+
+        -- Initialize the session
+        if (sim.isInMainMenu or sim.isSessionStarted) and not INITIALIZED then INITIALIZED = initialize(sim)
+        elseif not sim.isInMainMenu and not sim.isSessionStarted and REBOOTED and INITIALIZED then
+            if not physics.allowed() then ac.restartAssettoCorsa() end
+            REBOOTED = false
+        -- Race session has started
+        elseif INITIALIZED then controlSystems(sim) end
     end
 
     ac.perfEnd("1.main")
@@ -811,11 +784,8 @@ end
 
 function script.windowDebug(dt)
     local sim = ac.getSim()
-    ac.setWindowTitle("debug", "F1 Regs Debug                          "..SCRIPT_VERSION)
-    if sim.raceSessionType == 3 and INITIALIZED then
-        if not sim.isSessionStarted then
-            return
-        end
+    ac.setWindowTitle("debug", "F1 Regs Debug                "..SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")")
+    if sim.raceSessionType == 3 and INITIALIZED and not sim.isInMainMenu then
         local driver = DRIVERS[sim.focusedCar]
         local math = math
         local rules = F1R_CONFIG.data.RULES
@@ -824,7 +794,8 @@ function script.windowDebug(dt)
         ui.pushFont(ui.Font.Small)
 
         ui.treeNode("["..sessionTypeString(sim).." SESSION]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
-            inLineBulletText("Time", upperBool(physics.allowed()),space)
+            inLineBulletText("Time", -sim.timeToSessionStart,space)
+            inLineBulletText("Time", string.format("%02d:%02d:%02d", sim.timeHours, sim.timeMinutes, sim.timeSeconds),space)
             inLineBulletText("Physics Allowed", upperBool(physics.allowed()),space)
             inLineBulletText("Race Started", upperBool(sim.isSessionStarted),space)
             inLineBulletText("Leader Lap", LEADER_LAPS+1,space)
@@ -840,7 +811,7 @@ function script.windowDebug(dt)
                 inLineBulletText("Ahead ["..driver.carAhead.."]", tostring(ac.getDriverName(driver.carAhead)),space)
                 inLineBulletText("Track Position", driver.trackPosition.."/"..DRIVERS_ON_TRACK,space)
                 inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
-                inLineBulletText("Lap", (driver.lapsCompleted+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
+                inLineBulletText("Lap", (driver.car.lapCount+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
                 inLineBulletText("Fuel", math.round(driver.car.fuel,5).." L",space)
                 inLineBulletText("Fuel Map", driver.car.fuelMap,space)
                 inLineBulletText("AI Level", "["..math.round(driver.aiLevel*100,2).."] "..math.round(driver.car.aiLevel*100,2),space)
@@ -854,7 +825,7 @@ function script.windowDebug(dt)
                     inLineBulletText("Track Position", driver.trackPosition.."/"..DRIVERS_ON_TRACK,space)
                 end
                 inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
-                inLineBulletText("Lap", (driver.lapsCompleted+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
+                inLineBulletText("Lap", (driver.car.lapCount+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
                 inLineBulletText("Fuel", math.round(driver.car.fuel,5).." L",space)
                 inLineBulletText("Fuel Map", driver.car.fuelMap,space)
             end)
@@ -867,7 +838,7 @@ function script.windowDebug(dt)
             inLineBulletText("Wear [RR]", math.round(100-(driver.car.wheels[3].tyreWear*100),5),space)
         end)
 
-        if driver.mgukPresent then
+        if driver.car.kersPresent then
             ui.treeNode("[Hybrid Systems]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
                 local mguhMode = ""
                 if driver.car.mguhChargingBatteries then
@@ -876,7 +847,7 @@ function script.windowDebug(dt)
                     mguhMode = "ENGINE"
                 end
 
-                inLineBulletText("ERS Spent", string.format("%2.1f", driver.car.kersCurrentKJ).."/"..rules.MAX_ERS.." KJ",space)
+                inLineBulletText("ERS Spent", string.format("%2.1f", driver.car.kersCurrentKJ).."/"..math.round(driver.car.kersMaxKJ,0).." KJ",space)
                 inLineBulletText("ERS Input", math.round(driver.car.kersInput*100,2).." %",space)
                 inLineBulletText("MGUK Mode", string.upper(ac.getMGUKDeliveryName(driver.index)),space)
 
@@ -896,7 +867,7 @@ function script.windowDebug(dt)
         end
 
         ui.treeNode(drs_title, ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
-            if driver.drsPresent then
+            if driver.car.drsPresent then
                 if not inPits(driver) then
                     if driver.car.speedKmh >= 1 then inLineBulletText("Delta", math.round(getDelta(driver),3),space)
                     else inLineBulletText("Delta","---",space )end
@@ -906,16 +877,15 @@ function script.windowDebug(dt)
                     inLineBulletText("DRS Available", upperBool(driver.drsAvailable),space)
                     inLineBulletText("DRS Deploy Zone", upperBool(driver.car.drsAvailable),space)
                     inLineBulletText("DRS Deployable", upperBool(driver.drsDeployable),space)
-                    inLineBulletText("DRS Active", upperBool(driver.drsActive),space)
+                    inLineBulletText("DRS Active", upperBool(driver.car.drsActive),space)
                     inLineBulletText("DRS Locked", upperBool(driver.drsLocked),space)
                     inLineBulletText("DRS Zone ID", driver.drsZonePrevId,space)
                     inLineBulletText("DRS Zone Next ID", driver.drsZoneId,space)
                     inLineBulletText("Detection Line", tostring(getDetectionDistanceM(sim,driver)).." m",space)
                     inLineBulletText("Start Line", tostring(getStartDistanceM(sim,driver)).." m",space)
                     inLineBulletText("End Line", tostring(getEndDistanceM(sim,driver)).." m",space)
-                    inLineBulletText("Track Progress M", tostring(math.round(driver.trackProgress,5)).." m",space)
-                    inLineBulletText("Track Progress %", tostring(math.round(ac.worldCoordinateToTrackProgress(driver.car.position)*100,2)).." %",space)
-                    inLineBulletText("Spline Align", tostring(math.round(driver.car.splinePosition*100,2)).." %",space)
+                    inLineBulletText("Track Progress M", tostring(math.round(driver.car.splinePosition*sim.trackLengthM,5)).." m",space)
+                    inLineBulletText("Track Progress %", tostring(math.round(driver.car.splinePosition*100,2)).." %",space)
                 else ui.bulletText("IN PITS") end
             else
                 ui.bulletText("DRS not present")
