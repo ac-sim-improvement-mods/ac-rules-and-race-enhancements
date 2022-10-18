@@ -27,7 +27,6 @@ local F1RegsData = ac.connect({
     ac.StructItem.key('F1RegsData'),
     connected = ac.StructItem.boolean(),
     drsEnabled = ac.StructItem.boolean(),
-    drsLocked = ac.StructItem.boolean(),
     drsAvailable = ac.StructItem.boolean(),
     carAhead = ac.StructItem.int16(),
     carAheadDelta = ac.StructItem.float(),
@@ -37,9 +36,7 @@ local function storeData(driver)
     ac.perfBegin("store")
     F1RegsData.connected = true
     F1RegsData.drsEnabled = DRS_ENABLED
-    F1RegsData.drsLocked = driver.drsLocked
     F1RegsData.drsAvailable = driver.drsAvailable
-    F1RegsData.carAheadDelta = driver.drsLocked
     F1RegsData.carAhead = driver.carAhead
     F1RegsData.carAheadDelta = driver.carAheadDelta
     ac.perfEnd("store")
@@ -102,7 +99,6 @@ local Driver = class('Driver', function(carIndex)
     local carAhead = -1
     local carAheadDelta = -1
 
-    local drsLocked = false
     local drsActivationZone = false
     local drsZoneId = 0
     local drsZonePrevId = 0
@@ -116,7 +112,7 @@ local Driver = class('Driver', function(carIndex)
     local returnPostionTimer = -1
 
     return {
-    drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, drsZoneId = drsZoneId, drsLocked = drsLocked, drsActivationZone = drsActivationZone, drsAvailable = drsAvailable,
+    drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, drsZoneId = drsZoneId, drsActivationZone = drsActivationZone, drsAvailable = drsAvailable,
     aiControlled = aiControlled, aiPrePitFuel = aiPrePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, 
     returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, 
     timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, 
@@ -878,7 +874,6 @@ function script.windowDebug(dt)
                     inLineBulletText("DRS Deploy Zone", upperBool(driver.car.drsAvailable),space)
                     inLineBulletText("DRS Deployable", upperBool(driver.drsDeployable),space)
                     inLineBulletText("DRS Active", upperBool(driver.car.drsActive),space)
-                    inLineBulletText("DRS Locked", upperBool(driver.drsLocked),space)
                     inLineBulletText("DRS Zone ID", driver.drsZonePrevId,space)
                     inLineBulletText("DRS Zone Next ID", driver.drsZoneId,space)
                     inLineBulletText("Detection Line", tostring(getDetectionDistanceM(sim,driver)).." m",space)
