@@ -2,7 +2,8 @@ local SCRIPT_VERSION = "v0.9.5-alpha"
 local SCRIPT_VERSION_ID = 9500
 
 local INITIALIZED = false
-local REBOOTED = false
+local RESTARTED = false
+local REBOOT = false
 
 local F1R_CONFIG = nil
 local DRS_ZONES = nil
@@ -26,20 +27,20 @@ end
 local F1RegsData = ac.connect({
     ac.StructItem.key('F1RegsData'),
     connected = ac.StructItem.boolean(),
+    scriptVersionId = ac.StructItem.int16(),
     drsEnabled = ac.StructItem.boolean(),
-    drsAvailable = ac.StructItem.boolean(),
-    carAhead = ac.StructItem.int16(),
-    carAheadDelta = ac.StructItem.float(),
+    drsAvailable = ac.StructItem.array(ac.StructItem.boolean(),30),
+    carAhead = ac.StructItem.array(ac.StructItem.int16(),30),
+    carAheadDelta = ac.StructItem.array(ac.StructItem.float(),30),
 },false,ac.SharedNamespace.Shared)
 
 local function storeData(driver)
-    ac.perfBegin("store")
     F1RegsData.connected = true
+    F1RegsData.scriptVersionId = SCRIPT_VERSION_ID
     F1RegsData.drsEnabled = DRS_ENABLED
-    F1RegsData.drsAvailable = driver.drsAvailable
-    F1RegsData.carAhead = driver.carAhead
-    F1RegsData.carAheadDelta = driver.carAheadDelta
-    ac.perfEnd("store")
+    F1RegsData.drsAvailable[driver.index] = driver.drsAvailable
+    F1RegsData.carAhead[driver.index] = driver.carAhead
+    F1RegsData.carAheadDelta[driver.index] = driver.carAheadDelta
 end
 
 ---@param MappedConfig
@@ -90,10 +91,11 @@ local Driver = class('Driver', function(carIndex)
     local lapsCompleted = car.lapCount
     local name = ac.getDriverName(carIndex)
 
-    local aiControlled = car.isAIControlled
     local aiLevel = car.aiLevel
     local aiAggression = car.aiAggression
     local aiPrePitFuel = 0
+    local aiPitCall = false
+    local aiPitting = false
 
     local trackPosition = -1
     local carAhead = -1
@@ -112,11 +114,12 @@ local Driver = class('Driver', function(carIndex)
     local returnPostionTimer = -1
 
     return {
-    drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, drsZoneId = drsZoneId, drsActivationZone = drsActivationZone, drsAvailable = drsAvailable,
-    aiControlled = aiControlled, aiPrePitFuel = aiPrePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, 
-    returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, 
-    timePenalty = timePenalty, illegalOvertake = illegalOvertake, carAheadDelta = carAheadDelta, drsCheck = drsCheck, 
-    trackPosition = trackPosition, name = name, car = car, carAhead = carAhead, index = index, lapsCompleted = lapsCompleted,
+    drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, drsZoneId = drsZoneId, 
+    drsActivationZone = drsActivationZone, drsAvailable = drsAvailable, drsCheck = drsCheck,
+    aiPitting = aiPitting, aiPitCall = aiPitCall, aiPrePitFuel = aiPrePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, 
+    returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake,
+    carAheadDelta = carAheadDelta, carAhead = carAhead, trackPosition = trackPosition,
+    lapsCompleted = lapsCompleted, index = index,  name = name, car = car,
     }
 end, class.NoInitialize)
 
@@ -243,7 +246,7 @@ end
 ---@param driver Driver
 ---@return numberW
 local function getStartDistanceM(sim,driver)
-    local distance = (DRS_ZONES.startZones[driver.drsZoneId]*sim.trackLengthM)-driver.car.splinePosition
+    local distance = (DRS_ZONES.startZones[driver.drsZoneId]-driver.car.splinePosition)*sim.trackLengthM
     if distance <= 0 then distance = distance + sim.trackLengthM end
     return math.round(math.clamp(distance,0,10000), 5)
 end
@@ -252,7 +255,7 @@ end
 ---@param driver Driver
 ---@return number
 local function getEndDistanceM(sim,driver)
-    local distance = (DRS_ZONES.endZones[driver.drsZonePrevId]*sim.trackLengthM)-driver.car.splinePosition
+    local distance = (DRS_ZONES.endZones[driver.drsZonePrevId]-driver.car.splinePosition)*sim.trackLengthM
     if distance <= 0 then distance = distance + sim.trackLengthM end
 
     return math.round(math.clamp(distance,0,10000), 5)
@@ -262,7 +265,7 @@ end
 ---@param driver Driver
 ---@return number
 local function getDetectionDistanceM(sim,driver)
-    local distance = (DRS_ZONES.detectionZones[driver.drsZoneId]*sim.trackLengthM)-driver.car.splinePosition
+    local distance = (DRS_ZONES.detectionZones[driver.drsZoneId]-driver.car.splinePosition)*sim.trackLengthM
     if distance <= 0 then distance = distance + sim.trackLengthM end
 
     return math.round(math.clamp(distance,0,10000), 5)
@@ -317,11 +320,23 @@ end
 
 --- Locks the specified driver's DRS
 ---@param driver Driver
-local function lockDRS(driver)
-    driver.drsAvailable = false
-
-    physics.allowCarDRS(driver.index, false)
-    physics.setCarDRS(driver.index, false)
+local function setDRS(driver,allowed)
+    if allowed then
+        if ac.getPatchVersionCode() >= 2066 then
+            physics.allowCarDRS(driver.index, true)
+            if driver.car.isAIControlled then
+                physics.setCarDRS(driver.index, true)
+            end
+        end
+    else
+        driver.drsAvailable = false
+        if ac.getPatchVersionCode() >= 2066 then
+            physics.allowCarDRS(driver.index, false)
+            physics.setCarDRS(driver.index, false)
+        else
+            ac.setDRS(false)
+        end
+    end
 end
 
 --- Check if driver is on track or in pits
@@ -415,11 +430,9 @@ local function controlDRS(sim,driver)
         drsAvailable(driver)
         
         if driver.drsAvailable and DRS_ENABLED then
-            if driver.car.drsAvailable and driver.car.gas > 0.8 and driver.isAIControlled then
-                physics.setCarDRS(driver.index, true)
-            end
+            setDRS(driver,true)
         else
-            lockDRS(driver)
+            setDRS(driver,false)
         end
     end
 
@@ -520,7 +533,7 @@ end
 
 local function controlVSC(sim,driver)
     local vsc_lap_time = VSC_LAP_TIME
-    lockDRS(driver)
+    setDRS(driver,false)
 
     if driver.car.estimatedLapTimeMs < vsc_lap_time then
         ac.log(driver.index.." estimated: "..driver.car.estimatedLapTimeMs)
@@ -543,16 +556,36 @@ end
 
 local function aiPitNewTires(sim,driver)
     ac.perfBegin("5.aiPitNewTires")
+
     if driver.aiControlled then
-        if LEADER_LAPS < ac.getSession(sim.currentSessionIndex).laps - 5 and driver.aiPrePitFuel == 0 then
-            local avg_tyre_wear = ((driver.car.wheels[0].tyreWear + 
-                                    driver.car.wheels[1].tyreWear +
-                                    driver.car.wheels[2].tyreWear +
-                                    driver.car.wheels[3].tyreWear) / 4)
-            if avg_tyre_wear > 0.4 then                  
-                --physics.setCarPenalty(ac.PenaltyType.MandatoryPits,1)
-                driver.aiPrePitFuel = driver.car.fuel
-                physics.setCarFuel(driver.index, 0.5)
+        if not driver.car.isInPitlane then
+            if driver.aiPrePitFuel ~= 0 then
+                if driver.aiPitCall then
+                    driver.aiPitCall = false
+                    driver.aiPitting = true
+                    physics.setCarFuel(driver.index, driver.aiPrePitFuel)
+                end
+            else
+                if LEADER_LAPS < ac.getSession(sim.currentSessionIndex).laps - 5 then
+                    local avg_tyre_wear = ((driver.car.wheels[0].tyreWear + 
+                                            driver.car.wheels[1].tyreWear +
+                                            driver.car.wheels[2].tyreWear +
+                                            driver.car.wheels[3].tyreWear) / 4)
+                    if avg_tyre_wear > 0.4 then                  
+                        --physics.setCarPenalty(ac.PenaltyType.MandatoryPits,1)
+                        driver.aiPrePitFuel = driver.car.fuel
+                        physics.setCarFuel(driver.index, 0.1)
+                        driver.aiPitCall = true
+                    end
+                end
+            end
+        else
+            if driver.aiPrePitFuel ~= 0 then
+                physics.setCarFuel(driver.index, driver.aiPrePitFuel + 3)
+            end
+            if driver.car.isInPit then
+                driver.aiPitting = false
+                driver.aiPrePitFuel = 0
             end
         end
     end
@@ -576,15 +609,8 @@ local function controlSystems(sim)
         local driver = drivers[index]
         setLeaderLaps(driver)
         getNextDetectionLine(sim,driver)
+        aiPitNewTires(sim,driver)
 
-        if not inPits(driver) then
-            aiPitNewTires(sim,driver)
-        else
-            if driver.car.isInPit then
-                physics.setCarFuel(driver.index, driver.aiPrePitFuel + 2)
-            end
-        end
-        
         if not vsc_deployed then
             controlDRS(sim,driver)
             alternateAIAttack(driver)
@@ -597,10 +623,7 @@ local function controlSystems(sim)
         end
 
         -- overtake_check(driver)
-
-        if driver.index == 0 then
-            storeData(driver)
-        end
+        storeData(driver)
         ac.perfEnd("4.driver")
     end
     ac.perfEnd("3.driversLoop")
@@ -628,6 +651,9 @@ local function initialize(sim)
     
         trackSurfaces:set('_SCRIPTING_PHYSICS', 'ALLOW_APPS', '1')
         trackSurfaces:set('SURFACE_0', 'WAV_PITCH', 'extended-0')
+
+        REBOOT = true
+        return true
     end
 
     physics.overrideRacingFlag(ac.FlagType.None)
@@ -636,8 +662,8 @@ local function initialize(sim)
     log("F1 Regs version: "..SCRIPT_VERSION_ID)
     log("CSP version: "..csp_version)
 
-    if csp_version < 2066 then
-        ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP v0.1.79 required!")
+    if csp_version < 2051 then
+        ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP v0.1.78 required!")
         log("[WARN] Incompatible CSP version")
         return false
     end
@@ -672,16 +698,13 @@ local function initialize(sim)
         local driver = DRIVERS[driverIndex]
         driver.drsAvailable = false
         driver.trackPosition = driver.car.racePosition
-        lockDRS(driver)
+        setDRS(driver,false)
 
-        if driver.isAIControlled then
+        if driver.car.isAIControlled then
             physics.setCarFuel(driver.index, 140)
         end
 
-        if driver.index == 0 then
-            storeData(driver)
-        end
-
+        storeData(driver)
         log("[Loaded] Driver "..driver.index..": "..driver.name)
     end
 
@@ -702,17 +725,22 @@ function script.update()
         INITIALIZED = initialize(sim)
     end
 
+    if not ac.isWindowOpen("main") then
+        return
+    end
+
     if sim.raceSessionType == 3 then
-        if not REBOOTED and sim.isInMainMenu then
-            REBOOTED = true
+        if not RESTARTED and sim.isInMainMenu then
+            RESTARTED = true
             INITIALIZED = false
         end
 
         -- Initialize the session
         if (sim.isInMainMenu or sim.isSessionStarted) and not INITIALIZED then INITIALIZED = initialize(sim)
-        elseif not sim.isInMainMenu and not sim.isSessionStarted and REBOOTED and INITIALIZED then
-            if not physics.allowed() then ac.restartAssettoCorsa() end
-            REBOOTED = false
+        elseif not sim.isInMainMenu and not sim.isSessionStarted and RESTARTED and INITIALIZED then
+            if REBOOT then ac.restartAssettoCorsa() end
+            REBOOT = false
+            RESTARTED = false
         -- Race session has started
         elseif INITIALIZED then controlSystems(sim) end
     end
@@ -767,8 +795,14 @@ local function inLineBulletText(label,text,space)
         else
             ui.textColored(text, rgbm(1,0,0,1))
         end
-    elseif string.find(label, "Wear") then
+    elseif string.find(label, "Life") then
         if text < 60 then
+            ui.textColored(text.." %", rgbm(1,0,0,1))
+        else
+            ui.textColored(text.." %", rgbm(1,1,1,1))
+        end
+    elseif string.find(label, "Wear") then
+        if text >= 40 then
             ui.textColored(text.." %", rgbm(1,0,0,1))
         else
             ui.textColored(text.." %", rgbm(1,1,1,1))
@@ -781,7 +815,14 @@ end
 function script.windowDebug(dt)
     local sim = ac.getSim()
     ac.setWindowTitle("debug", "F1 Regs Debug                "..SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")")
-    if sim.raceSessionType == 3 and INITIALIZED and not sim.isInMainMenu then
+
+    if sim.raceSessionType ~= 3 then
+        ui.pushFont(ui.Font.Main)
+        ui.text("This is a "..sessionTypeString(sim).." not a RACE session")
+        return
+    end
+
+    if INITIALIZED and not sim.isInMainMenu then
         local driver = DRIVERS[sim.focusedCar]
         local math = math
         local rules = F1R_CONFIG.data.RULES
@@ -790,16 +831,18 @@ function script.windowDebug(dt)
         ui.pushFont(ui.Font.Small)
 
         ui.treeNode("["..sessionTypeString(sim).." SESSION]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
-            inLineBulletText("Time", -sim.timeToSessionStart,space)
-            inLineBulletText("Time", string.format("%02d:%02d:%02d", sim.timeHours, sim.timeMinutes, sim.timeSeconds),space)
+            inLineBulletText("F1 Regs Enabled", upperBool(ac.isWindowOpen("main")),space)
             inLineBulletText("Physics Allowed", upperBool(physics.allowed()),space)
             inLineBulletText("Race Started", upperBool(sim.isSessionStarted),space)
-            inLineBulletText("Leader Lap", LEADER_LAPS+1,space)
+            inLineBulletText("Time", string.format("%02d:%02d:%02d", sim.timeHours, sim.timeMinutes, sim.timeSeconds),space)
+            inLineBulletText("Leader Lap", (LEADER_LAPS+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
+        end)
+
+        ui.treeNode("[VSC]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
             inLineBulletText("VSC Called", upperBool(VSC_CALLED),space)
             inLineBulletText("VSC Deployed", upperBool(VSC_DEPLOYED),space)
             inLineBulletText("VSC Lap TIme", ac.lapTimeToString(VSC_LAP_TIME),space)
         end)
-
 
         if driver.aiControlled then
             ui.treeNode("[AI]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
@@ -808,6 +851,8 @@ function script.windowDebug(dt)
                 inLineBulletText("Track Position", driver.trackPosition.."/"..DRIVERS_ON_TRACK,space)
                 inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
                 inLineBulletText("Lap", (driver.car.lapCount+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
+                inLineBulletText("Pitting New Tyres", upperBool(driver.aiPitting),space)
+                inLineBulletText("Pre-Pit Fuel", math.round(driver.aiPrePitFuel,5).." L",space)
                 inLineBulletText("Fuel", math.round(driver.car.fuel,5).." L",space)
                 inLineBulletText("Fuel Map", driver.car.fuelMap,space)
                 inLineBulletText("AI Level", "["..math.round(driver.aiLevel*100,2).."] "..math.round(driver.car.aiLevel*100,2),space)
@@ -828,10 +873,16 @@ function script.windowDebug(dt)
         end
 
         ui.treeNode("[Tyres]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
-            inLineBulletText("Wear [FL]", math.round(100-(driver.car.wheels[0].tyreWear*100),5),space)
-            inLineBulletText("Wear [RL]", math.round(100-(driver.car.wheels[2].tyreWear*100),5),space)
-            inLineBulletText("Wear [FR]", math.round(100-(driver.car.wheels[1].tyreWear*100),5),space)
-            inLineBulletText("Wear [RR]", math.round(100-(driver.car.wheels[3].tyreWear*100),5),space)
+            local avg_tyre_wear = ((driver.car.wheels[0].tyreWear + 
+            driver.car.wheels[1].tyreWear +
+            driver.car.wheels[2].tyreWear +
+            driver.car.wheels[3].tyreWear) / 4)
+            inLineBulletText("Wear Average", math.round(avg_tyre_wear*100,5),space)
+
+            inLineBulletText("Tyre Life [FL]", math.round(100-(driver.car.wheels[0].tyreWear*100),5),space)
+            inLineBulletText("Tyre Life [RL]", math.round(100-(driver.car.wheels[2].tyreWear*100),5),space)
+            inLineBulletText("Tyre Life [FR]", math.round(100-(driver.car.wheels[1].tyreWear*100),5),space)
+            inLineBulletText("Tyre Life [RR]", math.round(100-(driver.car.wheels[3].tyreWear*100),5),space)
         end)
 
         if driver.car.kersPresent then
@@ -897,10 +948,5 @@ function script.windowDebug(dt)
             inLineBulletText("SCRIPT_6", ac.getCarPhysics(driver.index).scriptControllerInputs[6],space)
             inLineBulletText("SCRIPT_7", ac.getCarPhysics(driver.index).scriptControllerInputs[7],space)
         end)
-
-
-    else
-        ui.pushFont(ui.Font.Main)
-        ui.text("This is a "..sessionTypeString(sim).." not a RACE session")
     end
 end
