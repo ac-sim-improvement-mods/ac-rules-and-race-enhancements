@@ -614,7 +614,7 @@ local function controlSystems(sim)
         if config.AI_FORCE_PIT_TYRES == 1 then aiPitNewTires(sim,driver) end
 
         if not vsc_deployed then
-            if config.DRS_RULES == 1 then controlDRS(sim,driver) end
+            controlDRS(sim,driver)
             if config.AI_AGGRESSION_RUBBERBAND == 1 then alternateAIAttack(driver) end
         elseif vsc_called and not vsc_deployed then
             if driver.car.bestLapTimeMs then
