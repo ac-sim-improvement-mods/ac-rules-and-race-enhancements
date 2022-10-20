@@ -743,7 +743,7 @@ local function initialize(sim)
         driver.trackPosition = driver.car.racePosition
         setLeaderLaps(driver)
         if driver.car.isAIControlled then
-            physics.setCarFuel(driver.index, 140)
+            physics.setCarFuel(driver.index, driver.car.maxFuel)
         end
 
         storeData(driver)
