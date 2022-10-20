@@ -1049,9 +1049,9 @@ function script.windowDebug(dt)
 
                 inLineBulletText("ERS Spent", string.format("%2.1f", driver.car.kersCurrentKJ).."/"..math.round(driver.car.kersMaxKJ,0).." KJ",space)
                 inLineBulletText("ERS Input", math.round(driver.car.kersInput*100,2).." %",space)
-                inLineBulletText("MGUK Mode", string.upper(ac.getMGUKDeliveryName(driver.index)),space)
-
-                inLineBulletText("MGUH Mode", string.upper(mguhMode),space)
+                inLineBulletText("MGU-K Delivery", string.upper(ac.getMGUKDeliveryName(driver.index)),space)
+                inLineBulletText("MGU-K Recovery", math.round(driver.car.mgukRecovery*10).."%",space)
+                inLineBulletText("MGU-H Mode", string.upper(mguhMode),space)
             end)
         end
 
