@@ -358,7 +358,7 @@ local function setDriverDRS(driver,allowed)
     if ac.getPatchVersionCode() >= 2066 then
         physics.allowCarDRS(driver.index,not allowed)
         if driver.car.isAIControlled then
-            if allowed and driver.car.brake < 0.1 and driver.car.speedKmh > 50 then
+            if allowed and driver.car.brake < 0.5 and driver.car.speedKmh > 50 then
                 physics.setCarDRS(driver.index, true)
             elseif not allowed then
                 physics.setCarDRS(driver.index, false)
