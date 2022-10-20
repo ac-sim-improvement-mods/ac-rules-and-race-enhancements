@@ -116,23 +116,6 @@ local function control_brake_bias(data)
     local bb_a = front_torq/total*100
     local bbdiff = bbt-bb_a
 
-    -- ac.debug("BBB",math.round(bbb,6).." %")
-    -- ac.debug("BMIG",(bmig*100).." %")
-    -- ac.debug("BBT",math.round(bbt,2).." %")
-    -- ac.debug("BMIG Calc",bmigcalc.." %")
-
-    -- ac.debug("BMIG Ramp",(ramp*100).." %")
-    -- ac.debug("Brake",(math.round(car.brake,2)*100).." %")
-    -- ac.debug("T Torque",total)
-    -- ac.debug("F Torque",front_torq)
-    -- ac.debug("R Torque",rear_torq)
-    -- ac.debug("BB_Actual",math.round(bb_a,2).." %")
-    -- ac.debug("BB_DIFF",math.round(bbdiff,0).." %")
-    
-    -- ac.debug("ExtraA",car.extraA)
-    -- ac.debug("ExtraB",car.extraB)
-    -- ac.debug("ExtraC",car.extraC)
-
     data.controllerInputs[0] = total_brake_bias
 end
 
@@ -164,28 +147,11 @@ local function control_ai(data,sim)
     end
 end
 
-local entrydiff = 25
-local middiff = 50
-local exitdiff = 75
-local hispddiff = 90
-
-local function control_differential(data)
-    ac.debug("G Forces", data.gForces)
-    ac.debug("LOCKING", car.differentialPreload)
-
-
-    data.controllerInputs[2] = 250
-end
-
 function script.update(dt)
     local data = ac.accessCarPhysics()
     local sim = ac.getSim()
-    --ac.log(car.index.." "..tostring(F1RegsData.drsAvailable[car.index]))
-    ac.log(car.drsAvailable)
 
     control_brake_bias(data)
-    --control_differential(data)
-
     if not car.isAIControlled or not sim.raceSessionType == 3 then
         return
      end
