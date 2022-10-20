@@ -10,7 +10,7 @@ local DRS_ZONES = nil
 local DRIVERS = {}
 local DRIVERS_ON_TRACK = 0
 local LEADER_LAPS = 1
-local DRS_LAPS = 0
+local DRS_ENABLED_LAP = 0
 local WET_TRACK = false
 local DRS_ENABLED = false
 
@@ -29,18 +29,15 @@ local F1RegsData = ac.connect({
     connected = ac.StructItem.boolean(),
     scriptVersionId = ac.StructItem.int16(),
     drsEnabled = ac.StructItem.boolean(),
-    drsAvailable = ac.StructItem.array(ac.StructItem.boolean(),30),
-    carAhead = ac.StructItem.array(ac.StructItem.int16(),30),
-    carAheadDelta = ac.StructItem.array(ac.StructItem.float(),30),
+    drsAvailable = ac.StructItem.array(ac.StructItem.boolean(),32),
+    carAhead = ac.StructItem.array(ac.StructItem.int16(),32),
+    carAheadDelta = ac.StructItem.array(ac.StructItem.float(),32),
 },false,ac.SharedNamespace.Shared)
 
 local function storeData(driver)
     F1RegsData.connected = true
     F1RegsData.scriptVersionId = SCRIPT_VERSION_ID
     F1RegsData.drsEnabled = DRS_ENABLED
-    if F1RegsConfig.data.RULES.DRS_RULES == 0 then
-        driver.drsAvailable = true
-    end
     F1RegsData.drsAvailable[driver.index] = driver.drsAvailable
     F1RegsData.carAhead[driver.index] = driver.carAhead
     F1RegsData.carAheadDelta[driver.index] = driver.carAheadDelta
@@ -178,6 +175,46 @@ local function sessionTypeString(sim)
     return sessionTypes[sim.raceSessionType + 1]
 end
 
+local function weatherTypeString(sim)
+    local weatherTypes = {  
+        "Light Thunderstorm", ---Value: 0.
+        "Thunderstorm", ---Value: 1.
+        "Heavy Thunderstorm", ---Value: 2.
+        "Light Drizzle", ---Value: 3.
+        "Drizzle", ---Value: 4.
+        "Heavy Drizzle", ---Value: 5.
+        "Light Rain", ---Value: 6.
+        "Rain", ---Value: 7.
+        "Heavy Rain", ---Value: 8.
+        "Light Snow", ---Value: 9.
+        "Snow", ---Value: 10.
+        "Heavy Snow", ---Value: 11.
+        "Light Sleet", ---Value: 12.
+        "Sleet", ---Value: 13.
+        "Heavy Sleet", ---Value: 14.
+        "Clear", ---Value: 15.
+        "Few Clouds", ---Value: 16.
+        "Scattered Clouds", ---Value: 17.
+        "Broken Clouds", ---Value: 18.
+        "Overcast Clouds", ---Value: 19.
+        "Fog", ---Value: 20.
+        "Mist", ---Value: 21.
+        "Smoke", ---Value: 22.
+        "Haze", ---Value: 23.
+        "Sand", ---Value: 24.
+        "Dust", ---Value: 25.
+        "Squalls", ---Value: 26.
+        "Tornado", ---Value: 27.
+        "Hurricane", ---Value: 28.
+        "Cold", ---Value: 29.
+        "Hot", ---Value: 30.
+        "Windy", ---Value: 31.
+        "Hail", ---Value: 32.
+    }
+
+    return weatherTypes[sim.weatherType + 1]
+end
+
 --- Returns the main driver's track position in meters
 ---@param index number
 ---@return number
@@ -192,9 +229,9 @@ local function rainCheck(sim)
     local track_rain_intensity = sim.rainIntensity
     local track_wetness = sim.rainWetness
     local track_puddles = sim.rainWater
-    if track_wetness >= wet_limit and
-        track_puddles >= wet_limit then
 
+    local total_wetness = ((track_wetness/5) + (track_puddles*10))/2
+    if total_wetness >= wet_limit then
         if not WET_TRACK then
             ui.toast(ui.Icons.Bell, "DRS Disabled | Conditions too wet")
             log("[Race Control] DRS Disabled | Conditions too wet")
@@ -204,21 +241,17 @@ local function rainCheck(sim)
         end
 
         WET_TRACK = true
-
-        return true
+        DRS_ENABLED = false
     else
         if WET_TRACK then
-            if track_wetness >= wet_limit - 0.05 and
-            track_puddles >= wet_limit - 0.05 and
+            if total_wetness >= wet_limit - 0.05 and
             track_rain_intensity > 0.70 then
-                return true
             else
-                DRS_LAPS = LEADER_LAPS + 2
+                DRS_ENABLED_LAP = LEADER_LAPS + 2
                 WET_TRACK = false
 
-                ui.toast(ui.Icons.Bell, "DRS Enabled in 2 laps on lap "..DRS_LAPS)
-                log("[Race Control] Track is drying. DRS enabled in 2 laps on lap "..DRS_LAPS)
-                return false
+                ui.toast(ui.Icons.Bell, "DRS Enabled in 2 laps on lap "..DRS_ENABLED_LAP)
+                log("[Race Control] Track is drying. DRS enabled in 2 laps on lap "..DRS_ENABLED_LAP)
             end
         end
     end
@@ -227,8 +260,9 @@ end
 --- Enable DRS functionality if the lead driver has completed the specified numbers of laps
 ---@return boolean
 local function enableDRS(sim)
-    if not rainCheck(sim) then
-        if LEADER_LAPS >= DRS_LAPS then
+    rainCheck(sim)
+    if not WET_TRACK then
+        if LEADER_LAPS >= DRS_ENABLED_LAP then
             if not DRS_ENABLED then
                 ui.toast(ui.Icons.Bell, "DRS Enabled")
                 log("[Race Control] DRS Enabled")
@@ -320,20 +354,18 @@ end
 
 --- Locks the specified driver's DRS
 ---@param driver Driver
-local function setDRS(driver,allowed)
-    if allowed then
-        if ac.getPatchVersionCode() >= 2066 then
-            physics.allowCarDRS(driver.index, true)
-            if driver.car.isAIControlled then
+local function setDriverDRS(driver,allowed)
+    if ac.getPatchVersionCode() >= 2066 then
+        physics.allowCarDRS(driver.index,not allowed)
+        if driver.car.isAIControlled then
+            if allowed and driver.car.brake < 0.1 and driver.car.speedKmh > 50 then
                 physics.setCarDRS(driver.index, true)
+            elseif not allowed then
+                physics.setCarDRS(driver.index, false)
             end
         end
     else
-        driver.drsAvailable = false
-        if ac.getPatchVersionCode() >= 2066 then
-            physics.allowCarDRS(driver.index, false)
-            physics.setCarDRS(driver.index, false)
-        else
+        if not driver.index == 0 then
             ac.setDRS(false)
         end
     end
@@ -429,11 +461,12 @@ local function controlDRS(sim,driver)
     if sim.isSessionStarted then
         drsAvailable(driver)
         
-        if driver.drsAvailable and DRS_ENABLED then
-            setDRS(driver,true)
+        if DRS_ENABLED then
+            setDriverDRS(driver,driver.drsAvailable)
         else
-            setDRS(driver,false)
+            setDriverDRS(driver,false)
         end
+        
     end
 
     --ac.perfEnd("drs")
@@ -533,7 +566,7 @@ end
 
 local function controlVSC(sim,driver)
     local vsc_lap_time = VSC_LAP_TIME
-    setDRS(driver,false)
+    setDriverDRS(driver,false)
 
     if driver.car.estimatedLapTimeMs < vsc_lap_time then
         ac.log(driver.index.." estimated: "..driver.car.estimatedLapTimeMs)
@@ -611,18 +644,21 @@ local function controlSystems(sim)
         local driver = drivers[index]
         setLeaderLaps(driver)
         getNextDetectionLine(sim,driver)
-        if config.AI_FORCE_PIT_TYRES == 1 then aiPitNewTires(sim,driver) end
 
-        if not vsc_deployed then
-            controlDRS(sim,driver)
-            if config.AI_AGGRESSION_RUBBERBAND == 1 then alternateAIAttack(driver) end
-        elseif vsc_called and not vsc_deployed then
-            if driver.car.bestLapTimeMs then
-                best_lap_times[index] = driver.car.bestLapTimeMs
-            end
-        else
-            controlVSC(sim,driver)
-        end
+        if config.AI_FORCE_PIT_TYRES == 1 then aiPitNewTires(sim,driver) end
+        if config.AI_AGGRESSION_RUBBERBAND == 1 then alternateAIAttack(driver) end
+        if config.DRS_RULES == 1 then controlDRS(sim,driver) else driver.drsAvailable = true end
+
+        -- if not vsc_deployed then
+        --     -- controlDRS(sim,driver)
+        --     -- if config.AI_AGGRESSION_RUBBERBAND == 1 then alternateAIAttack(driver) end
+        -- elseif vsc_called and not vsc_deployed then
+        --     if driver.car.bestLapTimeMs then
+        --         best_lap_times[index] = driver.car.bestLapTimeMs
+        --     end
+        -- else
+        --     controlVSC(sim,driver)
+        -- end
 
         -- overtake_check(driver)
         storeData(driver)
@@ -697,7 +733,7 @@ local function initialize(sim)
 
     -- Get DRS Zones from track data folder
     DRS_ZONES = DRS_Points("drs_zones.ini")
-    DRS_LAPS = F1RegsConfig.data.RULES.DRS_ACTIVATION_LAP
+    DRS_ENABLED_LAP = F1RegsConfig.data.RULES.DRS_ACTIVATION_LAP
 
     -- Populate DRIVERS array
     for driverIndex = 0, sim.carsCount-1 do
@@ -705,7 +741,6 @@ local function initialize(sim)
         local driver = DRIVERS[driverIndex]
         driver.drsAvailable = false
         driver.trackPosition = driver.car.racePosition
-        setDRS(driver,false)
         setLeaderLaps(driver)
         if driver.car.isAIControlled then
             physics.setCarFuel(driver.index, 140)
@@ -716,8 +751,8 @@ local function initialize(sim)
     end
 
     if F1RegsConfig.data.RULES.DRS_RULES == 1 then
-        ui.toast(ui.Icons.Bell, "DRS Enabled in "..DRS_LAPS-LEADER_LAPS.." laps")
-        log("[Race Control] DRS Enabled in "..DRS_LAPS-LEADER_LAPS.." laps")
+        ui.toast(ui.Icons.Bell, "DRS Enabled in "..DRS_ENABLED_LAP-LEADER_LAPS.." laps")
+        log("[Race Control] DRS Enabled in "..DRS_ENABLED_LAP-LEADER_LAPS.." laps")
     end
 
     log("[Initialized]")
@@ -821,7 +856,7 @@ function script.windowSettings(dt)
     'Enable DRS being controlled by the app',
     function (v) return math.round(v, 0) end)
     if F1RegsConfig.data.RULES.DRS_RULES == 1 then
-        DRS_LAPS = slider(F1RegsConfig, 'RULES', 'DRS_ACTIVATION_LAP', 1, ac.getSession(ac.getSim().currentSessionIndex).laps, 1, false, 'Activation Lap: %.0f', 
+        DRS_ENABLED_LAP = slider(F1RegsConfig, 'RULES', 'DRS_ACTIVATION_LAP', 1, ac.getSession(ac.getSim().currentSessionIndex).laps, 1, false, 'Activation Lap: %.0f', 
         'First lap to allow DRS activation',
         function (v) return v end)
         slider(F1RegsConfig, 'RULES', 'DRS_GAP_DELTA', 100, 2000, 1, false, 'Gap Delta: %.0f ms',
@@ -891,7 +926,7 @@ function script.windowSettings(dt)
     --         PHYSICS_REBOOT = ac.INIConfig.OptionalNumber
     --     }})
     --     log("[Loaded] Applied config")
-    --     DRS_LAPS = F1RegsConfig.data.RULES.DRS_ACTIVATION_LAP
+    --     DRS_ENABLED_LAP = F1RegsConfig.data.RULES.DRS_ACTIVATION_LAP
     -- end
 end
 
@@ -942,6 +977,8 @@ function script.windowDebug(dt)
         local math = math
         local space = 200
 
+
+
         ui.pushFont(ui.Font.Small)
 
         ui.treeNode("["..sessionTypeString(sim).." SESSION]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
@@ -975,7 +1012,7 @@ function script.windowDebug(dt)
                 inLineBulletText("AI Aggr", "["..math.round(driver.aiAggression*100,2).."] "..math.round(driver.car.aiAggression*100,2),space)
             end)
         else
-            ui.treeNode("[Driver]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            ui.treeNode("[DRIVER]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
                 inLineBulletText("Driver ["..driver.index.."]", driver.name,space)
                 if not inPits(driver) then
                     inLineBulletText("Ahead ["..driver.carAhead.."]", tostring(ac.getDriverName(driver.carAhead)),space)
@@ -988,7 +1025,7 @@ function script.windowDebug(dt)
             end)
         end
 
-        ui.treeNode("[Tyres]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+        ui.treeNode("[TYRES]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
             local avg_tyre_wear = ((driver.car.wheels[0].tyreWear + 
             driver.car.wheels[1].tyreWear +
             driver.car.wheels[2].tyreWear +
@@ -1002,7 +1039,7 @@ function script.windowDebug(dt)
         end)
 
         if driver.car.kersPresent then
-            ui.treeNode("[Hybrid Systems]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            ui.treeNode("[HYBRID SYSTEMS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
                 local mguhMode = ""
                 if driver.car.mguhChargingBatteries then
                     mguhMode = "BATTERY"
@@ -1019,31 +1056,24 @@ function script.windowDebug(dt)
         end
 
         if F1RegsConfig.data.RULES.DRS_RULES == 1 then
-            local drs_title = ""
-            if not WET_TRACK then
-                if DRS_ENABLED == true then
-                    drs_title = "[DRS Enabled]"
-                else
-                    drs_title = "[DRS Enabled in "..DRS_LAPS-LEADER_LAPS.." laps]"
-                end
-            else
-                drs_title = "[DRS Disabled | Wet Conditions]"
-            end
     
-            ui.treeNode(drs_title, ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            ui.treeNode("[DRS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
                 if driver.car.drsPresent then
                     if not inPits(driver) then
-                        if driver.car.speedKmh >= 1 then inLineBulletText("Delta", math.round(getDelta(driver),3),space)
+                        local delta = driver.carAheadDelta
+                        inLineBulletText("Enabled on Lap", DRS_ENABLED_LAP,space)
+                        inLineBulletText("Enabled", upperBool(DRS_ENABLED),space)
+                        if driver.car.speedKmh >= 1 then inLineBulletText("Delta", math.round(delta,3),space)
                         else inLineBulletText("Delta","---",space )end
-                        inLineBulletText("In Gap", upperBool(checkGap(driver)),space)
+                        inLineBulletText("In Gap", upperBool((delta <= F1RegsConfig.data.RULES.DRS_GAP_DELTA/1000 and delta > 0.0) and true or false),space)
                         inLineBulletText("Check", upperBool(driver.drsCheck),space)
                         inLineBulletText("Crossed Detection", upperBool(crossedDetectionLine(driver)),space)
-                        inLineBulletText("DRS Available", upperBool(driver.drsAvailable),space)
-                        inLineBulletText("DRS Deploy Zone", upperBool(driver.car.drsAvailable),space)
-                        inLineBulletText("DRS Deployable", upperBool(driver.drsDeployable),space)
-                        inLineBulletText("DRS Active", upperBool(driver.car.drsActive),space)
-                        inLineBulletText("DRS Zone ID", driver.drsZonePrevId,space)
-                        inLineBulletText("DRS Zone Next ID", driver.drsZoneId,space)
+                        inLineBulletText("Available", upperBool(driver.drsAvailable),space)
+                        inLineBulletText("Deploy Zone", upperBool(driver.car.drsAvailable),space)
+                        inLineBulletText("Deployable", upperBool(driver.drsDeployable),space)
+                        inLineBulletText("Active", upperBool(driver.car.drsActive),space)
+                        inLineBulletText("Zone ID", driver.drsZonePrevId,space)
+                        inLineBulletText("Zone Next ID", driver.drsZoneId,space)
                         inLineBulletText("Detection Line", tostring(getDetectionDistanceM(sim,driver)).." m",space)
                         inLineBulletText("Start Line", tostring(getStartDistanceM(sim,driver)).." m",space)
                         inLineBulletText("End Line", tostring(getEndDistanceM(sim,driver)).." m",space)
@@ -1056,7 +1086,18 @@ function script.windowDebug(dt)
             end)
         end
 
-        ui.treeNode("[Script Controller Inputs]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+        ui.treeNode("[WEATHER]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            local totalWetness = ((sim.rainWetness/5) + (sim.rainWater*10))/2
+            inLineBulletText("Weather Type", weatherTypeString(sim),space)
+            inLineBulletText("Rain Intensity", math.round(sim.rainIntensity*100,2).."%",space)
+            inLineBulletText("Track Wetness", math.round(sim.rainWetness*100,2).."%",space)
+            inLineBulletText("Track Puddles", math.round(sim.rainWater*100,2).."%",space)
+            inLineBulletText("Total Wetness", math.round(totalWetness*100,2).."%",space)
+            inLineBulletText("Total Wetness Limit", math.round(F1RegsConfig.data.RULES.DRS_WET_LIMIT,2).."%",space)
+            inLineBulletText("Wet Track", upperBool(WET_TRACK),space)
+        end)
+
+        ui.treeNode("[SCRIPT CONTROLLER INPUTS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
             inLineBulletText("[0] Total Brake Balance", ac.getCarPhysics(driver.index).scriptControllerInputs[0],space)
             inLineBulletText("[1] Brake Migration %", ac.getCarPhysics(driver.index).scriptControllerInputs[1],space)
             inLineBulletText("[2]", ac.getCarPhysics(driver.index).scriptControllerInputs[2],space)
