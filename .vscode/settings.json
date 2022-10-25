@@ -4,5 +4,9 @@
     ],
     "Lua.workspace.preloadFileSize": 2000,
     "Lua.runtime.version": "LuaJIT",
-    "Lua.runtime.builtin": {}
+    "Lua.runtime.builtin": {},
+    "Lua.diagnostics.disable": [
+        "need-check-nil",
+        "param-type-mismatch"
+    ]
 }
