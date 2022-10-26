@@ -1125,3 +1125,62 @@ function script.windowDebug(dt)
         end)
     end
 end
+
+local function drawDrs()
+    ui.setCursorX(25)
+    ui.setCursorY(785)
+    ui.dwriteTextAligned(car.mgukRecovery*10, 70, ui.Alignment.Center, ui.Alignment.Center, vec2(350, 350), false, rgbm(0.95, 0.95, 0.95, 1))
+
+  display.rect{
+    pos = vec2(80, 700), 
+    size = vec2(860, 310),
+    color = rgbm(0.79, 0.78, 0, 1)
+  } 
+end
+
+local function drawVsc()
+
+end
+
+local function drawWetWeather()
+
+end
+
+local function drawPenalty()
+
+end
+
+local function drawWarning()
+
+end
+
+local NOTIFICATION_POPUPS = {drawDrs, drawVsc, drawWetWeather, drawPenalty, drawWarning}
+
+local function Popups()
+        local popupTime
+         = 5 --seconds
+        table.sort(incomingPopups, function a.priority < b.priority end)
+        local popupIndex = incomingPopups[#incomingPopups]
+        
+        return{
+            show = function(self)
+                if popupTime > 0 then
+                    popupTime = popupTime - 1
+                    NOTIFICATION_POPUPS[popupIndex](dt)
+                    run()
+                else
+                     popupTime = 5
+                     return incomingPopups.remove()
+                end 
+            end
+        }
+end
+
+function script.windowRaceControl(dt)
+       local popups = Popups()
+       local incomingPopups = DRIVERS[sim.focusedCar].incomingPopups
+       
+       incomingPopups = popups.show(incomingPopups)
+       
+       DRIVERS[sim.focusedCar].incomingPopups = incomingPopups
+end
