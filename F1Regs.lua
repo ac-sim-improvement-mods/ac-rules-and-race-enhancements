@@ -862,7 +862,7 @@ function script.windowSettings(dt)
         slider(F1RegsConfig, 'RULES', 'DRS_GAP_DELTA', 100, 2000, 1, false, 'Gap Delta: %.0f ms',
         'Max gap to car when crossing detection line to allow DRS for the next zone',
         function (v) return math.floor(v / 50 + 0.5) * 50 end)
-        slider(F1RegsConfig, 'RULES', 'DRS_WET_DISABLE', 0, 1, 1, true, F1RegsConfig.data.RULES.DRS_WET_DISABLE == 1 and 'Wet Weather Rule: ENABLED' or 'Wet Weather Rule: DISABLED', 
+        slider(F1RegsConfig, 'RULES', 'DRS_WET_DISABLE', 0, 1, 1, true, F1RegsConfig.data.RULES.DRS_WET_DISABLE == 1 and 'Wet Weather Rules: ENABLED' or 'Wet Weather Rules: DISABLED', 
         'Disable DRS activation if track wetness gets above the limit below',
         function (v) return math.round(v, 0) end)
         if F1RegsConfig.data.RULES.DRS_WET_DISABLE == 1 then
