@@ -1126,61 +1126,94 @@ function script.windowDebug(dt)
     end
 end
 
-local function drawDrs()
-    ui.setCursorX(25)
-    ui.setCursorY(785)
-    ui.dwriteTextAligned(car.mgukRecovery*10, 70, ui.Alignment.Center, ui.Alignment.Center, vec2(350, 350), false, rgbm(0.95, 0.95, 0.95, 1))
+--- Override function to add clarity and default values for drawing text
+local function drawText(textdraw)
+    if not textdraw.margin then
+        textdraw.margin = vec2(350, 350)
+    end
+    if not textdraw.color then
+        textdraw.color = rgbm(0.95, 0.95, 0.95, 1)
+    end
+    if not textdraw.fontSize then
+        textdraw.fontSize = 70
+    end
 
-  display.rect{
-    pos = vec2(80, 700), 
-    size = vec2(860, 310),
-    color = rgbm(0.79, 0.78, 0, 1)
-  } 
+    ui.setCursorX(textdraw.xPos)
+    ui.setCursorY(textdraw.yPos)
+    ui.dwriteTextAligned(textdraw.string, textdraw.fontSize, textdraw.xAlign, textdraw.yAlign, textdraw.margin, false, textdraw.color)
 end
 
-local function drawVsc()
+local function drawRaceControl(text)
+    ui.pushDWriteFont("Formula1 Display;Weight=Bold")
+    --ui.pushDWriteFont("Formula1 Display Bold Bold:fonts/f1.ttf")
 
+    local leftAlign = 147
+    local yAlign = -145
+    local fontSize = 32
+    local bannerHeight = 95
+    local bannerWidth = ui.measureDWriteText(text,30).x + 5
+
+    ui.beginScale()
+
+    ui.drawRectFilled(
+        vec2(0,0),
+        vec2(400,bannerHeight),
+        rgbm(0.07, 0.12, 0.23, 1)
+    )
+
+    ui.drawRectFilled(
+        vec2(360,0),
+        vec2(360+bannerWidth,bannerHeight),
+        rgbm(1,1,1,1)
+    )
+
+    drawText{
+        string = "RACE",
+        fontSize = fontSize,
+        xPos = leftAlign,
+        yPos = yAlign,
+        xAlign = ui.Alignment.Start,
+        yAlign = ui.Alignment.Center,
+        color = rgbm(1, 1, 1, 1)
+    }
+
+    drawText{
+        string = "CONTROL",
+        fontSize = fontSize,
+        xPos = leftAlign,
+        yPos = yAlign + 35,
+        xAlign = ui.Alignment.Start,
+        yAlign = ui.Alignment.Center,
+        color = rgbm(1, 1, 1, 1)
+    }
+
+    drawText{
+        string = text,
+        fontSize = 26,
+        xPos = 149 + bannerWidth/2,
+        yPos = yAlign + 21,
+        xAlign = ui.Alignment.Center,
+        yAlign = ui.Alignment.Center,
+        color = rgbm(0.07, 0.12, 0.23, 1),
+        margin = vec2(420, 350)
+    }
+
+    ui.beginScale()
+    local pos_x = 7
+    local pos_y = -2
+    local size_x = pos_x + 146
+    local size_y = pos_y + 100
+
+    ui.drawImage("assets/icons/fia_logo.png", vec2(pos_x,pos_y), vec2(size_x,size_y), rgbm(1,1,1,1), true)
+    ui.endScale(0.60)
+
+    ui.endScale(1)
+
+    ui.popDWriteFont()
 end
 
-local function drawWetWeather()
+function script.windowNotifications(dt)
 
-end
 
-local function drawPenalty()
-
-end
-
-local function drawWarning()
-
-end
-
-local NOTIFICATION_POPUPS = {drawDrs, drawVsc, drawWetWeather, drawPenalty, drawWarning}
-
-local function Popups()
-        local popupTime
-         = 5 --seconds
-        table.sort(incomingPopups, function a.priority < b.priority end)
-        local popupIndex = incomingPopups[#incomingPopups]
-        
-        return{
-            show = function(self)
-                if popupTime > 0 then
-                    popupTime = popupTime - 1
-                    NOTIFICATION_POPUPS[popupIndex](dt)
-                    run()
-                else
-                     popupTime = 5
-                     return incomingPopups.remove()
-                end 
-            end
-        }
-end
-
-function script.windowRaceControl(dt)
-       local popups = Popups()
-       local incomingPopups = DRIVERS[sim.focusedCar].incomingPopups
-       
-       incomingPopups = popups.show(incomingPopups)
-       
-       DRIVERS[sim.focusedCar].incomingPopups = incomingPopups
+    drawRaceControl("DRS ENABLED")
 end
