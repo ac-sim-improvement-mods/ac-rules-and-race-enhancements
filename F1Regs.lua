@@ -1,5 +1,5 @@
-local SCRIPT_VERSION = "v0.9.5-alpha"
-local SCRIPT_VERSION_ID = 9500
+local SCRIPT_VERSION = "v0.9.6.0-alpha"
+local SCRIPT_VERSION_ID = 0960
 
 local INITIALIZED = false
 local RESTARTED = false
@@ -170,7 +170,16 @@ end, class.NoInitialize)
 --- Converts session type number to the corresponding session type string
 ---@return string
 local function sessionTypeString(sim)
-    local sessionTypes = {"UNDEFINED", "PRACTICE", "QUALIFY", "RACE", "HOTLAP", "TIME ATTACK", "DRIFT", "DRAG"}
+    local sessionTypes = {
+        "UNDEFINED",
+        "PRACTICE",
+        "QUALIFY",
+        "RACE",
+        "HOTLAP",
+        "TIME ATTACK",
+        "DRIFT",
+        "DRAG"
+    }
 
     return sessionTypes[sim.raceSessionType + 1]
 end
@@ -702,8 +711,8 @@ local function initialize(sim)
         return false
     end
 
-    if csp_version < 2051 then
-        ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP v0.1.78 required!")
+    if csp_version < 2144 then
+        ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP v0.1.79 required!")
         log("[WARN] Incompatible CSP version")
         return false
     end
