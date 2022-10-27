@@ -1,6 +1,0 @@
-{2c656e58-da8f-4a61-84d0-87f01d360c87} bank:/DRS
-{b4784e8c-abf4-0623-0299-0d0eecc50a1f} bank:/DRS.strings
-{a1eda339-ab15-4e8c-a3da-975e6a0c77f4} bus:/
-{7efdc9dc-332f-480c-a356-2ed1ecbf1b7e} bus:/Reverb
-{c858f9c7-1979-41a4-acb7-3ad8a8a5ab25} event:/drs-available-beep
-{8ba13b3a-252f-454d-b388-069bceb2e848} event:/drs-flap

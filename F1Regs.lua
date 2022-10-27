@@ -23,8 +23,8 @@ local VSC_END_TIMER = 3000
 local NOTIFICATION_TIMER = 0
 local NOTIFICATION_TEXT = ""
 
-local DRS_FLAP = nil
-local DRS_BEEP = nil
+local DRS_FLAP = ui.MediaPlayer()
+local DRS_BEEP = ui.MediaPlayer()
 
 function log(message)
     ac.log("[F1Regs] "..message)
@@ -113,6 +113,8 @@ local Driver = class('Driver', function(carIndex)
     local drsCheck = false
     local drsAvailable = false
     local drsDeployable = false
+    local drsBeepFx = false
+    local drsFlapFx = false
 
     local timePenalty = 0
     local illegalOvertake = false
@@ -120,6 +122,7 @@ local Driver = class('Driver', function(carIndex)
     local returnPostionTimer = -1
 
     return {
+    drsBeepFx = drsBeepFx, drsFlapFx = drsFlapFx,
     drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, drsZoneId = drsZoneId, 
     drsActivationZone = drsActivationZone, drsAvailable = drsAvailable, drsCheck = drsCheck,
     aiPitting = aiPitting, aiPitCall = aiPitCall, aiPrePitFuel = aiPrePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, 
@@ -248,11 +251,7 @@ local function rainCheck(sim)
     local total_wetness = ((track_wetness/5) + (track_puddles*10))/2
     if total_wetness >= wet_limit then
         if not WET_TRACK then
-            ui.toast(ui.Icons.Bell, "DRS Disabled | Conditions too wet")
             log("[Race Control] DRS Disabled | Conditions too wet")
-            log("[Race Control] Puddles: "..track_puddles)
-            log("[Race Control] Wetness: "..track_wetness)
-            log("[Race Control] Intensity: "..track_rain_intensity)
             showNotification("DRS DISABLED | WET TRACK")
         end
 
@@ -266,7 +265,6 @@ local function rainCheck(sim)
                 DRS_ENABLED_LAP = LEADER_LAPS + 2
                 WET_TRACK = false
 
-                ui.toast(ui.Icons.Bell, "DRS Enabled in 2 laps on lap "..DRS_ENABLED_LAP)
                 log("[Race Control] Track is drying. DRS enabled in 2 laps on lap "..DRS_ENABLED_LAP)
                 showNotification("DRS ENABLED IN 2 LAPS")
             end
@@ -281,7 +279,6 @@ local function enableDRS(sim)
     if not WET_TRACK then
         if LEADER_LAPS >= DRS_ENABLED_LAP then
             if not DRS_ENABLED then
-                ui.toast(ui.Icons.Bell, "DRS Enabled")
                 log("[Race Control] DRS Enabled")
                 showNotification("DRS ENABLED")
             end
@@ -525,7 +522,6 @@ local function enableVSC(sim,best_lap_times)
         ac.log(VSC_LAP_TIME)
         VSC_DEPLOYED = true
         ac.log("Virtual Safety Car Deployed. No overtaking!")
-        ui.toast(ui.Icons.Warning, "[F1Regs] Virtual Safety Car Deployed. No overtaking!")
         showNotification("VIRTUAL SAFETY CAR DEPLOYED")
         physics.overrideRacingFlag(ac.FlagType.Caution)
     end
@@ -725,10 +721,12 @@ local function initialize(sim)
         end
     end
 
-    ac.debug("audio_loaded",ac.loadSoundbank('assets/audio/DRS.bank'))
-    DRS_BEEP = ac.AudioEvent("event:/drs-available-beep", false)
-    DRS_FLAP = ac.AudioEvent("event:/drs-flap", false)
-    
+    DRS_BEEP:setSource("./assets/audio/drs-available-beep.wav"):setAutoPlay(true)
+    DRS_BEEP:setVolume(ac.getAudioVolume("main") * 0.45 )
+
+    DRS_FLAP:setSource("./assets/audio/drs-flap.wav"):setAutoPlay(true)
+    DRS_FLAP:setVolume(ac.getAudioVolume("main") * 0.45 )
+
     -- Empty DRIVERS table
     for index in pairs(DRIVERS) do
         DRIVERS[index] = nil
@@ -755,7 +753,6 @@ local function initialize(sim)
     end
 
     if F1RegsConfig.data.RULES.DRS_RULES == 1 then
-        ui.toast(ui.Icons.Bell, "DRS Enabled in "..DRS_ENABLED_LAP-LEADER_LAPS.." laps")
         log("[Race Control] DRS Enabled in "..DRS_ENABLED_LAP-LEADER_LAPS.." laps")
     end
 
@@ -763,12 +760,30 @@ local function initialize(sim)
     return true
 end
 
-function script.update()
+local function audioHandler(sim)
+    local driver = DRIVERS[ac.getSim().focusedCar]
+
+    if sim.cameraMode < 3 then
+        if driver.drsBeepFx and driver.car.drsAvailable and driver.drsAvailable then
+            driver.drsBeepFx = false
+            DRS_BEEP:play()
+        elseif not driver.car.drsAvailable and driver.drsAvailable then
+            driver.drsBeepFx = true
+        end
+    
+        if driver.drsFlapFx ~= driver.car.drsActive then
+            driver.drsFlapFx = driver.car.drsActive
+            DRS_FLAP:play()
+        end
+
+        DRIVERS[ac.getSim().focusedCar] = driver
+    end
+end
+
+function script.update(dt)
     --ac.perfBegin("1.main")
     local sim = ac.getSim()
     local error = ac.getLastError()
-
-
 
     if error then
         log(error)
@@ -793,17 +808,8 @@ function script.update()
             RESTARTED = false
         -- Race session has started
         elseif INITIALIZED then 
-            controlSystems(sim) 
-        
-            DRS_BEEP:setParam('time',10)
-            DRS_BEEP:setPosition(ac.getCameraPosition())
-            DRS_BEEP:start()
-            DRS_BEEP:resume()
-            ac.debug("valid",DRS_BEEP:isValid())
-            ac.debug("playing",DRS_BEEP:isPlaying())
-            ac.debug("paused",DRS_BEEP:isPaused())
-            ac.debug("inrange",DRS_BEEP:isWithinRange())
-        end
+            audioHandler(sim)
+            controlSystems(sim) end
     end
 
     --ac.perfEnd("1.main")
@@ -1220,19 +1226,16 @@ local function drawRaceControl(text)
     ui.popDWriteFont()
 end
 
-local function drawTimeLeft()
-  ac.debug("timeout",string.format('Time left: %02.0f', math.max(0, NOTIFICATION_TIMER)))
+local function drawNotification()
   drawRaceControl(NOTIFICATION_TEXT)
 end
 
-local fadingTimer = ui.FadingElement(drawTimeLeft,false)
+local fadingTimer = ui.FadingElement(drawNotification,false)
 
 function showNotification(text,timer)
     if not timer then
         timer = 5
     end
-
-
 
     NOTIFICATION_TIMER = timer
     NOTIFICATION_TEXT = text
