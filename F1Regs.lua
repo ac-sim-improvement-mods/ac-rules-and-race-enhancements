@@ -23,6 +23,9 @@ local VSC_END_TIMER = 3000
 local NOTIFICATION_TIMER = 0
 local NOTIFICATION_TEXT = ""
 
+local DRS_FLAP = nil
+local DRS_BEEP = nil
+
 function log(message)
     ac.log("[F1Regs] "..message)
 end
@@ -487,25 +490,6 @@ local function controlDRS(sim,driver)
     --ac.perfEnd("drs")
 end
 
--- local function overtake_check(driver)
---     if driver.illegalOvertake then
---         if driver.returnPostionTimer == -1 then
---             ui.toast(ui.Icons.Bell, "Illegal overtake, give back that position in 30 seconds")
---             driver.returnPostionTimer = ac.getSim().timeSeconds + 30
---         elseif driver.car.racePosition >= driver.returnRacePosition then
---             ui.toast(ui.Icons.Bell, "You returned the race position")
---             driver.illegalOvertake = false
---             driver.returnPostionTimer = -1
---         elseif driver.returnPostionTimer >= ac.getSim().timeSeconds then
---             ui.toast(ui.Icons.Bell, "Failed to return the position, driver through penalty receieved")
---             driver.car.currentPenaltyType = 3
---             driver.car.currentPenaltyParameter = 5
---             driver.illegalOvertake = false
---             driver.returnPostionTimer = -1
---         end
---     end
--- end
-
 local function alternateAIAttack(driver)
     --ac.perfBegin("attack")
     local delta = driver.carAheadDelta
@@ -740,6 +724,10 @@ local function initialize(sim)
             physics.overrideRacingFlag(ac.FlagType.None)
         end
     end
+
+    ac.debug("audio_loaded",ac.loadSoundbank('assets/audio/DRS.bank'))
+    DRS_BEEP = ac.AudioEvent("event:/drs-available-beep", false)
+    DRS_FLAP = ac.AudioEvent("event:/drs-flap", false)
     
     -- Empty DRIVERS table
     for index in pairs(DRIVERS) do
@@ -780,6 +768,8 @@ function script.update()
     local sim = ac.getSim()
     local error = ac.getLastError()
 
+
+
     if error then
         log(error)
         INITIALIZED = initialize(sim)
@@ -802,7 +792,18 @@ function script.update()
             REBOOT = false
             RESTARTED = false
         -- Race session has started
-        elseif INITIALIZED then controlSystems(sim) end
+        elseif INITIALIZED then 
+            controlSystems(sim) 
+        
+            DRS_BEEP:setParam('time',10)
+            DRS_BEEP:setPosition(ac.getCameraPosition())
+            DRS_BEEP:start()
+            DRS_BEEP:resume()
+            ac.debug("valid",DRS_BEEP:isValid())
+            ac.debug("playing",DRS_BEEP:isPlaying())
+            ac.debug("paused",DRS_BEEP:isPaused())
+            ac.debug("inrange",DRS_BEEP:isWithinRange())
+        end
     end
 
     --ac.perfEnd("1.main")
@@ -1231,12 +1232,15 @@ function showNotification(text,timer)
         timer = 5
     end
 
+
+
     NOTIFICATION_TIMER = timer
     NOTIFICATION_TEXT = text
 end
 
 function script.windowNotifications(dt)
     local timer = NOTIFICATION_TIMER
-    NOTIFICATION_TIMER = timer - dt
+    timer = timer - dt
+    NOTIFICATION_TIMER = timer
     fadingTimer(timer > 0 and timer < 60)
 end

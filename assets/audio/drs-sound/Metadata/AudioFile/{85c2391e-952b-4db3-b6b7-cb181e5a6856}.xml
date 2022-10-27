@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="AudioFile" id="{85c2391e-952b-4db3-b6b7-cb181e5a6856}">
+		<property name="assetPath">
+			<value>drs-available-beep.wav</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>192</value>
+		</property>
+		<property name="channelCount">
+			<value>1</value>
+		</property>
+		<property name="length">
+			<value>0.089999999999999997</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{62eaebed-96b7-47b4-88fc-6ca1745386f8}</destination>
+		</relationship>
+	</object>
+</objects>
