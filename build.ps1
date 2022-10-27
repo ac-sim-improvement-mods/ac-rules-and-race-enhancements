@@ -4,6 +4,7 @@ Copy-Item "$PSScriptRoot\F1Regs.lua" -Destination "$build_dir\apps\lua\F1Regs"
 Copy-Item "$PSScriptRoot\manifest.ini" -Destination "$build_dir\apps\lua\F1Regs"
 Copy-Item "$PSScriptRoot\settings.ini" -Destination "$build_dir\apps\lua\F1Regs"
 Copy-Item "$PSScriptRoot\icon.png" -Destination "$build_dir\apps\lua\F1Regs"
+Copy-Item "$PSScriptRoot\assets" -Destination "$build_dir\apps\lua\F1Regs" -Recurse
 
 $folders = Get-ChildItem "$build_dir\content\cars"
 
