@@ -20,6 +20,9 @@ local VSC_LAP_TIME = 180000
 local VSC_START_TIMER = 1000
 local VSC_END_TIMER = 3000
 
+local NOTIFICATION_TIMER = 0
+local NOTIFICATION_TEXT = ""
+
 function log(message)
     ac.log("[F1Regs] "..message)
 end
@@ -247,6 +250,7 @@ local function rainCheck(sim)
             log("[Race Control] Puddles: "..track_puddles)
             log("[Race Control] Wetness: "..track_wetness)
             log("[Race Control] Intensity: "..track_rain_intensity)
+            showNotification("DRS DISABLED | WET TRACK")
         end
 
         WET_TRACK = true
@@ -261,6 +265,7 @@ local function rainCheck(sim)
 
                 ui.toast(ui.Icons.Bell, "DRS Enabled in 2 laps on lap "..DRS_ENABLED_LAP)
                 log("[Race Control] Track is drying. DRS enabled in 2 laps on lap "..DRS_ENABLED_LAP)
+                showNotification("DRS ENABLED IN 2 LAPS")
             end
         end
     end
@@ -275,6 +280,7 @@ local function enableDRS(sim)
             if not DRS_ENABLED then
                 ui.toast(ui.Icons.Bell, "DRS Enabled")
                 log("[Race Control] DRS Enabled")
+                showNotification("DRS ENABLED")
             end
             return true
         else
@@ -1207,13 +1213,141 @@ local function drawRaceControl(text)
     ui.drawImage("assets/icons/fia_logo.png", vec2(pos_x,pos_y), vec2(size_x,size_y), rgbm(1,1,1,1), true)
     ui.endScale(0.60)
 
+
+
     ui.endScale(1)
 
     ui.popDWriteFont()
 end
 
+local function drawLeaderboard()
+    local x_origin = 20
+    local y_origin = 20
+
+    local leaderboardWidth = x_origin + 320
+    local leaderboardHeight = y_origin + 300 
+
+    ui.pushDWriteFont("Formula1 Display;Weight=Bold")
+
+    ui.pathStroke(rgbm(0,0,0,1), false, 5)
+
+
+    ui.pushStyleVarAlpha(0.7)
+    ui.beginScale()
+    local pos_x = x_origin-50
+    local pos_y = 0
+    local size_x = pos_x + 400
+    local size_y = pos_y + 400
+    ui.drawImage("assets/icons/leaderboard4.png", vec2(pos_x,pos_y), vec2(size_x,size_y), rgbm(1,1,1,1), true)
+    ui.endScale(1)
+    ui.popDWriteFont()
+    ui.popStyleVar(1)
+
+    -- -- Main Rectangle
+    -- ui.drawRectFilled(
+    --     vec2(x_origin,y_origin),
+    --     vec2(leaderboardWidth,leaderboardHeight),
+    --     rgbm(0.1,0.1,0.1,0.2),
+    --     20,
+    --     ui.CornerFlags.Left
+    -- )
+
+    -- Lap Counter Underline
+    ui.drawRectFilled(
+        vec2(x_origin+10,138),
+        vec2(leaderboardWidth-10,141),
+        rgbm(0.3,0.3,0.3,1)
+    )
+
+    -- Lap Counter
+    ui.drawRectFilled(
+        vec2(x_origin+10,99),
+        vec2(leaderboardWidth-10,120),
+        rgbm(0,0,0,0.5)
+    )
+    
+    ui.beginGradientShade()
+    ui.drawRectFilled(
+        vec2(x_origin+10,120),
+        vec2(leaderboardWidth-10,141),
+        rgbm(0,0,0,0.5)
+    )
+    ui.endGradientShade(
+        vec2(x_origin,120),
+        vec2(x_origin,155),
+        rgbm(0,0,0,1),
+        rgbm(0.25,0.25,0.25,1)
+    )
+
+
+    ui.pushDWriteFont("Formula1 Display;Weight=Black")
+    drawText{
+        string = "RACE",
+        fontSize = 38,
+        xPos = x_origin + 190,
+        yPos = -125,
+        xAlign = ui.Alignment.Start,
+        yAlign = ui.Alignment.Center,
+        color = rgbm(0.6, 0.6, 0.6, 1)
+    }
+    ui.popDWriteFont()
+
+    ui.pushDWriteFont("Formula1 Display")
+    drawText{
+        string = "LAP       / 56",
+        fontSize = 22,
+        xPos = 120,
+        yPos = -75,
+        xAlign = ui.Alignment.Start,
+        yAlign = ui.Alignment.Center,
+        color = rgbm(0.7, 0.7, 0.7, 1)
+    }
+    ui.popDWriteFont()
+
+    drawText{
+        string = "             3",
+        fontSize = 30,
+        xPos = 88,
+        yPos = -75,
+        xAlign = ui.Alignment.Start,
+        yAlign = ui.Alignment.Center,
+        color = rgbm(0.7, 0.7, 0.7, 1)
+    }
+
+
+    ui.beginScale()
+    local pos_x = x_origin-248
+    local pos_y = -55
+    local size_x = pos_x + 700
+    local size_y = pos_y + 200
+    ui.drawImage("assets/icons/formula-1-logo.png", vec2(pos_x,pos_y), vec2(size_x,size_y), rgbm(1,1,1,1), true)
+    ui.endScale(0.25)
+    ui.popDWriteFont()
+end
+
+
+local function drawTimeLeft()
+  ac.debug("timeout",string.format('Time left: %02.0f', math.max(0, NOTIFICATION_TIMER)))
+  drawRaceControl(NOTIFICATION_TEXT)
+end
+
+local fadingTimer = ui.FadingElement(drawTimeLeft,false)
+
+function showNotification(text,timer)
+    if not timer then
+        timer = 5
+    end
+
+    NOTIFICATION_TIMER = timer
+    NOTIFICATION_TEXT = text
+end
+
 function script.windowNotifications(dt)
+    local timer = NOTIFICATION_TIMER
+    NOTIFICATION_TIMER = timer - dt
+    fadingTimer(timer > 0 and timer < 60)
+end
 
-
-    drawRaceControl("DRS ENABLED")
+function script.windowLeaderboard(dt)
+    --drawLeaderboard()
 end
