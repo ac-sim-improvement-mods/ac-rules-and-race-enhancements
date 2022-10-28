@@ -324,7 +324,7 @@ end
 --- Converts session type number to the corresponding session type string 
 ---@param driver Driver
 ---@return boolean
-local function getNextDetectionLine(sim,driver)
+local function getNextDetectionLine(driver)
     --ac.perfBegin("getNextDetection")
     local drs_zones = DRS_ZONES
     local closestStart = 0
@@ -632,7 +632,7 @@ local function controlSystems(sim)
         --ac.perfBegin("4.driver")
         local driver = drivers[index]
         setLeaderLaps(driver)
-        getNextDetectionLine(sim,driver)
+        getNextDetectionLine(driver)
 
         if config.AI_FORCE_PIT_TYRES == 1 then aiPitNewTires(sim,driver) end
         if config.AI_AGGRESSION_RUBBERBAND == 1 then alternateAIAttack(driver) end
