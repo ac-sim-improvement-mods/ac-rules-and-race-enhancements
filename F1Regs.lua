@@ -1,5 +1,5 @@
-local SCRIPT_VERSION = "v0.9.6.0-alpha"
-local SCRIPT_VERSION_ID = 0960
+local SCRIPT_VERSION = "0.9.7.0-alpha"
+local SCRIPT_VERSION_ID = 0970
 
 local INITIALIZED = false
 local RESTARTED = false
@@ -588,34 +588,32 @@ local function aiPitNewTires(sim,driver)
 
     if driver.car.isAIControlled then
         if not driver.car.isInPitlane then
-            if driver.aiPrePitFuel ~= 0 then
-                if driver.aiPitCall then
-                    driver.aiPitCall = false
-                    driver.aiPitting = true
-                    physics.setCarFuel(driver.index, driver.aiPrePitFuel)
-                end
+            if driver.aiPitCall then
+                driver.aiPitCall = false
+                driver.aiPitting = true
+                physics.setCarFuel(driver.index, driver.aiPrePitFuel)
             else
                 if LEADER_LAPS < ac.getSession(sim.currentSessionIndex).laps - 5 then
                     local avg_tyre_wear = ((driver.car.wheels[0].tyreWear + 
                                             driver.car.wheels[1].tyreWear +
                                             driver.car.wheels[2].tyreWear +
                                             driver.car.wheels[3].tyreWear) / 4)
-                    if avg_tyre_wear > 1-(F1RegsConfig.data.RULES.AI_TYRE_LIFE/100) then                  
+                    if avg_tyre_wear > 1-(F1RegsConfig.data.RULES.AI_TYRE_LIFE/100) then         
                         --physics.setCarPenalty(ac.PenaltyType.MandatoryPits,1)
                         driver.aiPrePitFuel = driver.car.fuel
                         physics.setCarFuel(driver.index, 0.1)
                         driver.aiPitCall = true
-                        
                     end
+                else
+                    driver.aiPrePitFuel = 0
                 end
             end
-        else
-            if driver.aiPrePitFuel ~= 0 then
-                physics.setCarFuel(driver.index, driver.aiPrePitFuel + 3)
-            end
+        else            
             if driver.car.isInPit then
+                physics.setCarFuel(driver.index, driver.aiPrePitFuel)
                 driver.aiPitting = false
-                driver.aiPrePitFuel = 0
+            else
+                driver.aiPrePitFuel = driver.car.fuel
             end
         end
     end
@@ -769,7 +767,7 @@ end
 local function audioHandler(sim)
     local driver = DRIVERS[ac.getSim().focusedCar]
 
-    if sim.cameraMode < 3 then
+    if sim.cameraMode < 3 and sim.isWindowForeground then
         if driver.drsBeepFx and driver.car.drsAvailable and driver.drsAvailable then
             driver.drsBeepFx = false
             DRS_BEEP:play()
@@ -878,7 +876,7 @@ end
 
 function script.windowSettings(dt)
     local scriptVersion = SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")"
-    ac.setWindowTitle("settings", "F1 Regs Settings      "..scriptVersion)
+    ac.setWindowTitle("settings", "F1 Regs Settings        "..scriptVersion)
     ui.pushFont(ui.Font.Small)
 
     ui.tabBar("settingstabbar", ui.TabBarFlags.None, function ()
@@ -893,7 +891,7 @@ function script.windowSettings(dt)
                 'First lap to allow DRS activation',
                 function (v) return v end)
                 slider(F1RegsConfig, 'RULES', 'DRS_GAP_DELTA', 100, 2000, 1, false, 'Gap Delta: %.0f ms',
-                'Max gap to car when crossing detection line to allow DRS for the next zone',
+                'Max gap to car ahead when crossing detection line to allow DRS for the next zone',
                 function (v) return math.floor(v / 50 + 0.5) * 50 end)
                 slider(F1RegsConfig, 'RULES', 'DRS_WET_DISABLE', 0, 1, 1, true, F1RegsConfig.data.RULES.DRS_WET_DISABLE == 1 and 'Wet Weather Rules: ENABLED' or 'Wet Weather Rules: DISABLED', 
                 'Disable DRS activation if track wetness gets above the limit below',
@@ -969,13 +967,11 @@ function script.windowSettings(dt)
             ui.header("VOLUME:")
 
             slider(F1RegsConfig, 'AUDIO', 'MASTER', 0, 100, 1, false, 'Master: %.0f%%', 
-            'Track wetness level that will disable DRS activation',
+            'F1 Regs Master Volume',
             function (v) return math.round(v,0) end)
 
-
-
             slider(F1RegsConfig, 'AUDIO', 'DRS_BEEP', 0, 100, 1, false, 'DRS Beep: %.0f%%', 
-            'Track wetness level that will disable DRS activation',
+            'DRS Beep Volume',
             function (v) return math.round(v,0) end)
             DRS_BEEP:setVolume(F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_BEEP/100)
 
@@ -987,7 +983,7 @@ function script.windowSettings(dt)
 
 
             slider(F1RegsConfig, 'AUDIO', 'DRS_FLAP', 0, 100, 1, false, 'DRS Flap: %.0f%%', 
-            'Track wetness level that will disable DRS activation',
+            'DRS Flap Volume',
             function (v) return math.round(v,0) end)
             DRS_FLAP:setVolume(F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_FLAP/100)
             
@@ -1002,8 +998,8 @@ function script.windowSettings(dt)
         ui.tabItem("UI", ui.TabItemFlags.None, function ()
             ui.newLine(1)
             ui.header("NOTIFICATIONS:")
-            slider(F1RegsConfig, 'NOTIFICATIONS', 'DURATION', 0, 10, 1, false, 'Race Control Banner Timer: %.0fs%', 
-            'Track wetness level that will disable DRS activation',
+            slider(F1RegsConfig, 'NOTIFICATIONS', 'DURATION', 0, 10, 1, false, 'Race Control Banner Timer: %.0f s', 
+            'Duration (seconds) that the "Race Control" banner will stay on screen',
             function (v) return math.round(v,0) end)
             ui.newLine(1)
         end)
@@ -1044,7 +1040,7 @@ end
 
 function script.windowDebug(dt)
     local sim = ac.getSim()
-    ac.setWindowTitle("debug", "F1 Regs Debug               "..SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")")
+    ac.setWindowTitle("debug", "F1 Regs Debug                 "..SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")")
 
     if sim.raceSessionType ~= 3 then
         ui.pushFont(ui.Font.Main)
@@ -1057,6 +1053,14 @@ function script.windowDebug(dt)
         local math = math
         local space = 200
         ui.pushFont(ui.Font.Small)
+
+        ui.treeNode("[INFO]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            inLineBulletText("CSP Version", ac.getPatchVersion(),space)
+            inLineBulletText("CSP Version Code", ac.getPatchVersionCode(),space)
+            inLineBulletText("F1 Regs Version", SCRIPT_VERSION,space)
+            inLineBulletText("F1 Regs Version Code", SCRIPT_VERSION_ID,space)
+            inLineBulletText("Current Date Time", os.date(),space)
+        end)
 
         ui.treeNode("["..sessionTypeString(sim).." SESSION]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
             inLineBulletText("F1 Regs Enabled", upperBool(ac.isWindowOpen("main")),space)
