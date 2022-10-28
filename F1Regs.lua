@@ -103,6 +103,9 @@ local Driver = class('Driver', function(carIndex)
     local aiPrePitFuel = 0
     local aiPitCall = false
     local aiPitting = false
+    
+    local lapPitted = 0 
+    local tyreLaps = 0
 
     local trackPosition = -1
     local carAhead = -1
@@ -123,6 +126,7 @@ local Driver = class('Driver', function(carIndex)
     local returnPostionTimer = -1
 
     return {
+    tyreLaps = tyreLaps, lapPitted = lapPitted,
     drsBeepFx = drsBeepFx, drsFlapFx = drsFlapFx,
     drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, drsZoneId = drsZoneId, 
     drsActivationZone = drsActivationZone, drsAvailable = drsAvailable, drsCheck = drsCheck,
@@ -613,6 +617,7 @@ local function aiPitNewTires(sim,driver)
             if driver.car.isInPit then
                 physics.setCarFuel(driver.index, driver.aiPrePitFuel)
                 driver.aiPitting = false
+                driver.tyreLaps = 0
             else
                 driver.aiPrePitFuel = driver.car.fuel
             end
@@ -640,6 +645,11 @@ local function controlSystems(sim)
         setLeaderLaps(driver)
         getNextDetectionLine(driver)
 
+        if driver.tyreLaps > 0 and driver.car.isInPitlane then
+            driver.lapPitted = driver.car.lapCount
+        end
+
+        driver.tyreLaps = driver.car.lapCount - driver.lapPitted
         if config.AI_FORCE_PIT_TYRES == 1 then aiPitNewTires(sim,driver) end
         if config.AI_AGGRESSION_RUBBERBAND == 1 then alternateAIAttack(driver) end
         if config.DRS_RULES == 1 then controlDRS(sim,driver) else driver.drsAvailable = true end
@@ -779,6 +789,7 @@ local function initialize(sim)
         local driver = DRIVERS[driverIndex]
         driver.drsAvailable = false
         driver.trackPosition = driver.car.racePosition
+        driver.lapPitted = driver.car.lapCount
         setLeaderLaps(driver)
         if driver.car.isAIControlled then
             physics.setCarFuel(driver.index, driver.car.maxFuel)
@@ -1142,6 +1153,10 @@ function script.windowDebug(dt)
                 inLineBulletText("Track Position", driver.trackPosition.."/"..DRIVERS_ON_TRACK,space)
                 inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
                 inLineBulletText("Lap", (driver.car.lapCount+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
+                inLineBulletText("Performance Meter", driver.car.performanceMeter,space)
+                inLineBulletText("Last Lap Time", ac.lapTimeToString(driver.car.previousLapTimeMs),space)
+                inLineBulletText("Best Lap Time", ac.lapTimeToString(driver.car.bestLapTimeMs),space)
+                inLineBulletText("Fuel Map", driver.car.fuelMap,space)
                 inLineBulletText("Pre-Pit Fuel", math.round(driver.aiPrePitFuel,5).." L",space)
                 inLineBulletText("Fuel", math.round(driver.car.fuel,5).." L",space)
                 inLineBulletText("Fuel Map", driver.car.fuelMap,space)
@@ -1170,6 +1185,8 @@ function script.windowDebug(dt)
             inLineBulletText("AI Tyre Life Average Limit", F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE.." %",space)
             inLineBulletText("AI Tyre Life Single Limit", F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE.." %",space)
             inLineBulletText("AI Pitting New Tyres", upperBool(driver.aiPitting),space)
+            inLineBulletText("Last Pit Lap", driver.lapPitted,space)
+            inLineBulletText("Tyre Laps", driver.tyreLaps,space)
             inLineBulletText("Tyre Life Average", math.round(100-(avg_tyre_wear*100),5),space)
             inLineBulletText("Tyre Life [FL]", math.round(100-(driver.car.wheels[0].tyreWear*100),5),space)
             inLineBulletText("Tyre Life [RL]", math.round(100-(driver.car.wheels[2].tyreWear*100),5),space)
