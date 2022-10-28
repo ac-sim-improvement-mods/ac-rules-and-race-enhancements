@@ -1,6 +1,6 @@
-local SCRIPT_VERSION = "0.9.7.0-alpha"
-local SCRIPT_VERSION_ID = 0970
-local SCRIPT_RELEASE_DATE = "2022-10-27"
+local SCRIPT_VERSION = "0.9.7.3-alpha"
+local SCRIPT_VERSION_ID = 9732
+local SCRIPT_RELEASE_DATE = "2022-10-28"
 
 local INITIALIZED = false
 local RESTARTED = false
@@ -103,6 +103,9 @@ local Driver = class('Driver', function(carIndex)
     local aiPrePitFuel = 0
     local aiPitCall = false
     local aiPitting = false
+    
+    local lapPitted = 0 
+    local tyreLaps = 0
 
     local trackPosition = -1
     local carAhead = -1
@@ -123,6 +126,7 @@ local Driver = class('Driver', function(carIndex)
     local returnPostionTimer = -1
 
     return {
+    tyreLaps = tyreLaps, lapPitted = lapPitted,
     drsBeepFx = drsBeepFx, drsFlapFx = drsFlapFx,
     drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, drsZoneId = drsZoneId, 
     drsActivationZone = drsActivationZone, drsAvailable = drsAvailable, drsCheck = drsCheck,
@@ -324,7 +328,7 @@ end
 --- Converts session type number to the corresponding session type string 
 ---@param driver Driver
 ---@return boolean
-local function getNextDetectionLine(sim,driver)
+local function getNextDetectionLine(driver)
     --ac.perfBegin("getNextDetection")
     local drs_zones = DRS_ZONES
     local closestStart = 0
@@ -359,9 +363,20 @@ end
 local function crossedDetectionLine(driver)
     local drs_zones = DRS_ZONES
     local track_pos = driver.car.splinePosition
+    local detection_line = drs_zones.detectionZones[driver.drsZoneId]
+    local start_line = drs_zones.startZones[driver.drsZoneId]
+
+    -- This handles when a DRS start zone is past the finish line after the detection zone
+    if detection_line > start_line then
+        if track_pos >= 0 and track_pos < start_line then
+            track_pos = track_pos + 1
+        end
+
+        start_line = start_line + 1
+    end
 
     -- If driver is between the end zone of the previous DRS zone, and the detection line of the upcoming DRS zone
-    if track_pos >= drs_zones.detectionZones[driver.drsZoneId] and track_pos < drs_zones.startZones[driver.drsZoneId] then
+    if track_pos >= detection_line and track_pos < start_line then
         return true
     else
         return false
@@ -371,18 +386,14 @@ end
 --- Locks the specified driver's DRS
 ---@param driver Driver
 local function setDriverDRS(driver,allowed)
-    if ac.getPatchVersionCode() >= 2066 then
-        physics.allowCarDRS(driver.index,not allowed)
-        if driver.car.isAIControlled then
-            if allowed and driver.car.brake < 0.5 and driver.car.speedKmh > 50 then
-                physics.setCarDRS(driver.index, true)
-            elseif not allowed then
-                physics.setCarDRS(driver.index, false)
-            end
-        end
-    else
-        if not driver.index == 0 then
-            ac.setDRS(false)
+    physics.allowCarDRS(driver.index,not allowed)
+    if driver.car.isAIControlled then
+        if not allowed then
+            physics.setCarDRS(driver.index, false)
+
+        elseif allowed and 
+            driver.car.brake < 0.5 and driver.car.speedKmh > 50 and getEndDistanceM(ac.getSim(),driver) > 100 then
+            physics.setCarDRS(driver.index, true)
         end
     end
 end
@@ -586,6 +597,8 @@ end
 
 local function aiPitNewTires(sim,driver)
     --ac.perfBegin("5.aiPitNewTires")
+    local avgTyreLimit = 1-(F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE/100)
+    local singleTyreLimit = 1-(F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE/100)
 
     if driver.car.isAIControlled then
         if not driver.car.isInPitlane then
@@ -599,7 +612,11 @@ local function aiPitNewTires(sim,driver)
                                             driver.car.wheels[1].tyreWear +
                                             driver.car.wheels[2].tyreWear +
                                             driver.car.wheels[3].tyreWear) / 4)
-                    if avg_tyre_wear > 1-(F1RegsConfig.data.RULES.AI_TYRE_LIFE/100) then
+                    if avg_tyre_wear > avgTyreLimit or 
+                    driver.car.wheels[0].tyreWear > singleTyreLimit or
+                    driver.car.wheels[1].tyreWear > singleTyreLimit or
+                    driver.car.wheels[2].tyreWear > singleTyreLimit or
+                    driver.car.wheels[3].tyreWear > singleTyreLimit then
                         --physics.setCarPenalty(ac.PenaltyType.MandatoryPits,1)
                         driver.aiPrePitFuel = driver.car.fuel
                         physics.setCarFuel(driver.index, 0.1)
@@ -611,6 +628,7 @@ local function aiPitNewTires(sim,driver)
             if driver.car.isInPit then
                 physics.setCarFuel(driver.index, driver.aiPrePitFuel)
                 driver.aiPitting = false
+                driver.tyreLaps = 0
             else
                 driver.aiPrePitFuel = driver.car.fuel
             end
@@ -636,8 +654,13 @@ local function controlSystems(sim)
         --ac.perfBegin("4.driver")
         local driver = drivers[index]
         setLeaderLaps(driver)
-        getNextDetectionLine(sim,driver)
+        getNextDetectionLine(driver)
 
+        if driver.tyreLaps > 0 and driver.car.isInPitlane then
+            driver.lapPitted = driver.car.lapCount
+        end
+
+        driver.tyreLaps = driver.car.lapCount - driver.lapPitted
         if config.AI_FORCE_PIT_TYRES == 1 then aiPitNewTires(sim,driver) end
         if config.AI_AGGRESSION_RUBBERBAND == 1 then alternateAIAttack(driver) end
         if config.DRS_RULES == 1 then controlDRS(sim,driver) else driver.drsAvailable = true end
@@ -679,20 +702,51 @@ local function initialize(sim)
     log("CSP version: "..csp_version)
 
 
-    -- Load config file
-    F1RegsConfig = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings.ini", {
-        RULES = { DRS_RULES = ac.INIConfig.OptionalNumber, DRS_ACTIVATION_LAP = ac.INIConfig.OptionalNumber, 
-        DRS_GAP_DELTA = ac.INIConfig.OptionalNumber, DRS_WET_DISABLE = ac.INIConfig.OptionalNumber, DRS_WET_LIMIT = ac.INIConfig.OptionalNumber,
-        VSC_RULES = ac.INIConfig.OptionalNumber, VSC_INIT_TIME = ac.INIConfig.OptionalNumber, VSC_DEPLOY_TIME = ac.INIConfig.OptionalNumber,
-        AI_FORCE_PIT_TYRES = ac.INIConfig.OptionalNumber, AI_TYRE_LIFE = ac.INIConfig.OptionalNumber, AI_AGGRESSION_RUBBERBAND = ac.INIConfig.OptionalNumber,
-        PHYSICS_REBOOT = ac.INIConfig.OptionalNumber
-        },
-        AUDIO = { MASTER = ac.INIConfig.OptionalNumber, DRS_BEEP = ac.INIConfig.OptionalNumber, DRS_FLAP = ac.INIConfig.OptionalNumber
-        },
-        NOTIFICATIONS = { DURATION = ac.INIConfig.OptionalNumber, SCALE = ac.INIConfig.OptionalNumber }
-    })
-    log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings.ini")
+    local configFile = "settings.ini"
+    if not io.fileExists(ac.findFile("apps/lua/F1Regs/"..configFile)) then
+        configFile = ac.findFile("apps/lua/F1Regs/"..configFile)
+        local settingsBase = "[RULES]\n[AUDIO]\n[NOTIFICATIONS]"
+        -- Opens a file in append mode
+        local file = io.open(configFile, "w")
 
+        -- sets the default output file as test.lua
+        io.output(file)
+
+        -- appends a word test to the last line of the file
+        io.write(settingsBase)
+
+        -- closes the open file
+        io.close(file)
+        log("[Loaded] Creating settings.ini")
+    end
+
+    F1RegsConfig = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/"..configFile, {
+        RULES = { 
+            DRS_RULES = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
+            DRS_ACTIVATION_LAP = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 3,
+            DRS_GAP_DELTA = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1000,
+            DRS_WET_DISABLE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
+            DRS_WET_LIMIT = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 15,
+            VSC_RULES = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
+            VSC_INIT_TIME = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 300,
+            VSC_DEPLOY_TIME = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 300,
+            AI_FORCE_PIT_TYRES = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
+            AI_AVG_TYRE_LIFE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 60,
+            AI_SINGLE_TYRE_LIFE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 45,
+            AI_AGGRESSION_RUBBERBAND = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
+            PHYSICS_REBOOT = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1
+        },
+        AUDIO = { 
+            MASTER = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 100,
+            DRS_BEEP = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 50,
+            DRS_FLAP = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 50
+        },
+        NOTIFICATIONS = {
+            SCALE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
+            DURATION = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 5
+        }
+    })
+    log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/"..configFile)
 
     if not sim.raceSessionType == 3 then
         log("[Race Control] "..sessionTypeString(sim).." session detected")
@@ -722,13 +776,13 @@ local function initialize(sim)
         end
     end
 
-     
+    local acVolume = ac.getAudioVolume(ac.AudioChannel.Main)
 
-    DRS_BEEP:setSource("./assets/audio/drs-available-beep.wav"):setAutoPlay(true)
-    DRS_BEEP:setVolume(F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_BEEP/100)
+    DRS_BEEP:setSource("./assets/audio/drs-available-beep.wav"):setAutoPlay(false)
+    DRS_BEEP:setVolume(acVolume * F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_BEEP/100)
 
-    DRS_FLAP:setSource("./assets/audio/drs-flap.wav"):setAutoPlay(true)
-    DRS_FLAP:setVolume(F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_FLAP/100)
+    DRS_FLAP:setSource("./assets/audio/drs-flap.wav"):setAutoPlay(false)
+    DRS_FLAP:setVolume(acVolume * F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_FLAP/100)
 
     -- Empty DRIVERS table
     for index in pairs(DRIVERS) do
@@ -746,6 +800,7 @@ local function initialize(sim)
         local driver = DRIVERS[driverIndex]
         driver.drsAvailable = false
         driver.trackPosition = driver.car.racePosition
+        driver.lapPitted = driver.car.lapCount
         setLeaderLaps(driver)
         if driver.car.isAIControlled then
             physics.setCarFuel(driver.index, driver.car.maxFuel)
@@ -875,7 +930,7 @@ end
 
 function script.windowSettings(dt)
     local scriptVersion = SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")"
-    ac.setWindowTitle("settings", "F1 Regs Settings        "..scriptVersion)
+    ac.setWindowTitle("settings", "F1 Regs Settings      "..scriptVersion)
     ui.pushFont(ui.Font.Small)
 
     ui.tabBar("settingstabbar", ui.TabBarFlags.None, function ()
@@ -922,8 +977,15 @@ function script.windowSettings(dt)
             'Force AI to pit for new tyres when their average tyre life is below AI TYRE LIFE',
             function (v) return math.round(v, 0) end)
             if F1RegsConfig.data.RULES.AI_FORCE_PIT_TYRES == 1 then
-                slider(F1RegsConfig, 'RULES', 'AI_TYRE_LIFE', 0, 100, 1, false, 'Pit Below Tyre Life: %.2f%%', 
+                slider(F1RegsConfig, 'RULES', 'AI_AVG_TYRE_LIFE', 0, 100, 1, false, 'Pit Below Avg Tyre Life: %.2f%%', 
                 'AI will pit after average tyre life % is below this value',
+                function (v) 
+                    F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE = math.clamp(F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE,0,math.floor(v / 0.5 + 0.5) * 0.5)
+                    return math.floor(v / 0.5 + 0.5) * 0.5 
+                end)
+
+                slider(F1RegsConfig, 'RULES', 'AI_SINGLE_TYRE_LIFE', 0, F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE, 1, false, 'Pit Below Single Tyre Life: %.2f%%', 
+                "AI will pit if one tyre's life % is below this value",
                 function (v) return math.floor(v / 0.5 + 0.5) * 0.5 end)
             end
             -- slider(F1RegsConfig, 'RULES', 'AI_AGGRESSION_RUBBERBAND', 0, 1, 1, true, F1RegsConfig.data.RULES.AI_AGGRESSION_RUBBERBAND == 1 and "Alt Aggression: ENABLED" or "Alt Aggression: DISABLED", 
@@ -956,7 +1018,7 @@ function script.windowSettings(dt)
             --         RULES = { DRS_RULES = ac.INIConfig.OptionalNumber, DRS_ACTIVATION_LAP = ac.INIConfig.OptionalNumber, 
             --         DRS_GAP_DELTA = ac.INIConfig.OptionalNumber, DRS_WET_DISABLE = ac.INIConfig.OptionalNumber, DRS_WET_LIMIT = ac.INIConfig.OptionalNumber,
             --         VSC_RULES = ac.INIConfig.OptionalNumber, VSC_INIT_TIME = ac.INIConfig.OptionalNumber, VSC_DEPLOY_TIME = ac.INIConfig.OptionalNumber,
-            --         AI_FORCE_PIT_TYRES = ac.INIConfig.OptionalNumber, AI_TYRE_LIFE = ac.INIConfig.OptionalNumber, AI_AGGRESSION_RUBBERBAND = ac.INIConfig.OptionalNumber,
+            --         AI_FORCE_PIT_TYRES = ac.INIConfig.OptionalNumber, AI_AVG_TYRE_LIFE = ac.INIConfig.OptionalNumber, AI_AGGRESSION_RUBBERBAND = ac.INIConfig.OptionalNumber,
             --         PHYSICS_REBOOT = ac.INIConfig.OptionalNumber
             --     }})
             --     log("[Loaded] Applied config")
@@ -968,6 +1030,7 @@ function script.windowSettings(dt)
         ui.tabItem("AUDIO", ui.TabItemFlags.None, function ()
             ui.newLine(1)
             ui.header("VOLUME:")
+            local acVolume = ac.getAudioVolume(ac.AudioChannel.Main)
 
             slider(F1RegsConfig, 'AUDIO', 'MASTER', 0, 100, 1, false, 'Master: %.0f%%', 
             'F1 Regs Master Volume',
@@ -976,7 +1039,7 @@ function script.windowSettings(dt)
             slider(F1RegsConfig, 'AUDIO', 'DRS_BEEP', 0, 100, 1, false, 'DRS Beep: %.0f%%', 
             'DRS Beep Volume',
             function (v) return math.round(v,0) end)
-            DRS_BEEP:setVolume(F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_BEEP/100)
+            DRS_BEEP:setVolume(acVolume * F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_BEEP/100)
 
             ui.sameLine(0,2)
             if ui.button("##drsbeeptest", vec2(20, 20), ui.ButtonFlags.None) then
@@ -988,7 +1051,7 @@ function script.windowSettings(dt)
             slider(F1RegsConfig, 'AUDIO', 'DRS_FLAP', 0, 100, 1, false, 'DRS Flap: %.0f%%', 
             'DRS Flap Volume',
             function (v) return math.round(v,0) end)
-            DRS_FLAP:setVolume(F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_FLAP/100)
+            DRS_FLAP:setVolume(acVolume * F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_FLAP/100)
             
             ui.sameLine(0,2)
             if ui.button("##drsflaptest", vec2(20, 20), ui.ButtonFlags.None) then
@@ -1005,9 +1068,9 @@ function script.windowSettings(dt)
             'Duration (seconds) that the "Race Control" banner will stay on screen',
             function (v) return math.round(v,0) end)
 
-            slider(F1RegsConfig, 'NOTIFICATIONS', 'SCALE', 0.1, 1, 1, false, 'Banner Scale: %.1f0%%', 
+            slider(F1RegsConfig, 'NOTIFICATIONS', 'SCALE', 0.1, 1, 1, false, 'Banner Scale: %.1f', 
             'Duration (seconds) that the "Race Control" banner will stay on screen',
-            function (v) return math.round(v,1) end)
+            function (v) return math.round(v,2) end)
 
             local buttonFlags = ui.ButtonFlags.None
 
@@ -1039,15 +1102,12 @@ local function inLineBulletText(label,text,space)
         else
             ui.textColored(text, rgbm(1,0,0,1))
         end
-    elseif string.find(label, "Life") then
-        if text < F1RegsConfig.data.RULES.AI_TYRE_LIFE then
+    elseif string.find(label, "Life") and not string.find(label, "Limit") then
+        if text < F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE or
+            (string.find(label, "Average") and text < F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE) then
             ui.textColored(text.." %", rgbm(1,0,0,1))
-        else
-            ui.textColored(text.." %", rgbm(1,1,1,1))
-        end
-    elseif string.find(label, "Wear") then
-        if text >= 100-F1RegsConfig.data.RULES.AI_TYRE_LIFE then
-            ui.textColored(text.." %", rgbm(1,0,0,1))
+        elseif text < F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE then
+            ui.textColored(text.." %", rgbm(1,1,0,1))
         else
             ui.textColored(text.." %", rgbm(1,1,1,1))
         end
@@ -1058,7 +1118,7 @@ end
 
 function script.windowDebug(dt)
     local sim = ac.getSim()
-    ac.setWindowTitle("debug", "F1 Regs Debug                 "..SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")")
+    ac.setWindowTitle("debug", "F1 Regs Debug               "..SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")")
 
     if sim.raceSessionType ~= 3 then
         ui.pushFont(ui.Font.Main)
@@ -1085,6 +1145,7 @@ function script.windowDebug(dt)
             inLineBulletText("F1 Regs Enabled", upperBool(ac.isWindowOpen("main")),space)
             inLineBulletText("Physics Allowed", upperBool(physics.allowed()),space)
             inLineBulletText("Race Started", upperBool(sim.isSessionStarted),space)
+            inLineBulletText("Track", ac.getTrackName(),space)
             inLineBulletText("Time", string.format("%02d:%02d:%02d", sim.timeHours, sim.timeMinutes, sim.timeSeconds),space)
             inLineBulletText("Leader Lap", LEADER_LAPS.."/"..ac.getSession(sim.currentSessionIndex).laps,space)
         end)
@@ -1097,31 +1158,39 @@ function script.windowDebug(dt)
             end)
         end
 
+        ui.treeNode("[DRIVER]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            inLineBulletText("Driver ["..driver.index.."]", driver.name,space)
+            inLineBulletText("Driver ahead ["..driver.carAhead.."]", tostring(ac.getDriverName(driver.carAhead)),space)
+            inLineBulletText("Team", ac.getDriverTeam(driver.car.index),space)
+            inLineBulletText("Number", ac.getDriverNumber(driver.car.index),space)
+            inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
+            inLineBulletText("Track Position", driver.trackPosition.."/"..DRIVERS_ON_TRACK,space)
+            inLineBulletText("Lap", (driver.car.lapCount+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
+            inLineBulletText("Last Lap Time", ac.lapTimeToString(driver.car.previousLapTimeMs),space)
+            inLineBulletText("Best Lap Time", ac.lapTimeToString(driver.car.bestLapTimeMs),space)
+        end)
+
+        ui.treeNode("[CAR INFO]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            inLineBulletText("Index", driver.car.index,space)
+            inLineBulletText("Brand", ac.getCarBrand(driver.car.index) ,space)
+            inLineBulletText("Name", ac.getCarName(driver.car.index, true),space)
+            inLineBulletText("ID", ac.getCarID(driver.car.index),space)
+            inLineBulletText("Skin",  ac.getCarSkinID(driver.car.index),space)
+            inLineBulletText("Origin",  ac.getCarCountry(driver.car.index),space)
+            inLineBulletText("Extended Physics", upperBool(driver.car.extendedPhysics),space)
+            inLineBulletText("Physics Available", upperBool(driver.car.physicsAvailable),space)
+            inLineBulletText("DRS Present", upperBool(driver.car.drsPresent),space)
+            inLineBulletText("Kunos Car", upperBool(driver.car.isKunosCar),space)
+        end)
+
         if driver.car.isAIControlled then
             ui.treeNode("[AI]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
-                inLineBulletText("Driver ["..driver.index.."]", driver.name,space)
-                inLineBulletText("Ahead ["..driver.carAhead.."]", tostring(ac.getDriverName(driver.carAhead)),space)
-                inLineBulletText("Track Position", driver.trackPosition.."/"..DRIVERS_ON_TRACK,space)
-                inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
-                inLineBulletText("Lap", (driver.car.lapCount+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
+                inLineBulletText("Level", "["..math.round(driver.aiLevel*100,2).."] "..math.round(driver.car.aiLevel*100,2),space)
+                inLineBulletText("Aggression", "["..math.round(driver.aiAggression*100,2).."] "..math.round(driver.car.aiAggression*100,2),space)
+                inLineBulletText("Tyre Life Avg Limit", F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE.." %",space)
+                inLineBulletText("Tyre Life Single Limit", F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE.." %",space)
                 inLineBulletText("Pitting New Tyres", upperBool(driver.aiPitting),space)
-                inLineBulletText("Pre-Pit Fuel", math.round(driver.aiPrePitFuel,5).." L",space)
-                inLineBulletText("Fuel", math.round(driver.car.fuel,5).." L",space)
-                inLineBulletText("Fuel Map", driver.car.fuelMap,space)
-                inLineBulletText("AI Level", "["..math.round(driver.aiLevel*100,2).."] "..math.round(driver.car.aiLevel*100,2),space)
-                inLineBulletText("AI Aggr", "["..math.round(driver.aiAggression*100,2).."] "..math.round(driver.car.aiAggression*100,2),space)
-            end)
-        else
-            ui.treeNode("[DRIVER]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
-                inLineBulletText("Driver ["..driver.index.."]", driver.name,space)
-                if not inPits(driver) then
-                    inLineBulletText("Ahead ["..driver.carAhead.."]", tostring(ac.getDriverName(driver.carAhead)),space)
-                    inLineBulletText("Track Position", driver.trackPosition.."/"..DRIVERS_ON_TRACK,space)
-                end
-                inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
-                inLineBulletText("Lap", (driver.car.lapCount+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
-                inLineBulletText("Fuel", math.round(driver.car.fuel,5).." L",space)
-                inLineBulletText("Fuel Map", driver.car.fuelMap,space)
+                inLineBulletText("Upcoming Turn", ac.getTrackUpcomingTurn(driver.car.index),space)
             end)
         end
 
@@ -1130,8 +1199,11 @@ function script.windowDebug(dt)
             driver.car.wheels[1].tyreWear +
             driver.car.wheels[2].tyreWear +
             driver.car.wheels[3].tyreWear) / 4)
-            inLineBulletText("Wear Average", math.round(avg_tyre_wear*100,5),space)
-
+            inLineBulletText("Compound Index", driver.car.compoundIndex,space)
+            inLineBulletText("Compound Name", ac.getTyresLongName(driver.car.index,driver.car.compoundIndex),space)
+            inLineBulletText("Last Pit Lap", driver.lapPitted,space)
+            inLineBulletText("Tyre Laps", driver.tyreLaps,space)
+            inLineBulletText("Tyre Life Average", math.round(100-(avg_tyre_wear*100),5),space)
             inLineBulletText("Tyre Life [FL]", math.round(100-(driver.car.wheels[0].tyreWear*100),5),space)
             inLineBulletText("Tyre Life [RL]", math.round(100-(driver.car.wheels[2].tyreWear*100),5),space)
             inLineBulletText("Tyre Life [FR]", math.round(100-(driver.car.wheels[1].tyreWear*100),5),space)
@@ -1174,9 +1246,9 @@ function script.windowDebug(dt)
                         inLineBulletText("Active", upperBool(driver.car.drsActive),space)
                         inLineBulletText("Zone ID", driver.drsZonePrevId,space)
                         inLineBulletText("Zone Next ID", driver.drsZoneId,space)
-                        inLineBulletText("Detection Line", tostring(getDetectionDistanceM(sim,driver)).." m",space)
-                        inLineBulletText("Start Line", tostring(getStartDistanceM(sim,driver)).." m",space)
-                        inLineBulletText("End Line", tostring(getEndDistanceM(sim,driver)).." m",space)
+                        inLineBulletText("Detection Line", "["..driver.drsZonePrevId.."] "..tostring(getDetectionDistanceM(sim,driver)).." m",space)
+                        inLineBulletText("Start Line", "["..driver.drsZonePrevId.."] "..tostring(getStartDistanceM(sim,driver)).." m",space)
+                        inLineBulletText("End Line", "["..driver.drsZoneId.."] "..tostring(getEndDistanceM(sim,driver)).." m",space)
                         inLineBulletText("Track Progress M", tostring(math.round(driver.car.splinePosition*sim.trackLengthM,5)).." m",space)
                         inLineBulletText("Track Progress %", tostring(math.round(driver.car.splinePosition*100,2)).." %",space)
                     else ui.bulletText("IN PITS") end
