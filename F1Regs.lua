@@ -1,5 +1,5 @@
 local SCRIPT_VERSION = "0.9.7.3-alpha"
-local SCRIPT_VERSION_ID = 9731
+local SCRIPT_VERSION_ID = 9732
 local SCRIPT_RELEASE_DATE = "2022-10-28"
 
 local INITIALIZED = false
@@ -1160,12 +1160,27 @@ function script.windowDebug(dt)
 
         ui.treeNode("[DRIVER]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
             inLineBulletText("Driver ["..driver.index.."]", driver.name,space)
-            inLineBulletText("Ahead ["..driver.carAhead.."]", tostring(ac.getDriverName(driver.carAhead)),space)
-            inLineBulletText("Track Position", driver.trackPosition.."/"..DRIVERS_ON_TRACK,space)
+            inLineBulletText("Driver ahead ["..driver.carAhead.."]", tostring(ac.getDriverName(driver.carAhead)),space)
+            inLineBulletText("Team", ac.getDriverTeam(driver.car.index),space)
+            inLineBulletText("Number", ac.getDriverNumber(driver.car.index),space)
             inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
+            inLineBulletText("Track Position", driver.trackPosition.."/"..DRIVERS_ON_TRACK,space)
             inLineBulletText("Lap", (driver.car.lapCount+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
             inLineBulletText("Last Lap Time", ac.lapTimeToString(driver.car.previousLapTimeMs),space)
             inLineBulletText("Best Lap Time", ac.lapTimeToString(driver.car.bestLapTimeMs),space)
+        end)
+
+        ui.treeNode("[CAR INFO]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            inLineBulletText("Index", driver.car.index,space)
+            inLineBulletText("Brand", ac.getCarBrand(driver.car.index) ,space)
+            inLineBulletText("Name", ac.getCarName(driver.car.index, true),space)
+            inLineBulletText("ID", ac.getCarID(driver.car.index),space)
+            inLineBulletText("Skin",  ac.getCarSkinID(driver.car.index),space)
+            inLineBulletText("Origin",  ac.getCarCountry(driver.car.index),space)
+            inLineBulletText("Extended Physics", upperBool(driver.car.extendedPhysics),space)
+            inLineBulletText("Physics Available", upperBool(driver.car.physicsAvailable),space)
+            inLineBulletText("DRS Present", upperBool(driver.car.drsPresent),space)
+            inLineBulletText("Kunos Car", upperBool(driver.car.isKunosCar),space)
         end)
 
         if driver.car.isAIControlled then
@@ -1175,6 +1190,7 @@ function script.windowDebug(dt)
                 inLineBulletText("Tyre Life Avg Limit", F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE.." %",space)
                 inLineBulletText("Tyre Life Single Limit", F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE.." %",space)
                 inLineBulletText("Pitting New Tyres", upperBool(driver.aiPitting),space)
+                inLineBulletText("Upcoming Turn", ac.getTrackUpcomingTurn(driver.car.index),space)
             end)
         end
 
@@ -1183,6 +1199,8 @@ function script.windowDebug(dt)
             driver.car.wheels[1].tyreWear +
             driver.car.wheels[2].tyreWear +
             driver.car.wheels[3].tyreWear) / 4)
+            inLineBulletText("Compound Index", driver.car.compoundIndex,space)
+            inLineBulletText("Compound Name", ac.getTyresLongName(driver.car.index,driver.car.compoundIndex),space)
             inLineBulletText("Last Pit Lap", driver.lapPitted,space)
             inLineBulletText("Tyre Laps", driver.tyreLaps,space)
             inLineBulletText("Tyre Life Average", math.round(100-(avg_tyre_wear*100),5),space)
