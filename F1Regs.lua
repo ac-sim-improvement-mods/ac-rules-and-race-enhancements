@@ -689,7 +689,7 @@ local function initialize(sim)
         },
         AUDIO = { MASTER = ac.INIConfig.OptionalNumber, DRS_BEEP = ac.INIConfig.OptionalNumber, DRS_FLAP = ac.INIConfig.OptionalNumber
         },
-        NOTIFICATIONS = { DURATION = ac.INIConfig.OptionalNumber }
+        NOTIFICATIONS = { DURATION = ac.INIConfig.OptionalNumber, SCALE = ac.INIConfig.OptionalNumber }
     })
     log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings.ini")
 
@@ -1000,10 +1000,25 @@ function script.windowSettings(dt)
 
         ui.tabItem("UI", ui.TabItemFlags.None, function ()
             ui.newLine(1)
-            ui.header("NOTIFICATIONS:")
-            slider(F1RegsConfig, 'NOTIFICATIONS', 'DURATION', 0, 10, 1, false, 'Race Control Banner Timer: %.0f s', 
+            ui.header("RACE CONTROL:")
+            slider(F1RegsConfig, 'NOTIFICATIONS', 'DURATION', 0, 10, 1, false, 'Banner Timer: %.0f s', 
             'Duration (seconds) that the "Race Control" banner will stay on screen',
             function (v) return math.round(v,0) end)
+
+            slider(F1RegsConfig, 'NOTIFICATIONS', 'SCALE', 0.1, 1, 1, false, 'Banner Scale: %.1f0%%', 
+            'Duration (seconds) that the "Race Control" banner will stay on screen',
+            function (v) return math.round(v,1) end)
+
+            local buttonFlags = ui.ButtonFlags.None
+
+            if ui.isWindowAppearing() then
+                buttonFlags = ui.ButtonFlags.Disabled
+            end
+
+            if ui.button("TEST BANNER", vec2(ui.windowWidth()-77,25), buttonFlags) then
+                showNotification("TEST",10)
+            end
+
             ui.newLine(1)
         end)
     end)
@@ -1220,6 +1235,7 @@ local function drawText(textdraw)
 end
 
 local function drawRaceControl(text)
+    ui.beginScale()
     ui.pushDWriteFont("Formula1 Display;Weight=Bold")
     --ui.pushDWriteFont("Formula1 Display Bold Bold:fonts/f1.ttf")
 
@@ -1228,8 +1244,6 @@ local function drawRaceControl(text)
     local fontSize = 32
     local bannerHeight = 95
     local bannerWidth = ui.measureDWriteText(text,30).x + 5
-
-    ui.beginScale()
 
     ui.drawRectFilled(
         vec2(0,0),
@@ -1283,9 +1297,8 @@ local function drawRaceControl(text)
     ui.drawImage("assets/icons/fia_logo.png", vec2(pos_x,pos_y), vec2(size_x,size_y), rgbm(1,1,1,1), true)
     ui.endScale(0.60)
 
-    ui.endScale(1)
-
     ui.popDWriteFont()
+    ui.endScale(F1RegsConfig.data.NOTIFICATIONS.SCALE)
 end
 
 local function drawNotification()
