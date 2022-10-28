@@ -1,5 +1,5 @@
-local SCRIPT_VERSION = "0.9.7.2-alpha"
-local SCRIPT_VERSION_ID = 9720
+local SCRIPT_VERSION = "0.9.7.3-alpha"
+local SCRIPT_VERSION_ID = 9730
 local SCRIPT_RELEASE_DATE = "2022-10-28"
 
 local INITIALIZED = false
