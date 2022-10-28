@@ -1,6 +1,6 @@
-local SCRIPT_VERSION = "0.9.7.1-alpha"
-local SCRIPT_VERSION_ID = 9710
-local SCRIPT_RELEASE_DATE = "2022-10-27"
+local SCRIPT_VERSION = "0.9.7.2-alpha"
+local SCRIPT_VERSION_ID = 9720
+local SCRIPT_RELEASE_DATE = "2022-10-28"
 
 local INITIALIZED = false
 local RESTARTED = false
@@ -371,18 +371,14 @@ end
 --- Locks the specified driver's DRS
 ---@param driver Driver
 local function setDriverDRS(driver,allowed)
-    if ac.getPatchVersionCode() >= 2066 then
-        physics.allowCarDRS(driver.index,not allowed)
-        if driver.car.isAIControlled then
-            if allowed and driver.car.brake < 0.5 and driver.car.speedKmh > 50 then
-                physics.setCarDRS(driver.index, true)
-            elseif not allowed then
-                physics.setCarDRS(driver.index, false)
-            end
-        end
-    else
-        if not driver.index == 0 then
-            ac.setDRS(false)
+    physics.allowCarDRS(driver.index,not allowed)
+    if driver.car.isAIControlled then
+        if not allowed then
+            physics.setCarDRS(driver.index, false)
+
+        elseif allowed and 
+            driver.car.brake < 0.5 and driver.car.speedKmh > 50 and getEndDistanceM(ac.getSim(),driver) > 100 then
+            physics.setCarDRS(driver.index, true)
         end
     end
 end
