@@ -1,5 +1,5 @@
 local SCRIPT_VERSION = "0.9.7.3-alpha"
-local SCRIPT_VERSION_ID = 9730
+local SCRIPT_VERSION_ID = 9731
 local SCRIPT_RELEASE_DATE = "2022-10-28"
 
 local INITIALIZED = false
@@ -1102,8 +1102,8 @@ local function inLineBulletText(label,text,space)
         else
             ui.textColored(text, rgbm(1,0,0,1))
         end
-    elseif string.find(label, "Life") and not string.find(label, "AI") then
-        if text < F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE or 
+    elseif string.find(label, "Life") and not string.find(label, "Limit") then
+        if text < F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE or
             (string.find(label, "Average") and text < F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE) then
             ui.textColored(text.." %", rgbm(1,0,0,1))
         elseif text < F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE then
@@ -1158,34 +1158,23 @@ function script.windowDebug(dt)
             end)
         end
 
+        ui.treeNode("[DRIVER]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            inLineBulletText("Driver ["..driver.index.."]", driver.name,space)
+            inLineBulletText("Ahead ["..driver.carAhead.."]", tostring(ac.getDriverName(driver.carAhead)),space)
+            inLineBulletText("Track Position", driver.trackPosition.."/"..DRIVERS_ON_TRACK,space)
+            inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
+            inLineBulletText("Lap", (driver.car.lapCount+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
+            inLineBulletText("Last Lap Time", ac.lapTimeToString(driver.car.previousLapTimeMs),space)
+            inLineBulletText("Best Lap Time", ac.lapTimeToString(driver.car.bestLapTimeMs),space)
+        end)
+
         if driver.car.isAIControlled then
             ui.treeNode("[AI]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
-                inLineBulletText("Driver ["..driver.index.."]", driver.name,space)
-                inLineBulletText("Ahead ["..driver.carAhead.."]", tostring(ac.getDriverName(driver.carAhead)),space)
-                inLineBulletText("Track Position", driver.trackPosition.."/"..DRIVERS_ON_TRACK,space)
-                inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
-                inLineBulletText("Lap", (driver.car.lapCount+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
-                inLineBulletText("Performance Meter", driver.car.performanceMeter,space)
-                inLineBulletText("Last Lap Time", ac.lapTimeToString(driver.car.previousLapTimeMs),space)
-                inLineBulletText("Best Lap Time", ac.lapTimeToString(driver.car.bestLapTimeMs),space)
-                inLineBulletText("Fuel Map", driver.car.fuelMap,space)
-                inLineBulletText("Pre-Pit Fuel", math.round(driver.aiPrePitFuel,5).." L",space)
-                inLineBulletText("Fuel", math.round(driver.car.fuel,5).." L",space)
-                inLineBulletText("Fuel Map", driver.car.fuelMap,space)
-                inLineBulletText("AI Level", "["..math.round(driver.aiLevel*100,2).."] "..math.round(driver.car.aiLevel*100,2),space)
-                inLineBulletText("AI Aggr", "["..math.round(driver.aiAggression*100,2).."] "..math.round(driver.car.aiAggression*100,2),space)
-            end)
-        else
-            ui.treeNode("[DRIVER]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
-                inLineBulletText("Driver ["..driver.index.."]", driver.name,space)
-                if not inPits(driver) then
-                    inLineBulletText("Ahead ["..driver.carAhead.."]", tostring(ac.getDriverName(driver.carAhead)),space)
-                    inLineBulletText("Track Position", driver.trackPosition.."/"..DRIVERS_ON_TRACK,space)
-                end
-                inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
-                inLineBulletText("Lap", (driver.car.lapCount+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
-                inLineBulletText("Fuel", math.round(driver.car.fuel,5).." L",space)
-                inLineBulletText("Fuel Map", driver.car.fuelMap,space)
+                inLineBulletText("Level", "["..math.round(driver.aiLevel*100,2).."] "..math.round(driver.car.aiLevel*100,2),space)
+                inLineBulletText("Aggression", "["..math.round(driver.aiAggression*100,2).."] "..math.round(driver.car.aiAggression*100,2),space)
+                inLineBulletText("Tyre Life Avg Limit", F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE.." %",space)
+                inLineBulletText("Tyre Life Single Limit", F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE.." %",space)
+                inLineBulletText("Pitting New Tyres", upperBool(driver.aiPitting),space)
             end)
         end
 
@@ -1194,9 +1183,6 @@ function script.windowDebug(dt)
             driver.car.wheels[1].tyreWear +
             driver.car.wheels[2].tyreWear +
             driver.car.wheels[3].tyreWear) / 4)
-            inLineBulletText("AI Tyre Life Average Limit", F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE.." %",space)
-            inLineBulletText("AI Tyre Life Single Limit", F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE.." %",space)
-            inLineBulletText("AI Pitting New Tyres", upperBool(driver.aiPitting),space)
             inLineBulletText("Last Pit Lap", driver.lapPitted,space)
             inLineBulletText("Tyre Laps", driver.tyreLaps,space)
             inLineBulletText("Tyre Life Average", math.round(100-(avg_tyre_wear*100),5),space)
@@ -1242,9 +1228,9 @@ function script.windowDebug(dt)
                         inLineBulletText("Active", upperBool(driver.car.drsActive),space)
                         inLineBulletText("Zone ID", driver.drsZonePrevId,space)
                         inLineBulletText("Zone Next ID", driver.drsZoneId,space)
-                        inLineBulletText("Detection Line", tostring(getDetectionDistanceM(sim,driver)).." m",space)
-                        inLineBulletText("Start Line", tostring(getStartDistanceM(sim,driver)).." m",space)
-                        inLineBulletText("End Line", tostring(getEndDistanceM(sim,driver)).." m",space)
+                        inLineBulletText("Detection Line", "["..driver.drsZonePrevId.."] "..tostring(getDetectionDistanceM(sim,driver)).." m",space)
+                        inLineBulletText("Start Line", "["..driver.drsZonePrevId.."] "..tostring(getStartDistanceM(sim,driver)).." m",space)
+                        inLineBulletText("End Line", "["..driver.drsZoneId.."] "..tostring(getEndDistanceM(sim,driver)).." m",space)
                         inLineBulletText("Track Progress M", tostring(math.round(driver.car.splinePosition*sim.trackLengthM,5)).." m",space)
                         inLineBulletText("Track Progress %", tostring(math.round(driver.car.splinePosition*100,2)).." %",space)
                     else ui.bulletText("IN PITS") end
