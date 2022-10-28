@@ -363,9 +363,20 @@ end
 local function crossedDetectionLine(driver)
     local drs_zones = DRS_ZONES
     local track_pos = driver.car.splinePosition
+    local detection_line = drs_zones.detectionZones[driver.drsZoneId]
+    local start_line = drs_zones.startZones[driver.drsZoneId]
+
+    -- This handles when a DRS start zone is past the finish line after the detection zone
+    if detection_line > start_line then
+        if track_pos >= 0 and track_pos < start_line then
+            track_pos = track_pos + 1
+        end
+
+        start_line = start_line + 1
+    end
 
     -- If driver is between the end zone of the previous DRS zone, and the detection line of the upcoming DRS zone
-    if track_pos >= drs_zones.detectionZones[driver.drsZoneId] and track_pos < drs_zones.startZones[driver.drsZoneId] then
+    if track_pos >= detection_line and track_pos < start_line then
         return true
     else
         return false
@@ -1134,6 +1145,7 @@ function script.windowDebug(dt)
             inLineBulletText("F1 Regs Enabled", upperBool(ac.isWindowOpen("main")),space)
             inLineBulletText("Physics Allowed", upperBool(physics.allowed()),space)
             inLineBulletText("Race Started", upperBool(sim.isSessionStarted),space)
+            inLineBulletText("Track", ac.getTrackName(),space)
             inLineBulletText("Time", string.format("%02d:%02d:%02d", sim.timeHours, sim.timeMinutes, sim.timeSeconds),space)
             inLineBulletText("Leader Lap", LEADER_LAPS.."/"..ac.getSession(sim.currentSessionIndex).laps,space)
         end)
