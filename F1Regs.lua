@@ -1,5 +1,5 @@
 local SCRIPT_VERSION = "0.9.7.1-alpha"
-local SCRIPT_VERSION_ID = 0971
+local SCRIPT_VERSION_ID = 9710
 local SCRIPT_RELEASE_DATE = "2022-10-27"
 
 local INITIALIZED = false
@@ -875,7 +875,7 @@ end
 
 function script.windowSettings(dt)
     local scriptVersion = SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")"
-    ac.setWindowTitle("settings", "F1 Regs Settings        "..scriptVersion)
+    ac.setWindowTitle("settings", "F1 Regs Settings      "..scriptVersion)
     ui.pushFont(ui.Font.Small)
 
     ui.tabBar("settingstabbar", ui.TabBarFlags.None, function ()
@@ -1058,7 +1058,7 @@ end
 
 function script.windowDebug(dt)
     local sim = ac.getSim()
-    ac.setWindowTitle("debug", "F1 Regs Debug                 "..SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")")
+    ac.setWindowTitle("debug", "F1 Regs Debug               "..SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")")
 
     if sim.raceSessionType ~= 3 then
         ui.pushFont(ui.Font.Main)
