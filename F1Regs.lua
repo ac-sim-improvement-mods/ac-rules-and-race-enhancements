@@ -1,5 +1,6 @@
 local SCRIPT_VERSION = "0.9.7.0-alpha"
 local SCRIPT_VERSION_ID = 0970
+local SCRIPT_RELEASE_DATE = "2022-10-27"
 
 local INITIALIZED = false
 local RESTARTED = false
@@ -592,20 +593,18 @@ local function aiPitNewTires(sim,driver)
                 driver.aiPitCall = false
                 driver.aiPitting = true
                 physics.setCarFuel(driver.index, driver.aiPrePitFuel)
-            else
+            elseif not driver.aiPitting then
                 if LEADER_LAPS < ac.getSession(sim.currentSessionIndex).laps - 5 then
                     local avg_tyre_wear = ((driver.car.wheels[0].tyreWear + 
                                             driver.car.wheels[1].tyreWear +
                                             driver.car.wheels[2].tyreWear +
                                             driver.car.wheels[3].tyreWear) / 4)
-                    if avg_tyre_wear > 1-(F1RegsConfig.data.RULES.AI_TYRE_LIFE/100) then         
+                    if avg_tyre_wear > 1-(F1RegsConfig.data.RULES.AI_TYRE_LIFE/100) then
                         --physics.setCarPenalty(ac.PenaltyType.MandatoryPits,1)
                         driver.aiPrePitFuel = driver.car.fuel
                         physics.setCarFuel(driver.index, 0.1)
                         driver.aiPitCall = true
                     end
-                else
-                    driver.aiPrePitFuel = 0
                 end
             end
         else            
@@ -933,7 +932,11 @@ function script.windowSettings(dt)
         
             local driver = DRIVERS[ac.getSim().focusedCar]
             if F1RegsConfig.data.RULES.AI_FORCE_PIT_TYRES == 1 and driver.car.isAIControlled then
-                if ui.button("FORCE FOCUSED AI TO PIT NOW", vec2(ui.windowWidth()-40,25), ui.ButtonFlags.None) then
+                local buttonFlags = ui.ButtonFlags.None
+                if driver.aiPitting or driver.car.isInPitlane then
+                    buttonFlags = ui.ButtonFlags.Disabled
+                end
+                if ui.button("FORCE FOCUSED AI TO PIT NOW", vec2(ui.windowWidth()-77,25), buttonFlags) then
                     driver.aiPrePitFuel = driver.car.fuel
                     physics.setCarFuel(driver.index, 0.1)
                     driver.aiPitCall = true
@@ -1059,7 +1062,8 @@ function script.windowDebug(dt)
             inLineBulletText("CSP Version Code", ac.getPatchVersionCode(),space)
             inLineBulletText("F1 Regs Version", SCRIPT_VERSION,space)
             inLineBulletText("F1 Regs Version Code", SCRIPT_VERSION_ID,space)
-            inLineBulletText("Current Date Time", os.date(),space)
+            inLineBulletText("F1 Regs Release Date", SCRIPT_RELEASE_DATE,space)
+            inLineBulletText("Current Date", os.date("%Y-%m-%d"),space)
         end)
 
         ui.treeNode("["..sessionTypeString(sim).." SESSION]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
