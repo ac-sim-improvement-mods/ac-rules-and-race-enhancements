@@ -14,7 +14,6 @@ Copy-Item "$PSScriptRoot\assets" -Destination $app_dir -Recurse -Force
 Copy-Item "$PSScriptRoot\data" -Destination $app_dir -Recurse -Force
 Copy-Item "$PSScriptRoot\F1Regs.lua" -Destination $app_dir -Force
 Copy-Item "$PSScriptRoot\manifest.ini" -Destination $app_dir -Force
-Copy-Item "$PSScriptRoot\settings_default.ini" -Destination $app_dir -Force
 Copy-Item "$PSScriptRoot\icon.png" -Destination $app_dir -Force
 
 $target_file = "$build_dir\F1Regs_$build_ver.zip"

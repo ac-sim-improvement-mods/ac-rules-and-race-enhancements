@@ -682,24 +682,51 @@ local function initialize(sim)
 
 
     local configFile = "settings.ini"
-    if not io.fileExists(ac.findFile(configFile)) then
-        configFile = "settings_default.ini"
+    if not io.fileExists(ac.findFile("apps/lua/F1Regs/"..configFile)) then
+        configFile = ac.findFile("apps/lua/F1Regs/"..configFile)
+        local settingsBase = "[RULES]\n[AUDIO]\n[NOTIFICATIONS]"
+        -- Opens a file in append mode
+        local file = io.open(configFile, "w")
 
+        -- sets the default output file as test.lua
+        io.output(file)
+
+        -- appends a word test to the last line of the file
+        io.write(settingsBase)
+
+        -- closes the open file
+        io.close(file)
+        log("[Loaded] Creating settings.ini")
     end
 
     F1RegsConfig = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/"..configFile, {
-        RULES = { DRS_RULES = ac.INIConfig.OptionalNumber, DRS_ACTIVATION_LAP = ac.INIConfig.OptionalNumber, 
-        DRS_GAP_DELTA = ac.INIConfig.OptionalNumber, DRS_WET_DISABLE = ac.INIConfig.OptionalNumber, DRS_WET_LIMIT = ac.INIConfig.OptionalNumber,
-        VSC_RULES = ac.INIConfig.OptionalNumber, VSC_INIT_TIME = ac.INIConfig.OptionalNumber, VSC_DEPLOY_TIME = ac.INIConfig.OptionalNumber,
-        AI_FORCE_PIT_TYRES = ac.INIConfig.OptionalNumber, AI_AVG_TYRE_LIFE = ac.INIConfig.OptionalNumber, AI_SINGLE_TYRE_LIFE = ac.INIConfig.OptionalNumber, AI_AGGRESSION_RUBBERBAND = ac.INIConfig.OptionalNumber,
-        PHYSICS_REBOOT = ac.INIConfig.OptionalNumber
+        RULES = { 
+            DRS_RULES = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
+            DRS_ACTIVATION_LAP = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 3,
+            DRS_GAP_DELTA = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1000,
+            DRS_WET_DISABLE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
+            DRS_WET_LIMIT = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 15,
+            VSC_RULES = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
+            VSC_INIT_TIME = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 300,
+            VSC_DEPLOY_TIME = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 300,
+            AI_FORCE_PIT_TYRES = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
+            AI_AVG_TYRE_LIFE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 60,
+            AI_SINGLE_TYRE_LIFE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 45,
+            AI_AGGRESSION_RUBBERBAND = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
+            PHYSICS_REBOOT = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1
         },
-        AUDIO = { MASTER = ac.INIConfig.OptionalNumber, DRS_BEEP = ac.INIConfig.OptionalNumber, DRS_FLAP = ac.INIConfig.OptionalNumber
+        AUDIO = { 
+            MASTER = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 100,
+            DRS_BEEP = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 50,
+            DRS_FLAP = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 50
         },
-        NOTIFICATIONS = { DURATION = ac.INIConfig.OptionalNumber, SCALE = ac.INIConfig.OptionalNumber }
+        NOTIFICATIONS = {
+            SCALE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
+            DURATION = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 5
+        }
     })
     log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/"..configFile)
-
+    
     if not sim.raceSessionType == 3 then
         log("[Race Control] "..sessionTypeString(sim).." session detected")
         return false
