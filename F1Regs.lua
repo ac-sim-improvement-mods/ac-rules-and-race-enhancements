@@ -582,6 +582,8 @@ end
 
 local function aiPitNewTires(sim,driver)
     --ac.perfBegin("5.aiPitNewTires")
+    local avgTyreLimit = 1-(F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE/100)
+    local singleTyreLimit = 1-(F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE/100)
 
     if driver.car.isAIControlled then
         if not driver.car.isInPitlane then
@@ -595,7 +597,11 @@ local function aiPitNewTires(sim,driver)
                                             driver.car.wheels[1].tyreWear +
                                             driver.car.wheels[2].tyreWear +
                                             driver.car.wheels[3].tyreWear) / 4)
-                    if avg_tyre_wear > 1-(F1RegsConfig.data.RULES.AI_TYRE_LIFE/100) then
+                    if avg_tyre_wear > avgTyreLimit or 
+                    driver.car.wheels[0].tyreWear > singleTyreLimit or
+                    driver.car.wheels[1].tyreWear > singleTyreLimit or
+                    driver.car.wheels[2].tyreWear > singleTyreLimit or
+                    driver.car.wheels[3].tyreWear > singleTyreLimit then
                         --physics.setCarPenalty(ac.PenaltyType.MandatoryPits,1)
                         driver.aiPrePitFuel = driver.car.fuel
                         physics.setCarFuel(driver.index, 0.1)
@@ -685,7 +691,7 @@ local function initialize(sim)
         RULES = { DRS_RULES = ac.INIConfig.OptionalNumber, DRS_ACTIVATION_LAP = ac.INIConfig.OptionalNumber, 
         DRS_GAP_DELTA = ac.INIConfig.OptionalNumber, DRS_WET_DISABLE = ac.INIConfig.OptionalNumber, DRS_WET_LIMIT = ac.INIConfig.OptionalNumber,
         VSC_RULES = ac.INIConfig.OptionalNumber, VSC_INIT_TIME = ac.INIConfig.OptionalNumber, VSC_DEPLOY_TIME = ac.INIConfig.OptionalNumber,
-        AI_FORCE_PIT_TYRES = ac.INIConfig.OptionalNumber, AI_TYRE_LIFE = ac.INIConfig.OptionalNumber, AI_AGGRESSION_RUBBERBAND = ac.INIConfig.OptionalNumber,
+        AI_FORCE_PIT_TYRES = ac.INIConfig.OptionalNumber, AI_AVG_TYRE_LIFE = ac.INIConfig.OptionalNumber, AI_SINGLE_TYRE_LIFE = ac.INIConfig.OptionalNumber, AI_AGGRESSION_RUBBERBAND = ac.INIConfig.OptionalNumber,
         PHYSICS_REBOOT = ac.INIConfig.OptionalNumber
         },
         AUDIO = { MASTER = ac.INIConfig.OptionalNumber, DRS_BEEP = ac.INIConfig.OptionalNumber, DRS_FLAP = ac.INIConfig.OptionalNumber
@@ -920,8 +926,15 @@ function script.windowSettings(dt)
             'Force AI to pit for new tyres when their average tyre life is below AI TYRE LIFE',
             function (v) return math.round(v, 0) end)
             if F1RegsConfig.data.RULES.AI_FORCE_PIT_TYRES == 1 then
-                slider(F1RegsConfig, 'RULES', 'AI_TYRE_LIFE', 0, 100, 1, false, 'Pit Below Tyre Life: %.2f%%', 
+                slider(F1RegsConfig, 'RULES', 'AI_AVG_TYRE_LIFE', 0, 100, 1, false, 'Pit Below Avg Tyre Life: %.2f%%', 
                 'AI will pit after average tyre life % is below this value',
+                function (v) 
+                    F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE = math.clamp(F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE,0,math.floor(v / 0.5 + 0.5) * 0.5)
+                    return math.floor(v / 0.5 + 0.5) * 0.5 
+                end)
+
+                slider(F1RegsConfig, 'RULES', 'AI_SINGLE_TYRE_LIFE', 0, F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE, 1, false, 'Pit Below Single Tyre Life: %.2f%%', 
+                "AI will pit if one tyre's life % is below this value",
                 function (v) return math.floor(v / 0.5 + 0.5) * 0.5 end)
             end
             -- slider(F1RegsConfig, 'RULES', 'AI_AGGRESSION_RUBBERBAND', 0, 1, 1, true, F1RegsConfig.data.RULES.AI_AGGRESSION_RUBBERBAND == 1 and "Alt Aggression: ENABLED" or "Alt Aggression: DISABLED", 
@@ -954,7 +967,7 @@ function script.windowSettings(dt)
             --         RULES = { DRS_RULES = ac.INIConfig.OptionalNumber, DRS_ACTIVATION_LAP = ac.INIConfig.OptionalNumber, 
             --         DRS_GAP_DELTA = ac.INIConfig.OptionalNumber, DRS_WET_DISABLE = ac.INIConfig.OptionalNumber, DRS_WET_LIMIT = ac.INIConfig.OptionalNumber,
             --         VSC_RULES = ac.INIConfig.OptionalNumber, VSC_INIT_TIME = ac.INIConfig.OptionalNumber, VSC_DEPLOY_TIME = ac.INIConfig.OptionalNumber,
-            --         AI_FORCE_PIT_TYRES = ac.INIConfig.OptionalNumber, AI_TYRE_LIFE = ac.INIConfig.OptionalNumber, AI_AGGRESSION_RUBBERBAND = ac.INIConfig.OptionalNumber,
+            --         AI_FORCE_PIT_TYRES = ac.INIConfig.OptionalNumber, AI_AVG_TYRE_LIFE = ac.INIConfig.OptionalNumber, AI_AGGRESSION_RUBBERBAND = ac.INIConfig.OptionalNumber,
             --         PHYSICS_REBOOT = ac.INIConfig.OptionalNumber
             --     }})
             --     log("[Loaded] Applied config")
@@ -1037,15 +1050,12 @@ local function inLineBulletText(label,text,space)
         else
             ui.textColored(text, rgbm(1,0,0,1))
         end
-    elseif string.find(label, "Life") then
-        if text < F1RegsConfig.data.RULES.AI_TYRE_LIFE then
+    elseif string.find(label, "Life") and not string.find(label, "AI") then
+        if text < F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE or 
+            (string.find(label, "Average") and text < F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE) then
             ui.textColored(text.." %", rgbm(1,0,0,1))
-        else
-            ui.textColored(text.." %", rgbm(1,1,1,1))
-        end
-    elseif string.find(label, "Wear") then
-        if text >= 100-F1RegsConfig.data.RULES.AI_TYRE_LIFE then
-            ui.textColored(text.." %", rgbm(1,0,0,1))
+        elseif text < F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE then
+            ui.textColored(text.." %", rgbm(1,1,0,1))
         else
             ui.textColored(text.." %", rgbm(1,1,1,1))
         end
@@ -1102,7 +1112,6 @@ function script.windowDebug(dt)
                 inLineBulletText("Track Position", driver.trackPosition.."/"..DRIVERS_ON_TRACK,space)
                 inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
                 inLineBulletText("Lap", (driver.car.lapCount+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
-                inLineBulletText("Pitting New Tyres", upperBool(driver.aiPitting),space)
                 inLineBulletText("Pre-Pit Fuel", math.round(driver.aiPrePitFuel,5).." L",space)
                 inLineBulletText("Fuel", math.round(driver.car.fuel,5).." L",space)
                 inLineBulletText("Fuel Map", driver.car.fuelMap,space)
@@ -1128,8 +1137,10 @@ function script.windowDebug(dt)
             driver.car.wheels[1].tyreWear +
             driver.car.wheels[2].tyreWear +
             driver.car.wheels[3].tyreWear) / 4)
-            inLineBulletText("Wear Average", math.round(avg_tyre_wear*100,5),space)
-
+            inLineBulletText("AI Tyre Life Average Limit", F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE.." %",space)
+            inLineBulletText("AI Tyre Life Single Limit", F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE.." %",space)
+            inLineBulletText("AI Pitting New Tyres", upperBool(driver.aiPitting),space)
+            inLineBulletText("Tyre Life Average", math.round(100-(avg_tyre_wear*100),5),space)
             inLineBulletText("Tyre Life [FL]", math.round(100-(driver.car.wheels[0].tyreWear*100),5),space)
             inLineBulletText("Tyre Life [RL]", math.round(100-(driver.car.wheels[2].tyreWear*100),5),space)
             inLineBulletText("Tyre Life [FR]", math.round(100-(driver.car.wheels[1].tyreWear*100),5),space)
