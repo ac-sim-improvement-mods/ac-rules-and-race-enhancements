@@ -679,8 +679,13 @@ local function initialize(sim)
     log("CSP version: "..csp_version)
 
 
-    -- Load config file
-    F1RegsConfig = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings.ini", {
+    local configFile = "settings.ini"
+    if not io.fileExists(ac.findFile(configFile)) then
+        configFile = "settings_default.ini"
+
+    end
+
+    F1RegsConfig = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/"..configFile, {
         RULES = { DRS_RULES = ac.INIConfig.OptionalNumber, DRS_ACTIVATION_LAP = ac.INIConfig.OptionalNumber, 
         DRS_GAP_DELTA = ac.INIConfig.OptionalNumber, DRS_WET_DISABLE = ac.INIConfig.OptionalNumber, DRS_WET_LIMIT = ac.INIConfig.OptionalNumber,
         VSC_RULES = ac.INIConfig.OptionalNumber, VSC_INIT_TIME = ac.INIConfig.OptionalNumber, VSC_DEPLOY_TIME = ac.INIConfig.OptionalNumber,
@@ -691,8 +696,7 @@ local function initialize(sim)
         },
         NOTIFICATIONS = { DURATION = ac.INIConfig.OptionalNumber, SCALE = ac.INIConfig.OptionalNumber }
     })
-    log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings.ini")
-
+    log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/"..configFile)
 
     if not sim.raceSessionType == 3 then
         log("[Race Control] "..sessionTypeString(sim).." session detected")
@@ -722,12 +726,10 @@ local function initialize(sim)
         end
     end
 
-     
-
-    DRS_BEEP:setSource("./assets/audio/drs-available-beep.wav"):setAutoPlay(true)
+    DRS_BEEP:setSource("./assets/audio/drs-available-beep.wav"):setAutoPlay(false)
     DRS_BEEP:setVolume(F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_BEEP/100)
 
-    DRS_FLAP:setSource("./assets/audio/drs-flap.wav"):setAutoPlay(true)
+    DRS_FLAP:setSource("./assets/audio/drs-flap.wav"):setAutoPlay(false)
     DRS_FLAP:setVolume(F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_FLAP/100)
 
     -- Empty DRIVERS table
