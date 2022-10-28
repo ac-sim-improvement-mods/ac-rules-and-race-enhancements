@@ -726,7 +726,7 @@ local function initialize(sim)
         }
     })
     log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/"..configFile)
-    
+
     if not sim.raceSessionType == 3 then
         log("[Race Control] "..sessionTypeString(sim).." session detected")
         return false
@@ -755,11 +755,13 @@ local function initialize(sim)
         end
     end
 
+    local acVolume = ac.getAudioVolume(ac.AudioChannel.Main)
+
     DRS_BEEP:setSource("./assets/audio/drs-available-beep.wav"):setAutoPlay(false)
-    DRS_BEEP:setVolume(F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_BEEP/100)
+    DRS_BEEP:setVolume(acVolume * F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_BEEP/100)
 
     DRS_FLAP:setSource("./assets/audio/drs-flap.wav"):setAutoPlay(false)
-    DRS_FLAP:setVolume(F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_FLAP/100)
+    DRS_FLAP:setVolume(acVolume * F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_FLAP/100)
 
     -- Empty DRIVERS table
     for index in pairs(DRIVERS) do
@@ -1006,6 +1008,7 @@ function script.windowSettings(dt)
         ui.tabItem("AUDIO", ui.TabItemFlags.None, function ()
             ui.newLine(1)
             ui.header("VOLUME:")
+            local acVolume = ac.getAudioVolume(ac.AudioChannel.Main)
 
             slider(F1RegsConfig, 'AUDIO', 'MASTER', 0, 100, 1, false, 'Master: %.0f%%', 
             'F1 Regs Master Volume',
@@ -1014,7 +1017,7 @@ function script.windowSettings(dt)
             slider(F1RegsConfig, 'AUDIO', 'DRS_BEEP', 0, 100, 1, false, 'DRS Beep: %.0f%%', 
             'DRS Beep Volume',
             function (v) return math.round(v,0) end)
-            DRS_BEEP:setVolume(F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_BEEP/100)
+            DRS_BEEP:setVolume(acVolume * F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_BEEP/100)
 
             ui.sameLine(0,2)
             if ui.button("##drsbeeptest", vec2(20, 20), ui.ButtonFlags.None) then
@@ -1026,7 +1029,7 @@ function script.windowSettings(dt)
             slider(F1RegsConfig, 'AUDIO', 'DRS_FLAP', 0, 100, 1, false, 'DRS Flap: %.0f%%', 
             'DRS Flap Volume',
             function (v) return math.round(v,0) end)
-            DRS_FLAP:setVolume(F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_FLAP/100)
+            DRS_FLAP:setVolume(acVolume * F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_FLAP/100)
             
             ui.sameLine(0,2)
             if ui.button("##drsflaptest", vec2(20, 20), ui.ButtonFlags.None) then
