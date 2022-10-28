@@ -1,5 +1,5 @@
-local SCRIPT_VERSION = "0.9.7.3-alpha"
-local SCRIPT_VERSION_ID = 9732
+local SCRIPT_VERSION = "0.9.7.4-alpha"
+local SCRIPT_VERSION_ID = 9740
 local SCRIPT_RELEASE_DATE = "2022-10-28"
 
 local INITIALIZED = false
@@ -703,22 +703,6 @@ local function initialize(sim)
 
 
     local configFile = "settings.ini"
-    if not io.fileExists(ac.findFile("apps/lua/F1Regs/"..configFile)) then
-        configFile = ac.findFile("apps/lua/F1Regs/"..configFile)
-        local settingsBase = "[RULES]\n[AUDIO]\n[NOTIFICATIONS]"
-        -- Opens a file in append mode
-        local file = io.open(configFile, "w")
-
-        -- sets the default output file as test.lua
-        io.output(file)
-
-        -- appends a word test to the last line of the file
-        io.write(settingsBase)
-
-        -- closes the open file
-        io.close(file)
-        log("[Loaded] Creating settings.ini")
-    end
 
     F1RegsConfig = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/"..configFile, {
         RULES = { 
@@ -746,6 +730,7 @@ local function initialize(sim)
             DURATION = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 5
         }
     })
+
     log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/"..configFile)
 
     if not sim.raceSessionType == 3 then
