@@ -17,40 +17,32 @@ end
 --- and excludes drivers in the pitlane
 function setTrackOrder()
     --ac.perfBegin("3.setTrackOrder")
-    local track_order = {}
+    local trackOrder = {}
     local drivers = DRIVERS
     for index=0, #drivers do
         if not drivers[index].isInPitlane then
-            table.insert(track_order,drivers[index])
+            table.insert(trackOrder,drivers[index])
         else
             drivers[index].trackPosition = -1
         end
     end
 
-    DRIVERS_ON_TRACK = #track_order
-
     -- Sort drivers by position on track, and ignore drivers in the pits
-    table.sort(track_order, function (a,b) return a.car.splinePosition > b.car.splinePosition end)
+    table.sort(trackOrder, function (a,b) return a.car.splinePosition > b.car.splinePosition end)
 
-    for index=1, #track_order do
-        drivers[track_order[index].index].trackPosition = index
+    for index=1, #trackOrder do
+        drivers[trackOrder[index].index].trackPosition = index
 
         if index == 1 then
-            drivers[track_order[index].index].carAhead = track_order[#track_order].index
+            drivers[trackOrder[index].index].carAhead = trackOrder[#trackOrder].index
         else
-            drivers[track_order[index].index].carAhead = track_order[index - 1].index
+            drivers[trackOrder[index].index].carAhead = trackOrder[index - 1].index
         end
     end
 
+    DRIVERS_ON_TRACK = #trackOrder
     DRIVERS = drivers
 
     --ac.perfEnd("3.setTrackOrder")
 end
 
-function setLeaderLaps(driver)
-    --ac.perfBegin("5.leaderlaps")
-    if driver.car.racePosition == 1 then
-        LEADER_LAPS = driver.car.lapCount+1
-    end
-    --ac.perfEnd("5.leaderlaps")
-end

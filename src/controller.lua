@@ -5,9 +5,14 @@ LEADER_LAPS = 1
 NOTIFICATION_TIMER = 0
 NOTIFICATION_TEXT = ""
 
+function setLeaderLaps(driver)
+    if driver.car.racePosition == 1 then
+        LEADER_LAPS = driver.car.lapCount+1
+    end
+end
+
 --- Controls all of the regulated systems
 function controlSystems(sim)
-    --ac.perfBegin("2.controlSystems")
     local drivers = DRIVERS
     local best_lap_times = {}
     local vsc_deployed = VSC_DEPLOYED
@@ -16,9 +21,7 @@ function controlSystems(sim)
 
     setTrackOrder()
 
-    --ac.perfBegin("3.driversLoop")
     for index=0, #drivers do
-        --ac.perfBegin("4.driver")
         local driver = drivers[index]
         setLeaderLaps(driver)
         getNextDetectionLine(driver)
@@ -45,13 +48,10 @@ function controlSystems(sim)
 
         -- overtake_check(driver)
         storeData(driver)
-        --ac.perfEnd("4.driver")
     end
-    --ac.perfEnd("3.driversLoop")
 
     if LEADER_LAPS >= 2 then
         if config.VSC_RULES == 1 then enableVSC(sim,best_lap_times) end
     end
 
-    --ac.perfEnd("2.controlSystems")
 end
