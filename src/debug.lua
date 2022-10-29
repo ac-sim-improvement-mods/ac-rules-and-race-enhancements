@@ -1,0 +1,172 @@
+function script.windowDebug(dt)
+    local sim = ac.getSim()
+    ac.setWindowTitle("debug", "F1 Regs Debug               "..SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")")
+
+    if sim.raceSessionType ~= 3 then
+        ui.pushFont(ui.Font.Main)
+        ui.text("This is a "..sessionTypeString(sim).." not a RACE session")
+        return
+    end
+
+    if INITIALIZED and not sim.isInMainMenu then
+        local driver = DRIVERS[sim.focusedCar]
+        local math = math
+        local space = 200
+        ui.pushFont(ui.Font.Small)
+
+        ui.treeNode("[INFO]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            inLineBulletText("CSP Version", ac.getPatchVersion(),space)
+            inLineBulletText("CSP Version Code", ac.getPatchVersionCode(),space)
+            inLineBulletText("F1 Regs Version", SCRIPT_VERSION,space)
+            inLineBulletText("F1 Regs Version Code", SCRIPT_VERSION_ID,space)
+            inLineBulletText("F1 Regs Release Date", SCRIPT_RELEASE_DATE,space)
+            inLineBulletText("Current Date", os.date("%Y-%m-%d"),space)
+        end)
+
+        ui.treeNode("["..sessionTypeString(sim).." SESSION]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            inLineBulletText("F1 Regs Enabled", upperBool(ac.isWindowOpen("main")),space)
+            inLineBulletText("Physics Allowed", upperBool(physics.allowed()),space)
+            inLineBulletText("Race Started", upperBool(sim.isSessionStarted),space)
+            inLineBulletText("Track", ac.getTrackName(),space)
+            inLineBulletText("Time", string.format("%02d:%02d:%02d", sim.timeHours, sim.timeMinutes, sim.timeSeconds),space)
+            inLineBulletText("Leader Lap", LEADER_LAPS.."/"..ac.getSession(sim.currentSessionIndex).laps,space)
+        end)
+
+        if F1RegsConfig.data.RULES.VSC_RULES == 1 then
+            ui.treeNode("[VSC]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+                inLineBulletText("VSC Called", upperBool(VSC_CALLED),space)
+                inLineBulletText("VSC Deployed", upperBool(VSC_DEPLOYED),space)
+                inLineBulletText("VSC Lap TIme", ac.lapTimeToString(VSC_LAP_TIME),space)
+            end)
+        end
+
+        ui.treeNode("[DRIVER]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            inLineBulletText("Driver ["..driver.index.."]", driver.name,space)
+            inLineBulletText("Driver ahead ["..driver.carAhead.."]", tostring(ac.getDriverName(driver.carAhead)),space)
+            inLineBulletText("Team", ac.getDriverTeam(driver.car.index),space)
+            inLineBulletText("Number", ac.getDriverNumber(driver.car.index),space)
+            inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
+            inLineBulletText("Track Position", driver.trackPosition.."/"..DRIVERS_ON_TRACK,space)
+            inLineBulletText("Lap", (driver.car.lapCount+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
+            inLineBulletText("Last Lap Time", ac.lapTimeToString(driver.car.previousLapTimeMs),space)
+            inLineBulletText("Best Lap Time", ac.lapTimeToString(driver.car.bestLapTimeMs),space)
+        end)
+
+        ui.treeNode("[CAR INFO]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            inLineBulletText("Index", driver.car.index,space)
+            inLineBulletText("Brand", ac.getCarBrand(driver.car.index) ,space)
+            inLineBulletText("Name", ac.getCarName(driver.car.index, true),space)
+            inLineBulletText("ID", ac.getCarID(driver.car.index),space)
+            inLineBulletText("Skin",  ac.getCarSkinID(driver.car.index),space)
+            inLineBulletText("Origin",  ac.getCarCountry(driver.car.index),space)
+            inLineBulletText("Extended Physics", upperBool(driver.car.extendedPhysics),space)
+            inLineBulletText("Physics Available", upperBool(driver.car.physicsAvailable),space)
+            inLineBulletText("DRS Present", upperBool(driver.car.drsPresent),space)
+            inLineBulletText("Kunos Car", upperBool(driver.car.isKunosCar),space)
+        end)
+
+        if driver.car.isAIControlled then
+            ui.treeNode("[AI]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+                inLineBulletText("Level", "["..math.round(driver.aiLevel*100,2).."] "..math.round(driver.car.aiLevel*100,2),space)
+                inLineBulletText("Aggression", "["..math.round(driver.aiAggression*100,2).."] "..math.round(driver.car.aiAggression*100,2),space)
+                inLineBulletText("Tyre Life Avg Limit", F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom.." %",space,driver)
+                inLineBulletText("Tyre Life Single Limit", F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom.." %",space,driver)
+                inLineBulletText("Pitting New Tyres", upperBool(driver.aiPitting),space)
+                inLineBulletText("Upcoming Turn", ac.getTrackUpcomingTurn(driver.car.index),space)
+            end)
+        end
+
+        ui.treeNode("[TYRES]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            local avg_tyre_wear = ((driver.car.wheels[0].tyreWear + 
+            driver.car.wheels[1].tyreWear +
+            driver.car.wheels[2].tyreWear +
+            driver.car.wheels[3].tyreWear) / 4)
+            inLineBulletText("Compound Index", driver.car.compoundIndex,space)
+            inLineBulletText("Compound Name", ac.getTyresLongName(driver.car.index,driver.car.compoundIndex),space)
+            inLineBulletText("Last Pit Lap", driver.lapPitted,space)
+            inLineBulletText("Tyre Laps", driver.tyreLaps,space)
+            inLineBulletText("Tyre Life Average", math.round(100-(avg_tyre_wear*100),5),space)
+            inLineBulletText("Tyre Life [FL]", math.round(100-(driver.car.wheels[0].tyreWear*100),5),space)
+            inLineBulletText("Tyre Life [RL]", math.round(100-(driver.car.wheels[2].tyreWear*100),5),space)
+            inLineBulletText("Tyre Life [FR]", math.round(100-(driver.car.wheels[1].tyreWear*100),5),space)
+            inLineBulletText("Tyre Life [RR]", math.round(100-(driver.car.wheels[3].tyreWear*100),5),space)
+        end)
+
+        if driver.car.kersPresent then
+            ui.treeNode("[HYBRID SYSTEMS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+                local mguhMode = ""
+                if driver.car.mguhChargingBatteries then
+                    mguhMode = "BATTERY"
+                else
+                    mguhMode = "ENGINE"
+                end
+
+                inLineBulletText("ERS Spent", string.format("%2.1f", driver.car.kersCurrentKJ).."/"..math.round(driver.car.kersMaxKJ,0).." KJ",space)
+                inLineBulletText("ERS Input", math.round(driver.car.kersInput*100,2).." %",space)
+                inLineBulletText("MGU-K Delivery", string.upper(ac.getMGUKDeliveryName(driver.index)),space)
+                inLineBulletText("MGU-K Recovery", math.round(driver.car.mgukRecovery*10).."%",space)
+                inLineBulletText("MGU-H Mode", string.upper(mguhMode),space)
+            end)
+        end
+
+        if F1RegsConfig.data.RULES.DRS_RULES == 1 then
+    
+            ui.treeNode("[DRS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+                if driver.car.drsPresent then
+                    if not driver.car.isInPitlane then
+                        local delta = driver.carAheadDelta
+                        inLineBulletText("Enabled on Lap", DRS_ENABLED_LAP,space)
+                        inLineBulletText("Enabled", upperBool(DRS_ENABLED),space)
+                        if driver.car.speedKmh >= 1 then inLineBulletText("Delta", math.round(delta,3),space)
+                        else inLineBulletText("Delta","---",space )end
+                        inLineBulletText("In Gap", upperBool((delta <= F1RegsConfig.data.RULES.DRS_GAP_DELTA/1000 and delta > 0.0) and true or false),space)
+                        inLineBulletText("Check", upperBool(driver.drsCheck),space)
+                        inLineBulletText("Crossed Detection", upperBool(crossedDetectionLine(driver)),space)
+                        inLineBulletText("Available", upperBool(driver.drsAvailable),space)
+                        inLineBulletText("Deploy Zone", upperBool(driver.car.drsAvailable),space)
+                        inLineBulletText("Deployable", upperBool(driver.drsDeployable),space)
+                        inLineBulletText("Active", upperBool(driver.car.drsActive),space)
+                        inLineBulletText("Zone ID", driver.drsZonePrevId,space)
+                        inLineBulletText("Zone Next ID", driver.drsZoneId,space)
+                        inLineBulletText("Detection Line", "["..driver.drsZonePrevId.."] "..tostring(getDetectionDistanceM(sim,driver)).." m",space)
+                        inLineBulletText("Start Line", "["..driver.drsZonePrevId.."] "..tostring(getStartDistanceM(sim,driver)).." m",space)
+                        inLineBulletText("End Line", "["..driver.drsZoneId.."] "..tostring(getEndDistanceM(sim,driver)).." m",space)
+                        inLineBulletText("Track Progress M", tostring(math.round(driver.car.splinePosition*sim.trackLengthM,5)).." m",space)
+                        inLineBulletText("Track Progress %", tostring(math.round(driver.car.splinePosition*100,2)).." %",space)
+                    else ui.bulletText("IN PITS") end
+                else
+                    ui.bulletText("DRS not present")
+                end
+            end)
+        end
+
+        ui.treeNode("[WEATHER]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            local totalWetness = ((sim.rainWetness/5) + (sim.rainWater*10))/2
+            inLineBulletText("Weather Type", weatherTypeString(sim),space)
+            inLineBulletText("Rain Intensity", math.round(sim.rainIntensity*100,2).."%",space)
+            inLineBulletText("Track Wetness", math.round(sim.rainWetness*100,2).."%",space)
+            inLineBulletText("Track Puddles", math.round(sim.rainWater*100,2).."%",space)
+            inLineBulletText("Total Wetness", math.round(totalWetness*100,2).."%",space)
+            inLineBulletText("Total Wetness Limit", math.round(F1RegsConfig.data.RULES.DRS_WET_LIMIT,2).."%",space)
+            inLineBulletText("Wet Track", upperBool(WET_TRACK),space)
+        end)
+
+        ui.treeNode("[INPUTS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            inLineBulletText("Gas", math.round(driver.car.gas,5),space)
+            inLineBulletText("Brake", math.round(driver.car.brake,5),space)
+            inLineBulletText("Clutch", math.round(driver.car.clutch,5),space)
+            inLineBulletText("Steer",  math.round(driver.car.steer,5),space)
+        end)
+
+        ui.treeNode("[SCRIPT CONTROLLER INPUTS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            inLineBulletText("[0] Total Brake Balance", math.round(ac.getCarPhysics(driver.index).scriptControllerInputs[0],5),space)
+            inLineBulletText("[1] Brake Migration %", ac.getCarPhysics(driver.index).scriptControllerInputs[1],space)
+            inLineBulletText("[2]", ac.getCarPhysics(driver.index).scriptControllerInputs[2],space)
+            inLineBulletText("[3]", ac.getCarPhysics(driver.index).scriptControllerInputs[3],space)
+            inLineBulletText("[4]", ac.getCarPhysics(driver.index).scriptControllerInputs[4],space)
+            inLineBulletText("[5]", ac.getCarPhysics(driver.index).scriptControllerInputs[5],space)
+            inLineBulletText("[6]", ac.getCarPhysics(driver.index).scriptControllerInputs[6],space)
+            inLineBulletText("[7]", ac.getCarPhysics(driver.index).scriptControllerInputs[7],space)
+        end)
+    end
+end

@@ -10,9 +10,10 @@ New-Item -itemType Directory -Path $app_dir
 }
 
 Copy-Item "$PSScriptRoot\extension" -Destination $build_dir\assettocorsa -Recurse -Force
+Copy-Item "$PSScriptRoot\F1Regs.lua" -Destination $app_dir -Force
+Copy-Item "$PSScriptRoot\src" -Destination $app_dir -Recurse -Force
 Copy-Item "$PSScriptRoot\assets" -Destination $app_dir -Recurse -Force
 Copy-Item "$PSScriptRoot\data" -Destination $app_dir -Recurse -Force
-Copy-Item "$PSScriptRoot\F1Regs.lua" -Destination $app_dir -Force
 Copy-Item "$PSScriptRoot\manifest.ini" -Destination $app_dir -Force
 Copy-Item "$PSScriptRoot\icon.png" -Destination $app_dir -Force
 
