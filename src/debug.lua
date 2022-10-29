@@ -72,7 +72,6 @@ function script.windowDebug(dt)
                 inLineBulletText("Tyre Life Avg Limit", F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom.." %",space,driver)
                 inLineBulletText("Tyre Life Single Limit", F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom.." %",space,driver)
                 inLineBulletText("Pitting New Tyres", upperBool(driver.aiPitting),space)
-                inLineBulletText("Upcoming Turn", ac.getTrackUpcomingTurn(driver.car.index),space)
             end)
         end
 
@@ -81,8 +80,8 @@ function script.windowDebug(dt)
             driver.car.wheels[1].tyreWear +
             driver.car.wheels[2].tyreWear +
             driver.car.wheels[3].tyreWear) / 4)
-            inLineBulletText("Compound Index", driver.car.compoundIndex,space)
             inLineBulletText("Compound Name", ac.getTyresLongName(driver.car.index,driver.car.compoundIndex),space)
+            inLineBulletText("Compound Index", driver.car.compoundIndex,space)
             inLineBulletText("Last Pit Lap", driver.lapPitted,space)
             inLineBulletText("Tyre Laps", driver.tyreLaps,space)
             inLineBulletText("Tyre Life Average", math.round(100-(avg_tyre_wear*100),5),space)
@@ -90,6 +89,14 @@ function script.windowDebug(dt)
             inLineBulletText("Tyre Life [RL]", math.round(100-(driver.car.wheels[2].tyreWear*100),5),space)
             inLineBulletText("Tyre Life [FR]", math.round(100-(driver.car.wheels[1].tyreWear*100),5),space)
             inLineBulletText("Tyre Life [RR]", math.round(100-(driver.car.wheels[3].tyreWear*100),5),space)
+        end)
+
+        ui.treeNode("[ICE]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            inLineBulletText("Max Fuel", driver.car.maxFuel,space)
+            inLineBulletText("Fuel", driver.car.fuel,space)
+            inLineBulletText("Fuel Per Lap", driver.car.fuelPerLap,space)
+            inLineBulletText("Fuel Map", driver.car.fuelMap,space)
+            inLineBulletText("Engine Life Left", (driver.car.engineLifeLeft/10).." %",space)
         end)
 
         if driver.car.kersPresent then
@@ -156,6 +163,7 @@ function script.windowDebug(dt)
             inLineBulletText("Brake", math.round(driver.car.brake,5),space)
             inLineBulletText("Clutch", math.round(driver.car.clutch,5),space)
             inLineBulletText("Steer",  math.round(driver.car.steer,5),space)
+            inLineBulletText("Upcoming Turn", ac.getTrackUpcomingTurn(driver.car.index),space)
         end)
 
         ui.treeNode("[SCRIPT CONTROLLER INPUTS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()

@@ -19,7 +19,7 @@ function inLineBulletText(label,text,space)
         else
             ui.textColored(text, rgbm(1,0,0,1))
         end
-    elseif string.find(label, "Life") and not string.find(label, "Limit") then
+    elseif string.find(label, "Tyre Life") and not string.find(label, "Limit") then
         if text < F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom or
             (string.find(label, "Average") and text < F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom) then
             ui.textColored(text.." %", rgbm(1,0,0,1))
