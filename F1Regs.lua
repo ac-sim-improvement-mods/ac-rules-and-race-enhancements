@@ -98,6 +98,8 @@ local Driver = class('Driver', function(carIndex)
     local lapsCompleted = car.lapCount
     local name = ac.getDriverName(carIndex)
 
+    local aiTyreAvgRandom =0
+    local aiTyreSingleRandom =0
     local aiLevel = car.aiLevel
     local aiAggression = car.aiAggression
     local aiPrePitFuel = 0
@@ -130,7 +132,7 @@ local Driver = class('Driver', function(carIndex)
     drsBeepFx = drsBeepFx, drsFlapFx = drsFlapFx,
     drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, drsZoneId = drsZoneId, 
     drsActivationZone = drsActivationZone, drsAvailable = drsAvailable, drsCheck = drsCheck,
-    aiPitting = aiPitting, aiPitCall = aiPitCall, aiPrePitFuel = aiPrePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, 
+    aiTyreSingleRandom = aiTyreSingleRandom, aiTyreAvgRandom = aiTyreAvgRandom, aiPitting = aiPitting, aiPitCall = aiPitCall, aiPrePitFuel = aiPrePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, 
     returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake,
     carAheadDelta = carAheadDelta, carAhead = carAhead, trackPosition = trackPosition,
     lapsCompleted = lapsCompleted, index = index,  name = name, car = car
@@ -597,8 +599,8 @@ end
 
 local function aiPitNewTires(sim,driver)
     --ac.perfBegin("5.aiPitNewTires")
-    local avgTyreLimit = 1-(F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE/100)
-    local singleTyreLimit = 1-(F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE/100)
+    local avgTyreLimit = 1 - (F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom)/100
+    local singleTyreLimit = 1 - (F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom)/100
 
     if driver.car.isAIControlled then
         if not driver.car.isInPitlane then
@@ -716,7 +718,9 @@ local function initialize(sim)
             VSC_DEPLOY_TIME = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 300,
             AI_FORCE_PIT_TYRES = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
             AI_AVG_TYRE_LIFE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 60,
+            AI_AVG_TYRE_LIFE_RANGE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 5,
             AI_SINGLE_TYRE_LIFE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 45,
+            AI_SINGLE_TYRE_LIFE_RANGE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 5,
             AI_AGGRESSION_RUBBERBAND = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
             PHYSICS_REBOOT = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1
         },
@@ -786,6 +790,17 @@ local function initialize(sim)
         driver.drsAvailable = false
         driver.trackPosition = driver.car.racePosition
         driver.lapPitted = driver.car.lapCount
+
+        math.randomseed(os.time())
+
+        for i=0, math.random(driverIndex + 1) do
+            math.randomseed(os.time()*driverIndex + 1)
+            math.random()
+        end
+
+        driver.aiTyreAvgRandom = math.random(-F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE_RANGE,F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE_RANGE)
+        driver.aiTyreSingleRandom = math.random(-F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE_RANGE,F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE_RANGE)
+
         setLeaderLaps(driver)
         if driver.car.isAIControlled then
             physics.setCarFuel(driver.index, driver.car.maxFuel)
@@ -925,6 +940,7 @@ function script.windowSettings(dt)
             slider(F1RegsConfig, 'RULES', 'DRS_RULES', 0, 1, 1, true, F1RegsConfig.data.RULES.DRS_RULES == 1 and 'DRS Rules: ENABLED' or 'DRS Rules: DISABLED', 
             'Enable DRS being controlled by the app',
             function (v) return math.round(v, 0) end)
+
             if F1RegsConfig.data.RULES.DRS_RULES == 1 then
                 DRS_ENABLED_LAP = slider(F1RegsConfig, 'RULES', 'DRS_ACTIVATION_LAP', 1, ac.getSession(ac.getSim().currentSessionIndex).laps, 1, false, 'Activation Lap: %.0f', 
                 'First lap to allow DRS activation',
@@ -932,7 +948,10 @@ function script.windowSettings(dt)
                 slider(F1RegsConfig, 'RULES', 'DRS_GAP_DELTA', 100, 2000, 1, false, 'Gap Delta: %.0f ms',
                 'Max gap to car ahead when crossing detection line to allow DRS for the next zone',
                 function (v) return math.floor(v / 50 + 0.5) * 50 end)
-                slider(F1RegsConfig, 'RULES', 'DRS_WET_DISABLE', 0, 1, 1, true, F1RegsConfig.data.RULES.DRS_WET_DISABLE == 1 and 'Wet Weather Rules: ENABLED' or 'Wet Weather Rules: DISABLED', 
+
+                ui.newLine(1)
+
+                slider(F1RegsConfig, 'RULES', 'DRS_WET_DISABLE', 0, 1, 1, true, F1RegsConfig.data.RULES.DRS_WET_DISABLE == 1 and 'Disable DRS When Wet: ENABLED' or 'Disable DRS When Wet: DISABLED', 
                 'Disable DRS activation if track wetness gets above the limit below',
                 function (v) return math.round(v, 0) end)
                 if F1RegsConfig.data.RULES.DRS_WET_DISABLE == 1 then
@@ -961,7 +980,24 @@ function script.windowSettings(dt)
             slider(F1RegsConfig, 'RULES', 'AI_FORCE_PIT_TYRES', 0, 1, 1, true, F1RegsConfig.data.RULES.AI_FORCE_PIT_TYRES == 1 and "Pit New Tyres Rules: ENABLED" or "Pit New Tyres Rules: DISABLED", 
             'Force AI to pit for new tyres when their average tyre life is below AI TYRE LIFE',
             function (v) return math.round(v, 0) end)
+            
+            local driver = DRIVERS[ac.getSim().focusedCar]
             if F1RegsConfig.data.RULES.AI_FORCE_PIT_TYRES == 1 then
+                if driver.car.isAIControlled then
+                    local buttonFlags = ui.ButtonFlags.None
+                    if driver.aiPitting or driver.car.isInPitlane then
+                        buttonFlags = ui.ButtonFlags.Disabled
+                    end
+                    if ui.button("FORCE FOCUSED AI TO PIT NOW", vec2(ui.windowWidth()-77,25), buttonFlags) then
+                        driver.aiPrePitFuel = driver.car.fuel
+                        physics.setCarFuel(driver.index, 0.1)
+                        driver.aiPitCall = true
+                    end
+
+                    
+                    ui.newLine(1)
+                end
+
                 slider(F1RegsConfig, 'RULES', 'AI_AVG_TYRE_LIFE', 0, 100, 1, false, 'Pit Below Avg Tyre Life: %.2f%%', 
                 'AI will pit after average tyre life % is below this value',
                 function (v) 
@@ -969,7 +1005,17 @@ function script.windowSettings(dt)
                     return math.floor(v / 0.5 + 0.5) * 0.5 
                 end)
 
+                slider(F1RegsConfig, 'RULES', 'AI_AVG_TYRE_LIFE_RANGE', 0, 15, 1, false, 'Variability: %.2f%%', 
+                "AI will pit if one tyre's life % is below this value",
+                function (v) return math.floor(v / 0.5 + 0.5) * 0.5 end)
+
+                ui.newLine(1)
+
                 slider(F1RegsConfig, 'RULES', 'AI_SINGLE_TYRE_LIFE', 0, F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE, 1, false, 'Pit Below Single Tyre Life: %.2f%%', 
+                "AI will pit if one tyre's life % is below this value",
+                function (v) return math.floor(v / 0.5 + 0.5) * 0.5 end)
+
+                slider(F1RegsConfig, 'RULES', 'AI_SINGLE_TYRE_LIFE_RANGE', 0, 15, 1, false, 'Variability: %.2f%%', 
                 "AI will pit if one tyre's life % is below this value",
                 function (v) return math.floor(v / 0.5 + 0.5) * 0.5 end)
             end
@@ -977,18 +1023,7 @@ function script.windowSettings(dt)
             -- 'Increase AI aggression when attacking',
             -- function (v) return math.round(v, 0) end)
         
-            local driver = DRIVERS[ac.getSim().focusedCar]
-            if F1RegsConfig.data.RULES.AI_FORCE_PIT_TYRES == 1 and driver.car.isAIControlled then
-                local buttonFlags = ui.ButtonFlags.None
-                if driver.aiPitting or driver.car.isInPitlane then
-                    buttonFlags = ui.ButtonFlags.Disabled
-                end
-                if ui.button("FORCE FOCUSED AI TO PIT NOW", vec2(ui.windowWidth()-77,25), buttonFlags) then
-                    driver.aiPrePitFuel = driver.car.fuel
-                    physics.setCarFuel(driver.index, 0.1)
-                    driver.aiPitCall = true
-                end
-            end
+
             ui.newLine(1)
         
             ui.header("MISC:")
@@ -1073,6 +1108,7 @@ function script.windowSettings(dt)
 end
 
 local function inLineBulletText(label,text,space)
+    local driver = DRIVERS[ac.getSim().focusedCar]
     ui.bulletText(label)
     ui.sameLine(space, 0)
     if text == "TRUE" then
@@ -1088,10 +1124,10 @@ local function inLineBulletText(label,text,space)
             ui.textColored(text, rgbm(1,0,0,1))
         end
     elseif string.find(label, "Life") and not string.find(label, "Limit") then
-        if text < F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE or
-            (string.find(label, "Average") and text < F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE) then
+        if text < F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom or
+            (string.find(label, "Average") and text < F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom) then
             ui.textColored(text.." %", rgbm(1,0,0,1))
-        elseif text < F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE then
+        elseif text < F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom then
             ui.textColored(text.." %", rgbm(1,1,0,1))
         else
             ui.textColored(text.." %", rgbm(1,1,1,1))
@@ -1172,8 +1208,8 @@ function script.windowDebug(dt)
             ui.treeNode("[AI]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
                 inLineBulletText("Level", "["..math.round(driver.aiLevel*100,2).."] "..math.round(driver.car.aiLevel*100,2),space)
                 inLineBulletText("Aggression", "["..math.round(driver.aiAggression*100,2).."] "..math.round(driver.car.aiAggression*100,2),space)
-                inLineBulletText("Tyre Life Avg Limit", F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE.." %",space)
-                inLineBulletText("Tyre Life Single Limit", F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE.." %",space)
+                inLineBulletText("Tyre Life Avg Limit", F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom.." %",space,driver)
+                inLineBulletText("Tyre Life Single Limit", F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom.." %",space,driver)
                 inLineBulletText("Pitting New Tyres", upperBool(driver.aiPitting),space)
                 inLineBulletText("Upcoming Turn", ac.getTrackUpcomingTurn(driver.car.index),space)
             end)
