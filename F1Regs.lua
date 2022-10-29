@@ -3,18 +3,18 @@ require 'src/init'
 require 'src/controller'
 require 'src/driver'
 require 'src/utils'
-require 'src/ui/notifications'
-require 'src/ui/settings-menu'
 require 'src/debug'
 require 'src/ac-ext'
 require 'src/sim-ext'
 require 'src/audio-ext'
+require 'src/ui/notifications'
+require 'src/ui/settings-menu'
 require 'src/systems/drs'
 require 'src/systems/vsc'
 require 'src/systems/ai'
 
-SCRIPT_VERSION = "0.9.7.4-alpha"
-SCRIPT_VERSION_ID = 9740
+SCRIPT_VERSION = "0.9.7.5-alpha"
+SCRIPT_VERSION_ID = 9750
 SCRIPT_RELEASE_DATE = "2022-10-28"
 
 INITIALIZED = false
@@ -29,9 +29,11 @@ function script.update(dt)
 
     if error then
         log(error)
+        INITIALIZED = false
         INITIALIZED = initialize(sim)
     end
 
+    if INITIALIZED then audioHandler(sim) end
     if not ac.isWindowOpen("main") then return end
 
     if sim.raceSessionType == 3 then
@@ -47,12 +49,8 @@ function script.update(dt)
             REBOOT = false
             RESTARTED = false
         -- Race session has started
-        elseif INITIALIZED then 
-            audioHandler(sim)
-            controlSystems(sim) end
+        elseif INITIALIZED then controlSystems(sim) end
     end
-
-    --ac.perfEnd("1.main")
 end
 
 function script.windowMain(dt)
