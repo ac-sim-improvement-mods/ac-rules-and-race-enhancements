@@ -9,7 +9,6 @@ function initialize(sim)
     log("F1 Regs version: "..SCRIPT_VERSION_ID)
     log("CSP version: "..ac.getPatchVersionCode())
 
-
     local configFile = "settings.ini"
 
     F1RegsConfig = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/"..configFile, {
@@ -43,13 +42,8 @@ function initialize(sim)
 
     log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/"..configFile)
 
-    if not sim.raceSessionType == 3 then
-        log("[Race Control] "..sessionTypeString(sim).." session detected")
-        return false
-    end
-
     if not compatibleCspVersion() then
-        ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP v0.1.79 required!")
+        ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP "..CSP_MIN_VERSION.." required!")
         log("[WARN] Incompatible CSP version")
         return false
     end
@@ -96,8 +90,6 @@ function initialize(sim)
         driver.drsAvailable = false
         driver.trackPosition = driver.car.racePosition
         driver.lapPitted = driver.car.lapCount
-
-        math.randomseed(os.time())
 
         for i=0, math.random(driverIndex + 1) do
             math.randomseed(os.time()*driverIndex + 1)

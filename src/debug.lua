@@ -1,19 +1,10 @@
 function script.windowDebug(dt)
     local sim = ac.getSim()
+    local windowName = "F1 Regs Debug"
     local scriptVersion = SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")"
-    local textSize = ui.measureText(scriptVersion).x + ui.measureText("F1 Regs Debug").x
+    local windowTitle = windowName..string.pad(scriptVersion, ui.windowWidth()-ui.measureText(windowNams).x, " ", -1)
 
-    local spacing = ""
-
-    for i=0, ui.windowWidth()-textSize-135 do
-        spacing = spacing.." "
-    end
-
-    scriptVersion = spacing..scriptVersion
-
-    ac.debug("text", textSize)
-    ac.debug("window", ui.windowWidth())
-    ac.setWindowTitle("debug", "F1 Regs Debug"..scriptVersion)
+    ac.setWindowTitle("debug", windowTitle)
 
     if sim.raceSessionType ~= 3 then
         ui.pushFont(ui.Font.Main)
