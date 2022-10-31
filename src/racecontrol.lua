@@ -1,6 +1,7 @@
 local drs = require 'src/systems/drs'
 local vsc = require 'src/systems/vsc'
 local ai = require 'src/systems/ai'
+local connect = require 'src/connection'
 
 local racecontrol = {}
 
@@ -101,6 +102,8 @@ function racecontrol.race()
     local rc = racecontrol.getRaceControl()
     local drivers = DRIVERS
     local rules = F1RegsConfig.data.RULES
+    
+    connect.storeRaceControlData(rc)
 
     for i=0, #drivers do
         local driver = drivers[i]
@@ -112,6 +115,8 @@ function racecontrol.race()
         end
 
         if rules.DRS_RULES == 1 then drs.controller(driver,rc.drsEnabled) else driver.drsAvailable = true end
+
+        connect.storeDriverData(driver) 
 
         DRIVERS[i] = driver
     end

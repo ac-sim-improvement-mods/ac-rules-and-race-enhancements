@@ -4,10 +4,8 @@ SCRIPT_RELEASE_DATE = "2022-10-28"
 CSP_MIN_VERSION = "1.79"
 CSP_MIN_VERSION_ID = 2144
 
-require 'src/connection'
 require 'src/ac_ext'
 require 'src/utils'
-require 'src/driver'
 require 'src/init'
 require 'src/ui/debug_menu'
 require 'src/ui/settings_menu'

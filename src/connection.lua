@@ -1,3 +1,5 @@
+local connection = {}
+
 local F1RegsData = ac.connect({
     ac.StructItem.key('F1RegsData'),
     connected = ac.StructItem.boolean(),
@@ -8,11 +10,16 @@ local F1RegsData = ac.connect({
     carAheadDelta = ac.StructItem.array(ac.StructItem.float(),32),
 },false,ac.SharedNamespace.Shared)
 
-function storeData(driver)
+function connection.storeRaceControlData(rc)
     F1RegsData.connected = true
     F1RegsData.scriptVersionId = SCRIPT_VERSION_ID
     F1RegsData.drsEnabled = DRS_ENABLED
+end
+
+function connection.storeDriverData(driver)
     F1RegsData.drsAvailable[driver.index] = driver.drsAvailable
     F1RegsData.carAhead[driver.index] = driver.carAhead
     F1RegsData.carAheadDelta[driver.index] = driver.carAheadDelta
 end
+
+return connection
