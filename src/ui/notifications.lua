@@ -98,8 +98,8 @@ function showNotification(text,timer)
 end
 
 function script.windowNotifications(dt)
-    local timer = NOTIFICATION_TIMER
-    timer = timer - dt
-    NOTIFICATION_TIMER = timer
-    fadingTimer(timer > 0 and timer < 60)
+    -- local timer = NOTIFICATION_TIMER
+    -- timer = timer - dt
+    -- NOTIFICATION_TIMER = timer
+    -- fadingTimer(timer > 0 and timer < 60)
 end

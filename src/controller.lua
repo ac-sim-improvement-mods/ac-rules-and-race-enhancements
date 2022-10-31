@@ -18,7 +18,7 @@ function controlSystems(sim)
     for index=0, #drivers do
         local driver = drivers[index]
         setLeaderLaps(driver)
-        getNextDetectionLine(driver)
+
 
         if driver.tyreLaps > 0 and driver.car.isInPitlane then
             driver.lapPitted = driver.car.lapCount

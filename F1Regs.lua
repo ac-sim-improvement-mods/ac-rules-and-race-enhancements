@@ -5,19 +5,18 @@ CSP_MIN_VERSION = "1.79"
 CSP_MIN_VERSION_ID = 2144
 
 require 'src/connection'
-require 'src/ac-ext'
+require 'src/ac_ext'
 require 'src/utils'
-require 'src/init'
-require 'src/controller'
 require 'src/driver'
-require 'src/debug'
+require 'src/init'
+require 'src/ui/debug_menu'
+require 'src/ui/settings_menu'
 require 'src/ui/notifications'
-require 'src/ui/settings-menu'
-require 'src/systems/drs'
-require 'src/systems/vsc'
-require 'src/systems/ai'
+
+rc = require 'src/racecontrol'
 
 INITIALIZED = false
+DRIVERS = {}
 
 local RESTARTED = false
 local REBOOT = false
@@ -34,26 +33,36 @@ function script.update(dt)
 
     if not ac.isWindowOpen("main") then return end
 
-    if sim.raceSessionType == 3 then
-        if not RESTARTED and sim.isInMainMenu then
-            RESTARTED = true
-            INITIALIZED = false
-        end
+    if not RESTARTED and sim.isInMainMenu then
+        RESTARTED = true
+        INITIALIZED = false
+    end
 
-        -- Initialize the session
-        if (sim.isInMainMenu or sim.isSessionStarted) and not INITIALIZED then INITIALIZED = initialize(sim)
-        elseif not sim.isInMainMenu and not sim.isSessionStarted and RESTARTED and INITIALIZED then
-            if REBOOT and F1RegsConfig.data.RULES.PHYSICS_REBOOT == 1 then ac.restartAssettoCorsa() end
-            REBOOT = false
-            RESTARTED = false
-        -- Race session has started
-        elseif INITIALIZED then controlSystems(sim) end
+    -- Initialize the session
+    if (sim.isInMainMenu or sim.isSessionStarted) and not INITIALIZED then INITIALIZED = initialize(sim)
+    elseif not sim.isInMainMenu and not sim.isSessionStarted and RESTARTED and INITIALIZED then
+        if REBOOT and F1RegsConfig.data.RULES.PHYSICS_REBOOT == 1 then ac.restartAssettoCorsa() end
+        REBOOT = false
+        RESTARTED = false
+    -- Race session has started
+    elseif INITIALIZED then        
+        if sim.raceSessionType == 3 then
+            rc.getRaceControl()
+            rc.race()
+        end
     end
 
     if INITIALIZED and sim.isSessionStarted then audioHandler(sim) end
-
 end
 
 function script.windowMain(dt)
     -- JUST TO KEEP THE SCRIPT ALIVE
+end
+
+function script.windowDebug(dt)
+    debugMenu(rc.getRaceControl())
+end
+
+function script.windowSettings(dt)
+    settingsMenu(rc.getRaceControl())
 end

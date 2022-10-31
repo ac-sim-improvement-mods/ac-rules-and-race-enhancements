@@ -1,12 +1,14 @@
+
 ---@class Driver
 ---@param carIndex number
 ---@return Driver
 Driver = class('Driver', function(carIndex)
-    local car = ac.getCar(carIndex)
-
     local index = carIndex
+    
+    local car = ac.getCar(index)
+    local name = ac.getDriverName(index)
+
     local lapsCompleted = car.lapCount
-    local name = ac.getDriverName(carIndex)
 
     local aiTyreAvgRandom =0
     local aiTyreSingleRandom =0
@@ -23,7 +25,7 @@ Driver = class('Driver', function(carIndex)
     local carAhead = -1
     local carAheadDelta = -1
 
-    local drsActivationZone = false
+    local drsActivationZone = car.drsAvailable
     local drsZoneId = 0
     local drsZonePrevId = 0
     local drsCheck = false
@@ -36,6 +38,20 @@ Driver = class('Driver', function(carIndex)
     local illegalOvertake = false
     local returnRacePosition = -1
     local returnPostionTimer = -1
+
+    if car.isAIControlled then
+        physics.setCarFuel(index, car.maxFuel)
+    end
+
+    for i=0, math.random(index + 1) do
+        math.randomseed(os.time()*i + 1)
+        math.random()
+    end
+
+    aiTyreAvgRandom = math.random(-F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE_RANGE,F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE_RANGE)
+    aiTyreSingleRandom = math.random(-F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE_RANGE,F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE_RANGE)
+
+    log("[Loaded] Driver ["..index.."] "..name)
 
     return {
     tyreLaps = tyreLaps, lapPitted = lapPitted,

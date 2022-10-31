@@ -1,8 +1,8 @@
-function script.windowDebug(dt)
+function debugMenu(rc)
     local sim = ac.getSim()
     local windowName = "F1 Regs Debug"
     local scriptVersion = SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")"
-    local windowTitle = windowName..string.pad(scriptVersion, ui.windowWidth()-ui.measureText(windowNams).x, " ", -1)
+    local windowTitle = windowName..string.pad(scriptVersion, ui.windowWidth()-ui.measureText(windowName).x, " ", -1)
 
     ac.setWindowTitle("debug", windowTitle)
 
@@ -58,7 +58,7 @@ function script.windowDebug(dt)
             inLineBulletText("In Pit Lane", upperBool(driver.car.isInPitlane),space)
             inLineBulletText("In Pits", upperBool(driver.car.isInPit),space)
             inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
-            inLineBulletText("Track Position", driver.trackPosition.."/"..DRIVERS_ON_TRACK,space)
+            inLineBulletText("Track Position", driver.trackPosition.."/"..rc.carsOnTrackCount,space)
             inLineBulletText("Lap", (driver.car.lapCount+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
             inLineBulletText("Last Lap Time", ac.lapTimeToString(driver.car.previousLapTimeMs),space)
             inLineBulletText("Best Lap Time", ac.lapTimeToString(driver.car.bestLapTimeMs),space)
@@ -138,7 +138,7 @@ function script.windowDebug(dt)
                         local delta = driver.carAheadDelta
                         inLineBulletText("Driver ahead ["..driver.carAhead.."]", tostring(ac.getDriverName(driver.carAhead)),space)
                         inLineBulletText("Enabled on Lap", DRS_ENABLED_LAP,space)
-                        inLineBulletText("Enabled", upperBool(DRS_ENABLED),space)
+                        inLineBulletText("Enabled", upperBool(rc.drsEnabled),space)
                         if driver.car.speedKmh >= 1 then inLineBulletText("Delta", math.round(delta,3),space)
                         else inLineBulletText("Delta","---",space )end
                         inLineBulletText("In Gap", upperBool((delta <= F1RegsConfig.data.RULES.DRS_GAP_DELTA/1000 and delta > 0.0) and true or false),space)

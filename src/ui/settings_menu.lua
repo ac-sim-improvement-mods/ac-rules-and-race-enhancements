@@ -41,7 +41,7 @@ local function slider(cfg, section, key, from, to, mult, isbool, format, tooltip
   return curValue
 end
 
-function script.windowSettings(dt)
+function settingsMenu()
     local scriptVersion = SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")"
     ac.setWindowTitle("settings", "F1 Regs Settings      "..scriptVersion)
     ui.pushFont(ui.Font.Small)
