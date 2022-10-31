@@ -132,9 +132,11 @@ function settingsMenu()
                 "AI will pit if one tyre's life % is below this value",
                 function (v) return math.floor(v / 0.5 + 0.5) * 0.5 end)
             end
-            -- slider(F1RegsConfig, 'RULES', 'AI_AGGRESSION_RUBBERBAND', 0, 1, 1, true, F1RegsConfig.data.RULES.AI_AGGRESSION_RUBBERBAND == 1 and "Alt Aggression: ENABLED" or "Alt Aggression: DISABLED", 
-            -- 'Increase AI aggression when attacking',
-            -- function (v) return math.round(v, 0) end)
+
+            ui.newLine(1)
+            slider(F1RegsConfig, 'RULES', 'AI_AGGRESSION_RUBBERBAND', 0, 1, 1, true, F1RegsConfig.data.RULES.AI_AGGRESSION_RUBBERBAND == 1 and "Alt Aggression: ENABLED" or "Alt Aggression: DISABLED", 
+            'Increase AI aggression when attacking',
+            function (v) return math.round(v, 0) end)
         
 
             ui.newLine(1)

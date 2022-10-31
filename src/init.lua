@@ -1,14 +1,15 @@
-
-
 --- Initialize
-function initialize(sim)
-    LEADER_LAPS = 0
-    VSC_DEPLOYED = false
-    VSC_CALLED = false
-
+function initialize()
     log("F1 Regs version: "..SCRIPT_VERSION)
     log("F1 Regs version: "..SCRIPT_VERSION_ID)
     log("CSP version: "..ac.getPatchVersionCode())
+
+    if not compatibleCspVersion() then
+        ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP "..CSP_MIN_VERSION.." ".."("..CSP_MIN_VERSION_ID..")".." required!")
+        log("[WARN] Incompatible CSP version")
+        initialize()
+        return false
+    end
 
     local configFile = "settings.ini"
 
@@ -43,13 +44,7 @@ function initialize(sim)
 
     log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/"..configFile)
 
-    if not compatibleCspVersion() then
-        ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP "..CSP_MIN_VERSION.." required!")
-        log("[WARN] Incompatible CSP version")
-        return false
-    end
-
-    if not F1RegsConfig.data.RULES.PHYSICS_REBOOT == 0 then
+    if F1RegsConfig.data.RULES.PHYSICS_REBOOT == 1 then
         if not physics.allowed() then
             local trackSurfaces = MappedConfig(ac.getTrackDataFilename('surfaces.ini'), {
                 _SCRIPTING_PHYSICS = { ALLOW_APPS = 'bullshit' },
@@ -74,9 +69,8 @@ function initialize(sim)
     DRS_FLAP:setSource("./assets/audio/drs-flap.wav"):setAutoPlay(false)
     DRS_FLAP:setVolume(acVolume * F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_FLAP/100)
 
-
     -- Get DRS Zones from track data folder
-    DRS_ZONES = DRS_Points("drs_zones.ini")
+    DRS_ZONES = DrsZones("drs_zones.ini")
 
     for i=0, ac.getSim().carsCount-1 do
         DRIVERS[i] = Driver(i)

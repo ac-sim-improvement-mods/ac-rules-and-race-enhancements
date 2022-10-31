@@ -13,13 +13,12 @@ require 'src/ui/debug_menu'
 require 'src/ui/settings_menu'
 require 'src/ui/notifications'
 
-rc = require 'src/racecontrol'
+local rc = require 'src/racecontrol'
 
 INITIALIZED = false
-DRIVERS = {}
 
-local RESTARTED = false
-local REBOOT = false
+RESTARTED = false
+REBOOT = false
 
 function script.update(dt)
     local sim = ac.getSim()
@@ -28,7 +27,7 @@ function script.update(dt)
     if error then
         log(error)
         INITIALIZED = false
-        INITIALIZED = initialize(sim)
+        INITIALIZED = initialize()
     end
 
     if not ac.isWindowOpen("main") then return end
@@ -39,7 +38,7 @@ function script.update(dt)
     end
 
     -- Initialize the session
-    if (sim.isInMainMenu or sim.isSessionStarted) and not INITIALIZED then INITIALIZED = initialize(sim)
+    if (sim.isInMainMenu or sim.isSessionStarted) and not INITIALIZED then INITIALIZED = initialize()
     elseif not sim.isInMainMenu and not sim.isSessionStarted and RESTARTED and INITIALIZED then
         if REBOOT and F1RegsConfig.data.RULES.PHYSICS_REBOOT == 1 then ac.restartAssettoCorsa() end
         REBOOT = false

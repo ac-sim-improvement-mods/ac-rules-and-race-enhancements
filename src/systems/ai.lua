@@ -1,48 +1,68 @@
-function aiPitNewTires(sim,driver)
-    --ac.perfBegin("5.aiPitNewTires")
+local ai = {}
+
+local function avgTyreWearBelowLimit(driver)
     local avgTyreLimit = 1 - (F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom)/100
-    local singleTyreLimit = 1 - (F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom)/100
-
-    if driver.car.isAIControlled then
-        if not driver.car.isInPitlane then
-            if driver.aiPitCall then
-                driver.aiPitCall = false
-                driver.aiPitting = true
-                physics.setCarFuel(driver.index, driver.aiPrePitFuel)
-            elseif not driver.aiPitting then
-                if LEADER_LAPS < ac.getSession(sim.currentSessionIndex).laps - 5 then
-                    local avg_tyre_wear = ((driver.car.wheels[0].tyreWear + 
-                                            driver.car.wheels[1].tyreWear +
-                                            driver.car.wheels[2].tyreWear +
-                                            driver.car.wheels[3].tyreWear) / 4)
-                    if avg_tyre_wear > avgTyreLimit or 
-                    driver.car.wheels[0].tyreWear > singleTyreLimit or
-                    driver.car.wheels[1].tyreWear > singleTyreLimit or
-                    driver.car.wheels[2].tyreWear > singleTyreLimit or
-                    driver.car.wheels[3].tyreWear > singleTyreLimit then
-                        --physics.setCarPenalty(ac.PenaltyType.MandatoryPits,1)
-                        driver.aiPrePitFuel = driver.car.fuel
-                        physics.setCarFuel(driver.index, 0.1)
-                        driver.aiPitCall = true
-                    end
-                end
-            end
-        else            
-            if driver.car.isInPit then
-                physics.setCarFuel(driver.index, driver.aiPrePitFuel)
-                driver.aiPitting = false
-                driver.tyreLaps = 0
-            else
-                driver.aiPrePitFuel = driver.car.fuel
-            end
-        end
-    end
-
-    --ac.perfEnd("5.aiPitNewTires")
+    local avgTyreWear = (driver.car.wheels[0].tyreWear +
+                            driver.car.wheels[1].tyreWear +
+                            driver.car.wheels[2].tyreWear +
+                            driver.car.wheels[3].tyreWear) / 4
+    return avgTyreWear > avgTyreLimit and true or false
 end
 
-function alternateAIAttack(driver)
-    --ac.perfBegin("attack")
+local function singleTyreWearBelowLimit(driver)
+    local singleTyreLimit = 1 - (F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom)/100
+
+    if driver.car.wheels[0].tyreWear > singleTyreLimit or
+            driver.car.wheels[1].tyreWear > singleTyreLimit or
+            driver.car.wheels[2].tyreWear > singleTyreLimit or
+            driver.car.wheels[3].tyreWear > singleTyreLimit then
+        return true
+    else
+        return false
+    end
+end
+
+local function triggerPitStop(driver)
+    driver.aiPrePitFuel = driver.car.fuel
+    physics.setCarFuel(driver.index, 0.1)
+    driver.aiPitCall = true
+end
+
+local function catchTriggeredPitStop(driver)
+    driver.aiPitCall = false
+    driver.aiPitting = true
+    physics.setCarFuel(driver.index, driver.aiPrePitFuel)
+end
+
+local function pitstop(driver)
+    physics.setCarFuel(driver.index, driver.aiPrePitFuel)
+    driver.aiPitting = false
+    driver.tyreLaps = 0
+end
+
+local function setPrePitFuel(driver)
+    driver.aiPrePitFuel = driver.car.fuel
+end
+
+function ai.pitNewTires(driver)
+    if not driver.car.isInPitlane and not driver.aiPitting then
+        if driver.aiPitCall then
+            catchTriggeredPitStop(driver)
+        else
+            if avgTyreWearBelowLimit(driver) or singleTyreWearBelowLimit(driver) then
+                triggerPitStop(driver)
+            end
+        end
+    else            
+        if driver.car.isInPit then
+            pitstop(driver)
+        else
+            setPrePitFuel(driver)
+        end
+    end
+end
+
+function ai.alternateAttack(driver)
     local delta = driver.carAheadDelta
     local defaultAgression = driver.aiAggression
     local defaultLevel = driver.aiLevel
@@ -54,6 +74,6 @@ function alternateAIAttack(driver)
     else
         physics.setAIAggression(driver.index, 0)
     end
-
-    --ac.perfEnd("attack")
 end
+
+return ai

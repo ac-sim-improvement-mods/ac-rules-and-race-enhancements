@@ -25,6 +25,8 @@ function controlSystems(sim)
         end
 
         driver.tyreLaps = driver.car.lapCount - driver.lapPitted
+
+        
         if config.AI_FORCE_PIT_TYRES == 1 then aiPitNewTires(sim,driver) end
         if config.AI_AGGRESSION_RUBBERBAND == 1 then alternateAIAttack(driver) end
         if config.DRS_RULES == 1 then controlDRS(sim,driver) else driver.drsAvailable = true end

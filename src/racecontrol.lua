@@ -4,6 +4,9 @@ local ai = require 'src/systems/ai'
 
 local racecontrol = {}
 
+DRS_ZONES = {}
+DRIVERS = {}
+
 function readOnly( t )
     local proxy = {}
     local mt = {
@@ -78,7 +81,6 @@ local function getTrackOrder(drivers)
     return #trackOrder
 end
 
-
 function racecontrol.getRaceControl()
     local rules = F1RegsConfig.data.RULES
     local drivers = DRIVERS
@@ -98,10 +100,19 @@ end
 function racecontrol.race()
     local rc = racecontrol.getRaceControl()
     local drivers = DRIVERS
+    local rules = F1RegsConfig.data.RULES
 
     for i=0, #drivers do
         local driver = drivers[i]
-        drs.controller(driver,rc.drsEnabled)
+        driver:update()
+        
+        if driver.car.isAIControlled then
+            if rules.AI_FORCE_PIT_TYRES == 1 then ai.pitNewTires(driver) end
+            if rules.AI_AGGRESSION_RUBBERBAND == 1 then ai.alternateAttack(driver) end
+        end
+
+        if rules.DRS_RULES == 1 then drs.controller(driver,rc.drsEnabled) else driver.drsAvailable = true end
+
         DRIVERS[i] = driver
     end
 end
