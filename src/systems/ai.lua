@@ -64,13 +64,14 @@ end
 
 function ai.alternateAttack(driver)
     local delta = driver.carAheadDelta
-    local defaultAgression = driver.aiAggression
+    local defaultAggression = driver.aiAggression
     local defaultLevel = driver.aiLevel
+    local maxAggression = 0.6
+
+    local newAggression = (1 / (delta*10)) * 60
     
-    if delta < 0.6 and delta >= 0.3 then
-        physics.setAIAggression(driver.index, math.clamp(defaultAgression + 0.15,0,0.60))
-    elseif delta < 0.3 and delta >= 0 then
-        physics.setAIAggression(driver.index, math.clamp(defaultAgression + 0.05,0,0.60))
+    if delta < 1 and delta >= 0 then
+        physics.setAIAggression(driver.index, math.clamp(newAggression,0,maxAggression))
     else
         physics.setAIAggression(driver.index, 0)
     end
