@@ -1,8 +1,27 @@
 function script.windowDebug(dt)
     local sim = ac.getSim()
-    ac.setWindowTitle("debug", "F1 Regs Debug               "..SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")")
+    local scriptVersion = SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")"
+    local textSize = ui.measureText(scriptVersion).x + ui.measureText("F1 Regs Debug").x
+
+    local spacing = ""
+
+    for i=0, ui.windowWidth()-textSize-135 do
+        spacing = spacing.." "
+    end
+
+    scriptVersion = spacing..scriptVersion
+
+    ac.debug("text", textSize)
+    ac.debug("window", ui.windowWidth())
+    ac.setWindowTitle("debug", "F1 Regs Debug"..scriptVersion)
 
     if sim.raceSessionType ~= 3 then
+        ui.pushFont(ui.Font.Main)
+        ui.text("This is a "..sessionTypeString(sim).." not a RACE session")
+        return
+    end
+
+    if not compatibleCspVersion() then
         ui.pushFont(ui.Font.Main)
         ui.text("This is a "..sessionTypeString(sim).." not a RACE session")
         return
@@ -25,8 +44,9 @@ function script.windowDebug(dt)
 
         ui.treeNode("["..sessionTypeString(sim).." SESSION]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
             inLineBulletText("F1 Regs Enabled", upperBool(ac.isWindowOpen("main")),space)
-            inLineBulletText("Physics Allowed", upperBool(physics.allowed()),space)
             inLineBulletText("Race Started", upperBool(sim.isSessionStarted),space)
+            inLineBulletText("Physics Allowed", upperBool(physics.allowed()),space)
+            inLineBulletText("Physics Late", sim.physicsLate,space)
             inLineBulletText("Track", ac.getTrackName(),space)
             inLineBulletText("Time", string.format("%02d:%02d:%02d", sim.timeHours, sim.timeMinutes, sim.timeSeconds),space)
             inLineBulletText("Leader Lap", LEADER_LAPS.."/"..ac.getSession(sim.currentSessionIndex).laps,space)
@@ -42,9 +62,10 @@ function script.windowDebug(dt)
 
         ui.treeNode("[DRIVER]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
             inLineBulletText("Driver ["..driver.index.."]", driver.name,space)
-            inLineBulletText("Driver ahead ["..driver.carAhead.."]", tostring(ac.getDriverName(driver.carAhead)),space)
             inLineBulletText("Team", ac.getDriverTeam(driver.car.index),space)
             inLineBulletText("Number", ac.getDriverNumber(driver.car.index),space)
+            inLineBulletText("In Pit Lane", upperBool(driver.car.isInPitlane),space)
+            inLineBulletText("In Pits", upperBool(driver.car.isInPit),space)
             inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
             inLineBulletText("Track Position", driver.trackPosition.."/"..DRIVERS_ON_TRACK,space)
             inLineBulletText("Lap", (driver.car.lapCount+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
@@ -97,6 +118,8 @@ function script.windowDebug(dt)
             inLineBulletText("Fuel Per Lap", driver.car.fuelPerLap,space)
             inLineBulletText("Fuel Map", driver.car.fuelMap,space)
             inLineBulletText("Engine Life Left", (driver.car.engineLifeLeft/10).." %",space)
+            inLineBulletText("RPM Limiter", driver.car.rpmLimiter,space)
+            inLineBulletText("RPM", math.round(driver.car.rpm,0),space)
         end)
 
         if driver.car.kersPresent then
@@ -122,6 +145,7 @@ function script.windowDebug(dt)
                 if driver.car.drsPresent then
                     if not driver.car.isInPitlane then
                         local delta = driver.carAheadDelta
+                        inLineBulletText("Driver ahead ["..driver.carAhead.."]", tostring(ac.getDriverName(driver.carAhead)),space)
                         inLineBulletText("Enabled on Lap", DRS_ENABLED_LAP,space)
                         inLineBulletText("Enabled", upperBool(DRS_ENABLED),space)
                         if driver.car.speedKmh >= 1 then inLineBulletText("Delta", math.round(delta,3),space)
@@ -146,6 +170,15 @@ function script.windowDebug(dt)
                 end
             end)
         end
+
+        ui.treeNode("[DAMAGE]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            inLineBulletText("Damage 0", driver.car.damage[0],space)
+            inLineBulletText("Damage 1", driver.car.damage[1],space)
+            inLineBulletText("Damage 2", driver.car.damage[2],space)
+            inLineBulletText("Damage 3", driver.car.damage[3],space)
+            inLineBulletText("Damage 4", driver.car.damage[4],space)
+            inLineBulletText("Gear Box Damage", driver.car.gearboxDamage,space)
+        end)
 
         ui.treeNode("[WEATHER]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
             local totalWetness = ((sim.rainWetness/5) + (sim.rainWater*10))/2

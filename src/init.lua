@@ -4,11 +4,10 @@ function initialize(sim)
     LEADER_LAPS = 0
     VSC_DEPLOYED = false
     VSC_CALLED = false
-    local csp_version = ac.getPatchVersionCode()
 
     log("F1 Regs version: "..SCRIPT_VERSION)
     log("F1 Regs version: "..SCRIPT_VERSION_ID)
-    log("CSP version: "..csp_version)
+    log("CSP version: "..ac.getPatchVersionCode())
 
 
     local configFile = "settings.ini"
@@ -49,13 +48,13 @@ function initialize(sim)
         return false
     end
 
-    if csp_version < 2144 then
+    if not compatibleCspVersion() then
         ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP v0.1.79 required!")
         log("[WARN] Incompatible CSP version")
         return false
     end
 
-    if F1RegsConfig.data.RULES.PHYSICS_REBOOT == 1 then
+    if not F1RegsConfig.data.RULES.PHYSICS_REBOOT == 0 then
         if not physics.allowed() then
             local trackSurfaces = MappedConfig(ac.getTrackDataFilename('surfaces.ini'), {
                 _SCRIPTING_PHYSICS = { ALLOW_APPS = 'bullshit' },
@@ -111,6 +110,10 @@ function initialize(sim)
         setLeaderLaps(driver)
         if driver.car.isAIControlled then
             physics.setCarFuel(driver.index, driver.car.maxFuel)
+        end
+
+        if not sim.isSessionStarted or driver.car.isInPit then
+            physics.setGentleStop(driverIndex, true)
         end
 
         storeData(driver)

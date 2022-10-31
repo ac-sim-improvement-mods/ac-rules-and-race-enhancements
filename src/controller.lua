@@ -5,12 +5,6 @@ LEADER_LAPS = 1
 NOTIFICATION_TIMER = 0
 NOTIFICATION_TEXT = ""
 
-function setLeaderLaps(driver)
-    if driver.car.racePosition == 1 then
-        LEADER_LAPS = driver.car.lapCount+1
-    end
-end
-
 --- Controls all of the regulated systems
 function controlSystems(sim)
     local drivers = DRIVERS
