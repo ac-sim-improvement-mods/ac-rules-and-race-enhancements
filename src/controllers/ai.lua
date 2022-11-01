@@ -32,8 +32,8 @@ local function strategyCall(driver,forced)
     local carAhead = DRIVERS[driver.carAhead]
     local trigger = true
     local lapsTotal = ac.getSession(ac.getSim().currentSessionIndex).laps
-    local lapsRemaining = math.clamp(lapsTotal - driver.lapsCompleted, 0)
-
+    local lapsRemaining = lapsTotal - driver.lapsCompleted
+    
     if not forced then
         if not carAhead.aiPitCall and driver.carAheadDelta < 1 then
             trigger = false
@@ -85,8 +85,20 @@ end
 
 function ai.alternateAttack(driver)
     local delta = driver.carAheadDelta
-    local speedMod = math.clamp(200/(driver.car.speedKmh or 0),1,2)
-    local maxAggression = ac.load("app.F1Regs."..driver.index..".AI_Aggression") / speedMod
+    local speedMod = math.clamp(200/(driver.car.speedKmh or 200),1,2)
+    local maxAggression = ac.load("app.F1Regs."..driver.index..".AI_Aggression")
+    local upcomingTurn = ac.getTrackUpcomingTurn(driver.index)
+    local upcomingTurnDistance = upcomingTurn.x
+    local upcomingTurnAngle = upcomingTurn.y
+
+    if upcomingTurnDistance >= 250 then
+        maxAggression = maxAggression + (maxAggression*0.25)
+    else
+        if upcomingTurnAngle < 90 then
+            maxAggression = maxAggression / speedMod
+        end
+    end
+
     local newAggression = math.lerp(0, maxAggression, 1-delta+0.2)
 
     if maxAggression ~= nil and maxAggression > 0 then
