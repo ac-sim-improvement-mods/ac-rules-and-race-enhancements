@@ -3,7 +3,7 @@ local vsc = require 'src/controllers/vsc'
 local ai = require 'src/controllers/ai'
 local connect = require 'src/connection'
 
-local racecontrol = {}
+local rc = {}
 
 DRS_ZONES = {}
 DRIVERS = {}
@@ -82,7 +82,7 @@ local function getTrackOrder(drivers)
     return #trackOrder
 end
 
-function racecontrol.getRaceControl()
+function rc.getRaceControl()
     local rules = F1RegsConfig.data.RULES
     local drivers = DRIVERS
     local carsOnTrackCount = getTrackOrder(drivers)
@@ -98,7 +98,7 @@ function racecontrol.getRaceControl()
     }
 end
 
-function racecontrol.race()
+function rc.race()
     local rc = racecontrol.getRaceControl()
     local drivers = DRIVERS
     local rules = F1RegsConfig.data.RULES
@@ -122,4 +122,4 @@ function racecontrol.race()
     end
 end
 
-return racecontrol
+return rc
