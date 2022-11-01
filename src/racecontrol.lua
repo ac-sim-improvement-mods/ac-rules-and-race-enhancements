@@ -1,6 +1,6 @@
-local drs = require 'src/systems/drs'
-local vsc = require 'src/systems/vsc'
-local ai = require 'src/systems/ai'
+local drs = require 'src/controllers/drs'
+local vsc = require 'src/controllers/vsc'
+local ai = require 'src/controllers/ai'
 local connect = require 'src/connection'
 
 local racecontrol = {}
