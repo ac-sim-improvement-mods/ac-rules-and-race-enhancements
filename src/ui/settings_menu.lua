@@ -41,7 +41,7 @@ local function slider(cfg, section, key, from, to, mult, isbool, format, tooltip
   return curValue
 end
 
-function script.windowSettings(dt)
+function settingsMenu()
     local scriptVersion = SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")"
     ac.setWindowTitle("settings", "F1 Regs Settings      "..scriptVersion)
     ui.pushFont(ui.Font.Small)
@@ -132,9 +132,11 @@ function script.windowSettings(dt)
                 "AI will pit if one tyre's life % is below this value",
                 function (v) return math.floor(v / 0.5 + 0.5) * 0.5 end)
             end
-            -- slider(F1RegsConfig, 'RULES', 'AI_AGGRESSION_RUBBERBAND', 0, 1, 1, true, F1RegsConfig.data.RULES.AI_AGGRESSION_RUBBERBAND == 1 and "Alt Aggression: ENABLED" or "Alt Aggression: DISABLED", 
-            -- 'Increase AI aggression when attacking',
-            -- function (v) return math.round(v, 0) end)
+
+            ui.newLine(1)
+            slider(F1RegsConfig, 'RULES', 'AI_AGGRESSION_RUBBERBAND', 0, 1, 1, true, F1RegsConfig.data.RULES.AI_AGGRESSION_RUBBERBAND == 1 and "Alt Aggression: ENABLED" or "Alt Aggression: DISABLED", 
+            'Increase AI aggression when attacking',
+            function (v) return math.round(v, 0) end)
         
 
             ui.newLine(1)

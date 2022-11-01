@@ -1,13 +1,15 @@
-
 --- Initialize
-function initialize(sim)
-    LEADER_LAPS = 0
-    VSC_DEPLOYED = false
-    VSC_CALLED = false
-
+function initialize()
     log("F1 Regs version: "..SCRIPT_VERSION)
     log("F1 Regs version: "..SCRIPT_VERSION_ID)
     log("CSP version: "..ac.getPatchVersionCode())
+
+    if not compatibleCspVersion() then
+        ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP "..CSP_MIN_VERSION.." ".."("..CSP_MIN_VERSION_ID..")".." required!")
+        log("[WARN] Incompatible CSP version")
+        initialize()
+        return false
+    end
 
     local configFile = "settings.ini"
 
@@ -42,13 +44,7 @@ function initialize(sim)
 
     log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/"..configFile)
 
-    if not compatibleCspVersion() then
-        ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP "..CSP_MIN_VERSION.." required!")
-        log("[WARN] Incompatible CSP version")
-        return false
-    end
-
-    if not F1RegsConfig.data.RULES.PHYSICS_REBOOT == 0 then
+    if F1RegsConfig.data.RULES.PHYSICS_REBOOT == 1 then
         if not physics.allowed() then
             local trackSurfaces = MappedConfig(ac.getTrackDataFilename('surfaces.ini'), {
                 _SCRIPTING_PHYSICS = { ALLOW_APPS = 'bullshit' },
@@ -73,47 +69,11 @@ function initialize(sim)
     DRS_FLAP:setSource("./assets/audio/drs-flap.wav"):setAutoPlay(false)
     DRS_FLAP:setVolume(acVolume * F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_FLAP/100)
 
-    -- Empty DRIVERS table
-    for index in pairs(DRIVERS) do
-        DRIVERS[index] = nil
-    end
-    DRIVERS = {}
-
     -- Get DRS Zones from track data folder
-    DRS_ZONES = DRS_Points("drs_zones.ini")
-    DRS_ENABLED_LAP = F1RegsConfig.data.RULES.DRS_ACTIVATION_LAP
+    DRS_ZONES = DrsZones("drs_zones.ini")
 
-    -- Populate DRIVERS array
-    for driverIndex = 0, sim.carsCount-1 do
-        table.insert(DRIVERS, driverIndex, Driver(driverIndex))
-        local driver = DRIVERS[driverIndex]
-        driver.drsAvailable = false
-        driver.trackPosition = driver.car.racePosition
-        driver.lapPitted = driver.car.lapCount
-
-        for i=0, math.random(driverIndex + 1) do
-            math.randomseed(os.time()*driverIndex + 1)
-            math.random()
-        end
-
-        driver.aiTyreAvgRandom = math.random(-F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE_RANGE,F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE_RANGE)
-        driver.aiTyreSingleRandom = math.random(-F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE_RANGE,F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE_RANGE)
-
-        setLeaderLaps(driver)
-        if driver.car.isAIControlled then
-            physics.setCarFuel(driver.index, driver.car.maxFuel)
-        end
-
-        if not sim.isSessionStarted or driver.car.isInPit then
-            physics.setGentleStop(driverIndex, true)
-        end
-
-        storeData(driver)
-        log("[Loaded] Driver "..driver.index..": "..driver.name)
-    end
-
-    if F1RegsConfig.data.RULES.DRS_RULES == 1 then
-        log("[Race Control] DRS Enabled in "..DRS_ENABLED_LAP-LEADER_LAPS.." laps")
+    for i=0, ac.getSim().carsCount-1 do
+        DRIVERS[i] = Driver(i)
     end
 
     log("[Initialized]")

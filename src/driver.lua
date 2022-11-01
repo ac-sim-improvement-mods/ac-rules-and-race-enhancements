@@ -1,12 +1,14 @@
+
 ---@class Driver
 ---@param carIndex number
 ---@return Driver
 Driver = class('Driver', function(carIndex)
-    local car = ac.getCar(carIndex)
-
     local index = carIndex
+    
+    local car = ac.getCar(index)
+    local name = ac.getDriverName(index)
+
     local lapsCompleted = car.lapCount
-    local name = ac.getDriverName(carIndex)
 
     local aiTyreAvgRandom =0
     local aiTyreSingleRandom =0
@@ -23,7 +25,8 @@ Driver = class('Driver', function(carIndex)
     local carAhead = -1
     local carAheadDelta = -1
 
-    local drsActivationZone = false
+    local drsActivationZone = car.drsAvailable
+    local drsZoneNextId = 0
     local drsZoneId = 0
     local drsZonePrevId = 0
     local drsCheck = false
@@ -37,10 +40,24 @@ Driver = class('Driver', function(carIndex)
     local returnRacePosition = -1
     local returnPostionTimer = -1
 
+    if car.isAIControlled then
+        physics.setCarFuel(index, car.maxFuel)
+    end
+
+    for i=0, math.random(index + 1) do
+        math.randomseed(os.time()*i + 1)
+        math.random()
+    end
+
+    aiTyreAvgRandom = math.random(-F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE_RANGE,F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE_RANGE)
+    aiTyreSingleRandom = math.random(-F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE_RANGE,F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE_RANGE)
+
+    log("[Loaded] Driver ["..index.."] "..name)
+
     return {
     tyreLaps = tyreLaps, lapPitted = lapPitted,
     drsBeepFx = drsBeepFx, drsFlapFx = drsFlapFx,
-    drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, drsZoneId = drsZoneId, 
+    drsZoneNextId = drsZoneNextId, drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, drsZoneId = drsZoneId, 
     drsActivationZone = drsActivationZone, drsAvailable = drsAvailable, drsCheck = drsCheck,
     aiTyreSingleRandom = aiTyreSingleRandom, aiTyreAvgRandom = aiTyreAvgRandom, aiPitting = aiPitting, aiPitCall = aiPitCall, aiPrePitFuel = aiPrePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, 
     returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake,
@@ -48,3 +65,21 @@ Driver = class('Driver', function(carIndex)
     lapsCompleted = lapsCompleted, index = index,  name = name, car = car
     }
 end, class.NoInitialize)
+
+local function getLapPitted(driver)
+    if driver.tyreLaps > 0 and driver.car.isInPitlane then
+       return driver.car.lapCount
+    else
+        return driver.lapPitted
+    end
+end
+
+local function getTyreLapCount(driver)
+    return driver.car.lapCount - driver.lapPitted
+end
+
+function Driver:update()
+    self.lapPitted = getLapPitted(self)
+    self.tyreLaps = getTyreLapCount(self)
+end
+
