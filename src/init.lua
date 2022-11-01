@@ -1,4 +1,5 @@
---- Initialize
+require 'src/driver'
+
 function initialize()
     log("F1 Regs version: "..SCRIPT_VERSION)
     log("F1 Regs version: "..SCRIPT_VERSION_ID)
@@ -72,8 +73,16 @@ function initialize()
     -- Get DRS Zones from track data folder
     DRS_ZONES = DrsZones("drs_zones.ini")
 
+    local storedAIAggression = {}
+
     for i=0, ac.getSim().carsCount-1 do
         DRIVERS[i] = Driver(i)
+
+        local driver = DRIVERS[i]
+
+        if driver.car.isAIControlled and storedAIAggression[i] == nil then
+            ac.store("app.F1Regs."..driver.index..".AI_Aggression",DRIVERS[i].aiAggression)
+        end
     end
 
     log("[Initialized]")

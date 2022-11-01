@@ -13,7 +13,7 @@ local F1RegsData = ac.connect({
 function connection.storeRaceControlData(rc)
     F1RegsData.connected = true
     F1RegsData.scriptVersionId = SCRIPT_VERSION_ID
-    F1RegsData.drsEnabled = DRS_ENABLED
+    F1RegsData.drsEnabled = rc.drsEnabled
 end
 
 function connection.storeDriverData(driver)

@@ -148,7 +148,7 @@ end
 ---@param mult number
 ---@param format string
 ---@param tooltip string?
-local function slider(cfg, section, key, from, to, mult, isbool, format, tooltip, preprocess)
+function slider(cfg, section, key, from, to, mult, isbool, format, tooltip, preprocess)
   if not cfg.data[section] then error('No such section: '..section, 2) end
   if not cfg.data[section][key] then error('No such key: '..key, 2) end
   local curValue = ui.slider('##'..section..key, mult < 0 and -mult / cfg.data[section][key] or cfg.data[section][key] * mult, from, to, format)

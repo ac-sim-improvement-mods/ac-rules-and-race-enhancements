@@ -80,7 +80,7 @@ function debugMenu(rc)
         if driver.car.isAIControlled then
             ui.treeNode("[AI]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
                 inLineBulletText("Level", "["..math.round(driver.aiLevel*100,2).."] "..math.round(driver.car.aiLevel*100,2),space)
-                inLineBulletText("Aggression", "["..math.round(driver.aiAggression*100,2).."] "..math.round(driver.car.aiAggression*100,2),space)
+                inLineBulletText("Aggression", "["..math.round(ac.load("app.F1Regs."..driver.index..".AI_Aggression")*100,2).."] "..math.round(driver.car.aiAggression*100,2),space)
                 inLineBulletText("Tyre Life Avg Limit", F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom.." %",space,driver)
                 inLineBulletText("Tyre Life Single Limit", F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom.." %",space,driver)
                 inLineBulletText("Pitting New Tyres", upperBool(driver.aiPitting),space)
