@@ -28,6 +28,25 @@ local function triggerPitStop(driver)
     driver.aiPitCall = true
 end
 
+local function strategyCall(driver,forced)
+    local carAhead = DRIVERS[driver.carAhead]
+    local trigger = true
+    local lapsTotal = ac.getSession(ac.getSim().currentSessionIndex).laps
+    local lapsRemaining = math.clamp(lapsTotal - driver.lapsCompleted, 0)
+
+    if not forced then
+        if not carAhead.aiPitCall and driver.carAheadDelta < 1 then
+            trigger = false
+        end
+
+        if lapsRemaining <= 5 then
+            trigger = false
+        end
+    end
+
+    if trigger then triggerPitStop(driver) end
+end
+
 local function catchTriggeredPitStop(driver)
     driver.aiPitCall = false
     driver.aiPitting = true
@@ -49,8 +68,10 @@ function ai.pitNewTires(driver)
         if driver.aiPitCall then
             catchTriggeredPitStop(driver)
         else
-            if avgTyreWearBelowLimit(driver) or singleTyreWearBelowLimit(driver) then
-                triggerPitStop(driver)
+            if singleTyreWearBelowLimit(driver) then
+                strategyCall(driver,true)
+            elseif avgTyreWearBelowLimit(driver) then
+                strategyCall(driver, false)
             end
         end
     else            
@@ -65,10 +86,11 @@ end
 function ai.alternateAttack(driver)
     local delta = driver.carAheadDelta
     local maxAggression = ac.load("app.F1Regs."..driver.index..".AI_Aggression")
-
     local newAggression = math.lerp(0, maxAggression, 1-delta+0.2)
 
-    physics.setAIAggression(driver.index, math.clamp(newAggression,0,maxAggression))
+    if maxAggression ~= nil and maxAggression > 0 then
+        physics.setAIAggression(driver.index, math.clamp(newAggression,0,maxAggression))
+    end
 end
 
 return ai
