@@ -40,7 +40,7 @@ Driver = class('Driver', function(carIndex)
     local returnRacePosition = -1
     local returnPostionTimer = -1
 
-    if car.isAIControlled then
+    if car.isAIControlled and not ac.getSim().isSessionStarted then
         physics.setCarFuel(index, car.maxFuel)
     end
 
@@ -55,14 +55,14 @@ Driver = class('Driver', function(carIndex)
     log("[Loaded] Driver ["..index.."] "..name)
 
     return {
-    tyreLaps = tyreLaps, lapPitted = lapPitted,
-    drsBeepFx = drsBeepFx, drsFlapFx = drsFlapFx,
-    drsZoneNextId = drsZoneNextId, drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, drsZoneId = drsZoneId, 
-    drsActivationZone = drsActivationZone, drsAvailable = drsAvailable, drsCheck = drsCheck,
-    aiTyreSingleRandom = aiTyreSingleRandom, aiTyreAvgRandom = aiTyreAvgRandom, aiPitting = aiPitting, aiPitCall = aiPitCall, aiPrePitFuel = aiPrePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, 
-    returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake,
-    carAheadDelta = carAheadDelta, carAhead = carAhead, trackPosition = trackPosition,
-    lapsCompleted = lapsCompleted, index = index,  name = name, car = car
+        tyreLaps = tyreLaps, lapPitted = lapPitted,
+        drsBeepFx = drsBeepFx, drsFlapFx = drsFlapFx,
+        drsZoneNextId = drsZoneNextId, drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, drsZoneId = drsZoneId, 
+        drsActivationZone = drsActivationZone, drsAvailable = drsAvailable, drsCheck = drsCheck,
+        aiTyreSingleRandom = aiTyreSingleRandom, aiTyreAvgRandom = aiTyreAvgRandom, aiPitting = aiPitting, aiPitCall = aiPitCall, aiPrePitFuel = aiPrePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, 
+        returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake,
+        carAheadDelta = carAheadDelta, carAhead = carAhead, trackPosition = trackPosition,
+        lapsCompleted = lapsCompleted, index = index,  name = name, car = car
     }
 end, class.NoInitialize)
 

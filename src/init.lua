@@ -79,7 +79,7 @@ function initialize()
         local driver = DRIVERS[i]
 
         if driver.car.isAIControlled and ac.load("app.F1Regs."..driver.index..".AI_Aggression") == nil then
-            ac.store("app.F1Regs."..driver.index..".AI_Aggression",DRIVERS[i].aiAggression)
+            ac.store("app.F1Regs."..driver.index..".AI_Aggression",DRIVERS[i].aiAggression + 0.03)
         end
     end
 
