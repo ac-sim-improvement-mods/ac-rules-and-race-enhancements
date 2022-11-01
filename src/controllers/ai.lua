@@ -64,17 +64,11 @@ end
 
 function ai.alternateAttack(driver)
     local delta = driver.carAheadDelta
-    local defaultAggression = driver.aiAggression
-    local defaultLevel = driver.aiLevel
-    local maxAggression = 0.6
+    local maxAggression = ac.load("app.F1Regs."..driver.index..".AI_Aggression")
 
-    local newAggression = (1 / (delta*10)) * 60
-    
-    if delta < 1 and delta >= 0 then
-        physics.setAIAggression(driver.index, math.clamp(newAggression,0,maxAggression))
-    else
-        physics.setAIAggression(driver.index, 0)
-    end
+    local newAggression = math.lerp(0, maxAggression, 1-delta+0.2)
+
+    physics.setAIAggression(driver.index, math.clamp(newAggression,0,maxAggression))
 end
 
 return ai

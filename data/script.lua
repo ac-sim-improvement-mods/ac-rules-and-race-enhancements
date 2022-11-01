@@ -1,6 +1,3 @@
----
---- Script v0.9.5-alpha
----
 local OFF_TRACK_TIMER = 0
 
 local F1RegsData = ac.connect({

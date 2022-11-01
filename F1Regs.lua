@@ -17,7 +17,7 @@ INITIALIZED = false
 RESTARTED = false
 REBOOT = false
 
-local function run()
+local function run(sim)
         audioHandler()
         if sim.raceSessionType == 3 then
             rc.getRaceControl()
@@ -58,7 +58,7 @@ function script.update(dt)
         RESTARTED = false
     -- Race session has started
     elseif INITIALIZED then
-        run()
+        run(sim)
     end
 end
 

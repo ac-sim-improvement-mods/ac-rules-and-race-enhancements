@@ -28,7 +28,8 @@ DRS_FLAP = ui.MediaPlayer()
 DRS_BEEP = ui.MediaPlayer()
 
 function audioHandler()
-    local driver = DRIVERS[ac.getSim().focusedCar]
+    local sim = ac.getSim()
+    local driver = DRIVERS[sim.focusedCar]
 
     if sim.cameraMode < 3 and sim.isWindowForeground then
         if driver.drsBeepFx and driver.car.drsAvailable and driver.drsAvailable then
@@ -43,7 +44,7 @@ function audioHandler()
             DRS_FLAP:play()
         end
 
-        DRIVERS[ac.getSim().focusedCar] = driver
+        DRIVERS[sim.focusedCar] = driver
     end
 end
 

@@ -116,7 +116,7 @@ function racecontrol.race()
 
         if rules.DRS_RULES == 1 then drs.controller(driver,rc.drsEnabled) else driver.drsAvailable = true end
 
-        connect.storeDriverData(driver) 
+        connect.storeDriverData(driver)
 
         DRIVERS[i] = driver
     end
