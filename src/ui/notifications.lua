@@ -26,12 +26,14 @@ local function drawRaceControl(text)
     local bannerHeight = 95
     local bannerWidth = ui.measureDWriteText(text,30).x + 5
 
+    -- Race Control dark blue rect
     ui.drawRectFilled(
         vec2(0,0),
-        vec2(400,bannerHeight),
+        vec2(360,bannerHeight),
         rgbm(0.07, 0.12, 0.23, 1)
     )
 
+    -- Information white rect
     ui.drawRectFilled(
         vec2(360,0),
         vec2(360+bannerWidth,bannerHeight),
