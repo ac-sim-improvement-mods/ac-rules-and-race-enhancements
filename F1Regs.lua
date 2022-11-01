@@ -11,7 +11,7 @@ require 'src/ui/debug_menu'
 require 'src/ui/settings_menu'
 require 'src/ui/notifications'
 
-local rc = require 'src/racecontrol'
+local rc = require 'src/race_control'
 
 INITIALIZED = false
 RESTARTED = false
