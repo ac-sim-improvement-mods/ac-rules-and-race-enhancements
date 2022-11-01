@@ -85,7 +85,8 @@ end
 
 function ai.alternateAttack(driver)
     local delta = driver.carAheadDelta
-    local maxAggression = ac.load("app.F1Regs."..driver.index..".AI_Aggression")
+    local speedMod = math.clamp(200/(driver.car.speedKmh or 0),1,2)
+    local maxAggression = ac.load("app.F1Regs."..driver.index..".AI_Aggression") / speedMod
     local newAggression = math.lerp(0, maxAggression, 1-delta+0.2)
 
     if maxAggression ~= nil and maxAggression > 0 then
