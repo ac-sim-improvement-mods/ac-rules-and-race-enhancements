@@ -116,22 +116,8 @@ local function control_brake_bias(data)
     data.controllerInputs[0] = total_brake_bias
 end
 
-local function lock_drs(data)
-    if not F1RegsData.drsAvailable[car.index] then
-        if car.drsAvailable and car.drsActive then
-            data.brake = 0.1001
-        end   
-    elseif data.brake <= 0.025 and car.drsAvailable then
-        data.brake = 0.025
-    end
-end
-
 local function control_ai(data,sim)
     if sim.isSessionStarted then
-        if F1RegsData.connected and ac.getPatchVersionCode() < 2066 then
-            lock_drs(data)
-        end
-
         if not launch_control(data,sim) then
             if not car.isInPitlane then
                 force_full_throttle_on_straights(data)
