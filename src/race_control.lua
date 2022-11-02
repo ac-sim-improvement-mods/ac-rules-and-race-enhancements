@@ -52,7 +52,7 @@ end
 ---@param rules F1RegsConfig.data.RULES
 ---@return drsEnabled boolean
 local function isDrsEnabled(rules)
-    if getLeaderCompletedLaps() >= rules.DRS_ACTIVATION_LAP then
+    if getLeaderCompletedLaps() + 1 >= rules.DRS_ACTIVATION_LAP then
         return true
     else
         return false
