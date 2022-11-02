@@ -50,9 +50,10 @@ end, class.NoInitialize)
 local function setDrsAvailable(driver)
     if not driver.car.isInPitlane then
         local inDrsZone = driver.car.drsAvailable
+        local inDrsRange = inDrsRange(driver)
 
         if crossedDetectionLine(driver) == false then
-            driver.drsCheck = inDrsRange(driver)
+            driver.drsCheck = inDrsRange
             if driver.drsAvailable and inDrsZone and driver.car.drsActive then 
                 driver.drsDeployable = true
                 driver.drsAvailable = true
@@ -132,7 +133,9 @@ end
 function inDrsRange(driver)
     local delta = getDelta(driver)
     driver.carAheadDelta = delta
-    return ((delta <= F1RegsConfig.data.RULES.DRS_GAP_DELTA/1000 and delta > 0.0) and true or false)
+    return(
+        (delta <= F1RegsConfig.data.RULES.DRS_GAP_DELTA/1000 and delta > 0.0) and true or false
+    )
 end
 
 function inDeployZone(driver)
