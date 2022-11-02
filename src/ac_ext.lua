@@ -10,7 +10,12 @@ end
 ---@return number
 function getDelta(driver)
 ---@diagnostic disable-next-line: return-type-mismatch
-    return math.round((ac.getCar(driver.carAhead).splinePosition - driver.car.splinePosition) / (driver.car.speedKmh / 3.6) * ac.getSim().trackLengthM,5)
+    local carAheadSplinePosition = ac.getCar(driver.carAhead).splinePosition
+    local carSplinePosition = driver.car.splinePosition
+    if carSplinePosition > carAheadSplinePosition then
+        carAheadSplinePosition = carAheadSplinePosition + 1
+    end
+    return math.round((carAheadSplinePosition - carSplinePosition) / (driver.car.speedKmh / 3.6) * ac.getSim().trackLengthM,5)
 end
 
 
