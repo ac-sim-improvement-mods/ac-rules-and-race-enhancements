@@ -47,13 +47,17 @@ local function strategyCall(driver,forced)
     local lapsTotal = ac.getSession(ac.getSim().currentSessionIndex).laps
     local lapsRemaining = lapsTotal - driver.lapsCompleted
     
-    if not forced then
-        if not carAhead.aiPitCall and driver.carAheadDelta < 1 then
-            trigger = false
-        end
-
-        if lapsRemaining <= 5 then
-            trigger = false
+    if driver.car.splinePosition > 0.9 then
+        trigger = false
+    else
+        if not forced then
+            if not carAhead.aiPitCall and driver.carAheadDelta < 1 then
+                trigger = false
+            end
+    
+            if lapsRemaining <= 5 then
+                trigger = false
+            end
         end
     end
 
