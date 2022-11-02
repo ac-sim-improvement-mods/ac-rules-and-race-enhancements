@@ -122,7 +122,7 @@ function ai.alternateAttack(driver)
         end
     end
 
-    local newAggression = math.lerp(0, maxAggression, 1-delta+0.2)
+    local newAggression = delta > 0 and math.lerp(0, maxAggression, 1-delta+0.2) or 0
 
     if maxAggression ~= nil and maxAggression > 0 then
         physics.setAIAggression(driver.index, math.clamp(newAggression,0,maxAggression))
