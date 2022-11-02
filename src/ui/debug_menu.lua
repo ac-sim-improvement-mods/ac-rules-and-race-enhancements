@@ -181,7 +181,7 @@ function debugMenu(rc)
             inLineBulletText("Track Puddles", math.round(sim.rainWater*100,2).."%",space)
             inLineBulletText("Total Wetness", math.round(totalWetness*100,2).."%",space)
             inLineBulletText("Total Wetness Limit", math.round(F1RegsConfig.data.RULES.DRS_WET_LIMIT,2).."%",space)
-            inLineBulletText("Wet Track", upperBool(WET_TRACK),space)
+            inLineBulletText("Wet Track", upperBool(rc.wetTrack),space)
         end)
 
         ui.treeNode("[INPUTS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
