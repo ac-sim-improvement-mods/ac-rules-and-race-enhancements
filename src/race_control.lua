@@ -1,3 +1,4 @@
+---@diagnostic disable: return-type-mismatch
 local drs = require 'src/controllers/drs'
 local vsc = require 'src/controllers/vsc'
 local ai = require 'src/controllers/ai'
@@ -109,26 +110,28 @@ end
 --- Race Control for race sessions
 --- @param rules F1RegsConfig.data.RULES
 --- @param driver Driver
-local function raceSession(rules,driver)
+local function raceSession(racecontrol,rules,driver)
         if driver.car.isAIControlled then
             if rules.AI_FORCE_PIT_TYRES == 1 then ai.pitNewTires(driver) end
             if rules.AI_AGGRESSION_RUBBERBAND == 1 then ai.alternateAttack(driver)  end
         end
 
-        if rules.DRS_RULES == 1 then drs.controller(driver,rc.drsEnabled) else driver.drsAvailable = true end
+        if rules.DRS_RULES == 1 then drs.controller(driver,racecontrol.drsEnabled) else driver.drsAvailable = true end
+
+        return driver
 end
 
 --- Race Control for qualify sessions
 --- @param rules F1RegsConfig.data.RULES
 --- @param driver 
-local function qualifySession(rules,driver)
+local function qualifySession(racecontrol,rules,driver)
 
 end
 
 --- Race Control for practice sessions
 --- @param rules F1RegsConfig.data.RULES
 --- @param driver 
-local function practiceSession(rules,driver)
+local function practiceSession(racecontrol,rules,driver)
 
 end
 
@@ -136,14 +139,18 @@ end
 --- @param sessionType ac.SessionTypes
 --- @param rules F1RegsConfig.data.RULES
 --- @param driver Driver
-local function run(sessionType,rules,driver)
-    if sessionType == ac.SessionType.Race
-        raceSession(rules,driver)
-    elseif sessionType == ac.SessionType.Qualify
-        qualifySession(rules,driver)
-    elseif sessionType == ac.SessionType.Practice
-        practiceSession(rules,driver)
+local function run(racecontrol,sessionType,driver)
+    local rules = F1RegsConfig.data.RULES
+
+    if sessionType == ac.SessionType.Race then
+        raceSession(racecontrol,rules,driver)
+    elseif sessionType == ac.SessionType.Qualify then
+        qualifySession(racecontrol,rules,driver)
+    elseif sessionType == ac.SessionType.Practice then
+        practiceSession(racecontrol,rules,driver)
     end
+
+    return driver
 end
 
 --- Updates and returns race control variables
@@ -170,19 +177,18 @@ end
 --- Drives Race Control sessions amd driver loop
 ---@param sessionType ac.SessionTypes
 function rc.session(sessionType)
-    local rc = racecontrol.getRaceControl()
+    local racecontrol = rc.getRaceControl()
     local drivers = DRIVERS
-    local rules = F1RegsConfig.data.RULES
+    audioHandler()
 
     for i=0, #drivers do
         local driver = drivers[i]
         driver:update()
-        run(sessionType,rules,driver)
-        DRIVERS[i] = driver
+        DRIVERS[i] = run(racecontrol,sessionType,driver)
         connect.storeDriverData(driver)
     end
     
-    connect.storeRaceControlData(rc)
+    connect.storeRaceControlData(racecontrol)
 end
 
 
