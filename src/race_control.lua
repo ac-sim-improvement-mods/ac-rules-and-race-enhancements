@@ -82,6 +82,33 @@ local function getTrackOrder(drivers)
     return #trackOrder
 end
 
+local function raceSession(rules,driver)
+        if driver.car.isAIControlled then
+            if rules.AI_FORCE_PIT_TYRES == 1 then ai.pitNewTires(driver) end
+            if rules.AI_AGGRESSION_RUBBERBAND == 1 then ai.alternateAttack(driver)  end
+        end
+
+        if rules.DRS_RULES == 1 then drs.controller(driver,rc.drsEnabled) else driver.drsAvailable = true end
+end
+
+local function qualifySession(rules,driver)
+
+end
+
+local function practiceSession(rules,driver)
+
+end
+
+local function run(sessionType,rules,driver)
+    if sessionType == ac.SessionType.Race
+        raceSession(rules,driver)
+    elseif sessionType == ac.SessionType.Qualify
+        qualifySession(rules,driver)
+    elseif sessionType == ac.SessionType.Practice
+        practiceSession(rules,driver)
+    end
+end
+
 function rc.getRaceControl()
     local rules = F1RegsConfig.data.RULES
     local drivers = DRIVERS
@@ -98,28 +125,22 @@ function rc.getRaceControl()
     }
 end
 
-function rc.race()
+--- @param ac.SessionType
+function rc.session(sessionType)
     local rc = racecontrol.getRaceControl()
     local drivers = DRIVERS
     local rules = F1RegsConfig.data.RULES
-    
-    connect.storeRaceControlData(rc)
 
     for i=0, #drivers do
         local driver = drivers[i]
         driver:update()
-        
-        if driver.car.isAIControlled then
-            if rules.AI_FORCE_PIT_TYRES == 1 then ai.pitNewTires(driver) end
-            if rules.AI_AGGRESSION_RUBBERBAND == 1 then ai.alternateAttack(driver) end
-        end
-
-        if rules.DRS_RULES == 1 then drs.controller(driver,rc.drsEnabled) else driver.drsAvailable = true end
-
-        connect.storeDriverData(driver)
-
+        run(sessionType,rules,driver)
         DRIVERS[i] = driver
+        connect.storeDriverData(driver)
     end
+    
+    connect.storeRaceControlData(rc)
 end
+
 
 return rc
