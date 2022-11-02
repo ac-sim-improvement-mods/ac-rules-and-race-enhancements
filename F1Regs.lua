@@ -23,13 +23,6 @@ DRIVERS = {}
 DRS_FLAP = ui.MediaPlayer()
 DRS_BEEP = ui.MediaPlayer()
 
---- Run the audio handler and race control session
---- @param sim ac.getSim()
-local function run(sim)
-        audioHandler()
-        rc.session(sim.sessionType)
-end
-
 --- Check if AC has restarted
 --- @param sim ac.getSim()
 local function restartCheck(sim)
@@ -51,22 +44,24 @@ end
 
 function script.update(dt)
     local sim = ac.getSim()
-    
+
     errorCheck()
     restartCheck(sim)
 
     -- A simple On/Off for F1 Regs
     if not ac.isWindowOpen("main") then return end
 
-    -- Initialize the session
-    if (sim.isInMainMenu or sim.isSessionStarted) and not INITIALIZED then INITIALIZED = initialize()
-    elseif not sim.isInMainMenu and not sim.isSessionStarted and RESTARTED and INITIALIZED then
+    if INITIALIZED then
         if REBOOT and F1RegsConfig.data.RULES.PHYSICS_REBOOT == 1 then ac.restartAssettoCorsa() end
-        REBOOT = false
-        RESTARTED = false
-    -- Race session has started
-    elseif INITIALIZED then
-        run(sim)
+        if not sim.isInMainMenu and not sim.isSessionStarted then
+            RESTARTED = false
+        else
+            rc.session(sim.raceSessionType)
+        end
+    else
+        if sim.isInMainMenu or sim.isSessionStarted then
+            INITIALIZED = initialize()
+        end
     end
 end
 
