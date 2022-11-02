@@ -3,7 +3,7 @@ local vsc = require 'src/controllers/vsc'
 local ai = require 'src/controllers/ai'
 local connect = require 'src/connection'
 
-local racecontrol = {}
+local rc = {}
 
 DRS_ZONES = {}
 DRIVERS = {}
@@ -13,7 +13,7 @@ function readOnly( t )
     local mt = {
         __index = t,
         __newindex = function ( t, k, v )
-            error("attempt to update a read-only table", 2)
+            error("attempt to update a read-only value", 2)
         end
     }
     setmetatable(proxy, mt)
@@ -82,7 +82,34 @@ local function getTrackOrder(drivers)
     return #trackOrder
 end
 
-function racecontrol.getRaceControl()
+local function raceSession(rules,driver)
+        if driver.car.isAIControlled then
+            if rules.AI_FORCE_PIT_TYRES == 1 then ai.pitNewTires(driver) end
+            if rules.AI_AGGRESSION_RUBBERBAND == 1 then ai.alternateAttack(driver)  end
+        end
+
+        if rules.DRS_RULES == 1 then drs.controller(driver,rc.drsEnabled) else driver.drsAvailable = true end
+end
+
+local function qualifySession(rules,driver)
+
+end
+
+local function practiceSession(rules,driver)
+
+end
+
+local function run(sessionType,rules,driver)
+    if sessionType == ac.SessionType.Race
+        raceSession(rules,driver)
+    elseif sessionType == ac.SessionType.Qualify
+        qualifySession(rules,driver)
+    elseif sessionType == ac.SessionType.Practice
+        practiceSession(rules,driver)
+    end
+end
+
+function rc.getRaceControl()
     local rules = F1RegsConfig.data.RULES
     local drivers = DRIVERS
     local carsOnTrackCount = getTrackOrder(drivers)
@@ -98,28 +125,22 @@ function racecontrol.getRaceControl()
     }
 end
 
-function racecontrol.race()
+--- @param ac.SessionType
+function rc.session(sessionType)
     local rc = racecontrol.getRaceControl()
     local drivers = DRIVERS
     local rules = F1RegsConfig.data.RULES
-    
-    connect.storeRaceControlData(rc)
 
     for i=0, #drivers do
         local driver = drivers[i]
         driver:update()
-        
-        if driver.car.isAIControlled then
-            if rules.AI_FORCE_PIT_TYRES == 1 then ai.pitNewTires(driver) end
-            if rules.AI_AGGRESSION_RUBBERBAND == 1 then ai.alternateAttack(driver) end
-        end
-
-        if rules.DRS_RULES == 1 then drs.controller(driver,rc.drsEnabled) else driver.drsAvailable = true end
-
-        connect.storeDriverData(driver)
-
+        run(sessionType,rules,driver)
         DRIVERS[i] = driver
+        connect.storeDriverData(driver)
     end
+    
+    connect.storeRaceControlData(rc)
 end
 
-return racecontrol
+
+return rc

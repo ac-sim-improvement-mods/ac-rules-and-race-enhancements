@@ -19,10 +19,7 @@ REBOOT = false
 
 local function run(sim)
         audioHandler()
-        if sim.raceSessionType == 3 then
-            rc.getRaceControl()
-            rc.race()
-        end
+        rc.session(sim.sessionType)
 end
 
 local function restartCheck(sim)
