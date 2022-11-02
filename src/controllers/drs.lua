@@ -124,6 +124,8 @@ local function setDriverDRS(driver,allowed)
             driver.car.brake < 0.5 and driver.car.speedKmh > 50 and getEndLineDistanceM(driver) > 175 then
             physics.setCarDRS(driver.index, true)
         end
+    elseif not allowed then
+        ac.setDRS(false)
     end
 end
 
