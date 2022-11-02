@@ -83,7 +83,7 @@ end
 local function getTrackOrder(drivers)
     local trackOrder = {}
     for index=0, #drivers do
-        if not drivers[index].isInPitlane then
+        if not drivers[index].car.isInPitlane then
             table.insert(trackOrder,drivers[index])
         else
             drivers[index].trackPosition = -1
