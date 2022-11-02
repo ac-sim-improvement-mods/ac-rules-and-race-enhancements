@@ -1,3 +1,11 @@
+local function randomizer(index,range)
+    for i=0, math.random(index + 10) do
+        math.randomseed(os.time()*i + 1)
+        math.random()
+    end
+
+    return math.random(-range,range)
+end
 
 ---@class Driver
 ---@param carIndex number
@@ -10,14 +18,14 @@ Driver = class('Driver', function(carIndex)
 
     local lapsCompleted = car.lapCount
 
-    local aiTyreAvgRandom =0
-    local aiTyreSingleRandom =0
     local aiLevel = car.aiLevel
     local aiAggression = car.aiAggression
     local aiPrePitFuel = 0
     local aiPitCall = false
     local aiPitting = false
     
+    local pitstopCount = 0
+    local pitted = false
     local lapPitted = 0 
     local tyreLaps = 0
 
@@ -44,18 +52,13 @@ Driver = class('Driver', function(carIndex)
         physics.setCarFuel(index, car.maxFuel)
     end
 
-    for i=0, math.random(index + 1) do
-        math.randomseed(os.time()*i + 1)
-        math.random()
-    end
-
-    aiTyreAvgRandom = math.random(-F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE_RANGE,F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE_RANGE)
-    aiTyreSingleRandom = math.random(-F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE_RANGE,F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE_RANGE)
+    local aiTyreAvgRandom = randomizer(index,F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE_RANGE)
+    local aiTyreSingleRandom = randomizer(index, F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE_RANGE)
 
     log("[Loaded] Driver ["..index.."] "..name)
 
     return {
-        tyreLaps = tyreLaps, lapPitted = lapPitted,
+        pitted = pitted, pitstopCount = pitstopCount, tyreLaps = tyreLaps, lapPitted = lapPitted,
         drsBeepFx = drsBeepFx, drsFlapFx = drsFlapFx,
         drsZoneNextId = drsZoneNextId, drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, drsZoneId = drsZoneId, 
         drsActivationZone = drsActivationZone, drsAvailable = drsAvailable, drsCheck = drsCheck,
@@ -81,11 +84,30 @@ end
 ---@param driver Driver
 ---@return number
 local function getTyreLapCount(driver)
-    return driver.car.lapCount - driver.lapPitted
+    if driver.car.isInPitlane and not driver.pitted then
+        return driver.tyreLaps
+    else
+        return driver.car.lapCount - driver.lapPitted
+    end
+    
+end
+
+local function getPitstopCount(driver)
+    if driver.car.isInPit and not driver.pitted then
+        driver.pitted = true
+        driver.aiTyreAvgRandom = randomizer(driver.index,F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE_RANGE)
+        driver.aiTyreSingleRandom = randomizer(driver.index,F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE_RANGE)
+        return driver.pitstopCount + 1
+    elseif not driver.car.isInPitlane and driver.pitted then
+        driver.pitted = false
+    end
+
+    return driver.pitstopCount
 end
 
 function Driver:update()
     self.lapPitted = getLapPitted(self)
     self.tyreLaps = getTyreLapCount(self)
+    self.pitstopCount = getPitstopCount(self)
 end
 
