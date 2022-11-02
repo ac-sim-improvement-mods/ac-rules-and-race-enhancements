@@ -17,6 +17,12 @@ INITIALIZED = false
 RESTARTED = false
 REBOOT = false
 
+DRS_ZONES = {}
+DRIVERS = {}
+
+DRS_FLAP = ui.MediaPlayer()
+DRS_BEEP = ui.MediaPlayer()
+
 --- Run the audio handler and race control session
 --- @param sim ac.getSim()
 local function run(sim)

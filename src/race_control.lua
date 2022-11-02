@@ -5,9 +5,6 @@ local connect = require 'src/connection'
 
 local rc = {}
 
-DRS_ZONES = {}
-DRIVERS = {}
-
 function readOnly( t )
     local proxy = {}
     local mt = {

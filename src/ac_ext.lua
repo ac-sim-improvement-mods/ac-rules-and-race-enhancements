@@ -24,9 +24,6 @@ function compatibleCspVersion()
     end
 end
 
-DRS_FLAP = ui.MediaPlayer()
-DRS_BEEP = ui.MediaPlayer()
-
 --- Plays DRS audio sounds
 function audioHandler()
     local sim = ac.getSim()
