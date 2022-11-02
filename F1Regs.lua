@@ -17,11 +17,15 @@ INITIALIZED = false
 RESTARTED = false
 REBOOT = false
 
+--- Run the audio handler and race control session
+--- @param sim ac.getSim()
 local function run(sim)
         audioHandler()
         rc.session(sim.sessionType)
 end
 
+--- Check if AC has restarted
+--- @param sim ac.getSim()
 local function restartCheck(sim)
     if not RESTARTED and sim.isInMainMenu then
         RESTARTED = true
@@ -29,6 +33,7 @@ local function restartCheck(sim)
     end
 end
 
+--- Check and log last error
 local function errorCheck()
     local error = ac.getLastError()
     if error then

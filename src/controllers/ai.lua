@@ -1,5 +1,9 @@
 local ai = {}
 
+--- Returns whether driver's average tyre life is below
+--- the limit or not
+---@param driver Driver
+---@return bool
 local function avgTyreWearBelowLimit(driver)
     local avgTyreLimit = 1 - (F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom)/100
     local avgTyreWear = (driver.car.wheels[0].tyreWear +
@@ -9,6 +13,10 @@ local function avgTyreWearBelowLimit(driver)
     return avgTyreWear > avgTyreLimit and true or false
 end
 
+--- Returns whether one of a driver's tyre life is below
+--- the limit or not
+---@param driver Driver
+---@return bool
 local function singleTyreWearBelowLimit(driver)
     local singleTyreLimit = 1 - (F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom)/100
 
@@ -22,12 +30,17 @@ local function singleTyreWearBelowLimit(driver)
     end
 end
 
+--- Force AI driver to drive to the pits
+--- @param driver Driver
 local function triggerPitStop(driver)
     driver.aiPrePitFuel = driver.car.fuel
     physics.setCarFuel(driver.index, 0.1)
     driver.aiPitCall = true
 end
 
+--- Determine if going to the pits is advantageous or not
+--- @param driver Driver
+--- @param forced boolean
 local function strategyCall(driver,forced)
     local carAhead = DRIVERS[driver.carAhead]
     local trigger = true
@@ -47,22 +60,30 @@ local function strategyCall(driver,forced)
     if trigger then triggerPitStop(driver) end
 end
 
+--- Handles driver state when pitstop gets triggered.
+--- Resets fuel to pre pit call state
+---@param driver Driver
 local function catchTriggeredPitStop(driver)
     driver.aiPitCall = false
     driver.aiPitting = true
     physics.setCarFuel(driver.index, driver.aiPrePitFuel)
 end
 
+--- Occurs when a driver is in the pit
+---@param driver Driver
 local function pitstop(driver)
     physics.setCarFuel(driver.index, driver.aiPrePitFuel)
     driver.aiPitting = false
     driver.tyreLaps = 0
 end
 
+--- Sets drivers pre pit fuel value
 local function setPrePitFuel(driver)
     driver.aiPrePitFuel = driver.car.fuel
 end
 
+--- Determines when an AI driver should pit for new tyres
+--- @param driver Driver
 function ai.pitNewTires(driver)
     if not driver.car.isInPitlane and not driver.aiPitting then
         if driver.aiPitCall then
@@ -83,6 +104,8 @@ function ai.pitNewTires(driver)
     end
 end
 
+--- Variable aggression function for AI drivers
+--- @param driver Driver
 function ai.alternateAttack(driver)
     local delta = driver.carAheadDelta
     local speedMod = math.clamp(200/(driver.car.speedKmh or 200),1,2)

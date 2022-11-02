@@ -66,6 +66,9 @@ Driver = class('Driver', function(carIndex)
     }
 end, class.NoInitialize)
 
+--- Returns lap pitted or lap count if driver just pitted
+---@param driver Driver
+---@return number
 local function getLapPitted(driver)
     if driver.tyreLaps > 0 and driver.car.isInPitlane then
        return driver.car.lapCount
@@ -74,6 +77,9 @@ local function getLapPitted(driver)
     end
 end
 
+--- Returns tyre lap count
+---@param driver Driver
+---@return number
 local function getTyreLapCount(driver)
     return driver.car.lapCount - driver.lapPitted
 end

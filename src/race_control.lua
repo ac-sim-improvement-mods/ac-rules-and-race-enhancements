@@ -20,6 +20,8 @@ function readOnly( t )
     return proxy
 end
 
+---Returns leaders completed lap count.
+---@return lapCount number
 local function getLeaderCompletedLaps()
     for i=0, ac.getSim().carsCount - 1 do
         local car = ac.getCar(i)
@@ -30,6 +32,9 @@ local function getLeaderCompletedLaps()
     end
 end
 
+---Returns whether DRS is enabled or not
+---@param rules F1RegsConfig.data.RULES
+---@return drsEnabled boolean
 local function isDrsEnabled(rules)
     if getLeaderCompletedLaps() >= rules.DRS_ACTIVATION_LAP then
         return true
@@ -38,6 +43,9 @@ local function isDrsEnabled(rules)
     end
 end
 
+---Returns whether the track is too wet for DRS enabled or not
+---@param rules F1RegsConfig.data.RULES
+---@return wetTrack boolean
 local function isTrackWet(rules)
     local sim = ac.getSim()
     local wet_limit = rules.DRS_WET_LIMIT/100
@@ -55,6 +63,7 @@ end
 
 --- Sets the on track order of drivers
 --- and excludes drivers in the pitlane
+--- @param drivers DRIVERS
 local function getTrackOrder(drivers)
     local trackOrder = {}
     for index=0, #drivers do
@@ -82,6 +91,9 @@ local function getTrackOrder(drivers)
     return #trackOrder
 end
 
+--- Race Control for race sessions
+--- @param rules F1RegsConfig.data.RULES
+--- @param driver Driver
 local function raceSession(rules,driver)
         if driver.car.isAIControlled then
             if rules.AI_FORCE_PIT_TYRES == 1 then ai.pitNewTires(driver) end
@@ -91,14 +103,24 @@ local function raceSession(rules,driver)
         if rules.DRS_RULES == 1 then drs.controller(driver,rc.drsEnabled) else driver.drsAvailable = true end
 end
 
+--- Race Control for qualify sessions
+--- @param rules F1RegsConfig.data.RULES
+--- @param driver 
 local function qualifySession(rules,driver)
 
 end
 
+--- Race Control for practice sessions
+--- @param rules F1RegsConfig.data.RULES
+--- @param driver 
 local function practiceSession(rules,driver)
 
 end
 
+--- Switch for runnimg the different kinds of sessioms
+--- @param sessionType ac.SessionTypes
+--- @param rules F1RegsConfig.data.RULES
+--- @param driver Driver
 local function run(sessionType,rules,driver)
     if sessionType == ac.SessionType.Race
         raceSession(rules,driver)
@@ -109,6 +131,11 @@ local function run(sessionType,rules,driver)
     end
 end
 
+--- Updates and returns race control variables
+--- @return carsOnTrackCount number
+--- @return leaderCompletedLaps number
+--- @return drsEnabled boolean
+--- @return wetTrack boolean
 function rc.getRaceControl()
     local rules = F1RegsConfig.data.RULES
     local drivers = DRIVERS
@@ -125,7 +152,8 @@ function rc.getRaceControl()
     }
 end
 
---- @param ac.SessionType
+--- Drives Race Control sessions amd driver loop
+---@param sessionType ac.SessionTypes
 function rc.session(sessionType)
     local rc = racecontrol.getRaceControl()
     local drivers = DRIVERS

@@ -1,5 +1,7 @@
 require 'src/driver'
 
+--- Initialize F1 Regs and returns initialized state
+--- @return boolean
 function initialize()
     log("F1 Regs version: "..SCRIPT_VERSION)
     log("F1 Regs version: "..SCRIPT_VERSION_ID)

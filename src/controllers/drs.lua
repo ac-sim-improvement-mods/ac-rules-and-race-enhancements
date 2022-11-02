@@ -197,6 +197,9 @@ function getEndLineDistanceM(driver)
         getZoneLineDistanceM(DRS_ZONES.endZones,driver,driver.drsZoneId)
 end
 
+--- Returns whether driver is between a detection line and a start line
+---@param driver Driver
+---@return bool
 function crossedDetectionLine(driver)
     local zones = DRS_ZONES
     local track_pos = driver.car.splinePosition
@@ -220,6 +223,9 @@ function crossedDetectionLine(driver)
     end
 end
 
+--- Control driver's DRS deployment
+--- @param driver Driver
+--- @param drsEnabled boolean
 function drs.controller(driver,drsEnabled)
     setDriverDrsZones(driver)
     setDrsAvailable(driver)

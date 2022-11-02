@@ -10,12 +10,16 @@ local F1RegsData = ac.connect({
     carAheadDelta = ac.StructItem.array(ac.StructItem.float(),32),
 },false,ac.SharedNamespace.Shared)
 
+--- Stores race control data
+--- @param rc race_control
 function connection.storeRaceControlData(rc)
     F1RegsData.connected = true
     F1RegsData.scriptVersionId = SCRIPT_VERSION_ID
     F1RegsData.drsEnabled = rc.drsEnabled
 end
 
+--- Stores driver data
+--- @param driver Driver
 function connection.storeDriverData(driver)
     F1RegsData.drsAvailable[driver.index] = driver.drsAvailable
     F1RegsData.carAhead[driver.index] = driver.carAhead

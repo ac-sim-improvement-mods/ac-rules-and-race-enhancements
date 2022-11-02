@@ -14,7 +14,7 @@ function getDelta(driver)
 end
 
 
---- Is the installed CSP version compatible with F1 Regs
+--- Returns state of installed CSP version being compatible with F1 Regs
 --- @return boolean
 function compatibleCspVersion()
     if ac.getPatchVersionCode() < CSP_MIN_VERSION_ID then
@@ -27,6 +27,7 @@ end
 DRS_FLAP = ui.MediaPlayer()
 DRS_BEEP = ui.MediaPlayer()
 
+--- Plays DRS audio sounds
 function audioHandler()
     local sim = ac.getSim()
     local driver = DRIVERS[sim.focusedCar]

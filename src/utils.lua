@@ -1,9 +1,18 @@
-
+--- Log messages
+--- @param message string
 function log(message)
     ac.log("[F1Regs] "..message)
 end
 
+--- Lines up bullet text label with text
+--- @param label string
+--- @param text string
+--- @param space number
 function inLineBulletText(label,text,space)
+    if not space then
+        space = 10
+    end
+    
     local driver = DRIVERS[ac.getSim().focusedCar]
     ui.bulletText(label)
     ui.sameLine(space, 0)
@@ -34,6 +43,7 @@ function inLineBulletText(label,text,space)
 end
 
 --- Converts session type number to the corresponding session type string
+---@param sim ac.StateSim
 ---@return string
 function sessionTypeString(sim)
     local sessionTypes = {
@@ -50,6 +60,9 @@ function sessionTypeString(sim)
     return sessionTypes[sim.raceSessionType + 1]
 end
 
+--- Converts weather type number to the corresponding weather type string
+---@param sim ac.StateSim
+---@return string
 function weatherTypeString(sim)
     local weatherTypes = {  
         "Light Thunderstorm", ---Value: 0.
@@ -90,10 +103,16 @@ function weatherTypeString(sim)
     return weatherTypes[sim.weatherType + 1]
 end
 
-function upperBool(s)
-    return string.upper(tostring(s))
+--- Converts boolean to uppercase string
+---@param bool boolean
+---@return string
+function upperBool(bool)
+    return string.upper(tostring(bool))
 end
 
+--- Returns average number of a table
+---@param t Table
+---@return average number
 function math.average(t)
     local sum = 0
     for _,v in pairs(t) do -- Get the sum of all numbers in t
