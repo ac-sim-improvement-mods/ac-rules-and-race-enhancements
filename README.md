@@ -1,2 +1,2 @@
-# ac-F1-Regulations
-Helps Assetto Corsa's F1 simulation be more in line with real life.
+# Assetto Corsa F1 Regulations Mod
+A mod for Assetto Corsa that adds F1 rules and enhances AI for races, qualifying, and practices.
