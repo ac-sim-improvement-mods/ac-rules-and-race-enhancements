@@ -1,6 +1,7 @@
 local function randomizer(index,range)
-    for i=0, math.random(index + 10) do
-        math.randomseed(os.time()*i + 1)
+    math.random()
+    for i=0, math.random(index) do
+        math.randomseed(os.time()*(i+1))
         math.random()
     end
 
