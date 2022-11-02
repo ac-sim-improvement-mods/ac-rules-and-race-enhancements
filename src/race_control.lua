@@ -17,6 +17,24 @@ function readOnly( t )
     return proxy
 end
 
+---@alias rc.WeekendSessions
+---| `rc.WeekendSessions.FP1` @Value: 0.
+---| `rc.WeekendSessions.FP2` @Value: 1.
+---| `rc.WeekendSessions.FP3` @Value: 2.
+---| `rc.WeekendSessions.Q1` @Value: 3.
+---| `rc.WeekendSessions.Q2` @Value: 4.
+---| `rc.WeekendSessions.Q3` @Value: 5.
+---| `rc.WeekendSessions.Race` @Value: 6.
+rc.WeekendSessions = {
+    FP1 = 0,
+    FP2 = 1,
+    FP3 = 2,
+    Q1 = 3,
+    Q2 = 4,
+    Q3 = 5,
+    Race = 6
+} 
+
 ---Returns leaders completed lap count.
 ---@return lapCount number
 local function getLeaderCompletedLaps()
