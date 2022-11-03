@@ -26,6 +26,8 @@ Driver = class('Driver', function(carIndex)
     local aiPitting = false
     
     local pitstopCount = 0
+    local pitstopTime = 0
+    local pitTime = 0
     local pitted = false
     local lapPitted = 0 
     local tyreLaps = 0
