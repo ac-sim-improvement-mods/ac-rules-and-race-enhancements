@@ -6,14 +6,7 @@ function debugMenu(rc)
 
     ac.setWindowTitle("debug", windowTitle)
 
-    if sim.raceSessionType ~= 3 then
-        ui.pushFont(ui.Font.Main)
-        ui.text("This is a "..sessionTypeString(sim).." not a RACE session")
-        return
-    end
-
     if not compatibleCspVersion() then
-        ui.pushFont(ui.Font.Main)
         ui.text("This is a "..sessionTypeString(sim).." not a RACE session")
         return
     end
@@ -69,10 +62,8 @@ function debugMenu(rc)
         ui.treeNode("[CAR INFO]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
             inLineBulletText("Index", driver.car.index,space)
             inLineBulletText("Brand", ac.getCarBrand(driver.car.index) ,space)
-            inLineBulletText("Name", ac.getCarName(driver.car.index, true),space)
             inLineBulletText("ID", ac.getCarID(driver.car.index),space)
             inLineBulletText("Skin",  ac.getCarSkinID(driver.car.index),space)
-            inLineBulletText("Origin",  ac.getCarCountry(driver.car.index),space)
             inLineBulletText("Extended Physics", upperBool(driver.car.extendedPhysics),space)
             inLineBulletText("Physics Available", upperBool(driver.car.physicsAvailable),space)
             inLineBulletText("DRS Present", upperBool(driver.car.drsPresent),space)

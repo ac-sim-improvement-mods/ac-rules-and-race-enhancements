@@ -9,7 +9,7 @@ function initialize()
 
     if not compatibleCspVersion() then
         ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP "..CSP_MIN_VERSION.." ".."("..CSP_MIN_VERSION_ID..")".." required!")
-        log("[WARN] Incompatible CSP version")
+        log("[WARN] Incompatible CSP version. CSP "..CSP_MIN_VERSION.." ".."("..CSP_MIN_VERSION_ID..")".." required!")
         initialize()
         return false
     end
