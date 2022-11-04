@@ -6,6 +6,8 @@ local connect = require 'src/connection'
 
 local rc = {}
 
+DRIVERS = {}
+
 function readOnly( t )
     local proxy = {}
     local mt = {
@@ -153,35 +155,29 @@ local function run(racecontrol,sessionType,driver)
     return driver
 end
 
+local function update(rules,drivers)
+    return readOnly{
+        sim = ac.getSim(),
+        session = ac.getSession(),
+        carsOnTrackCount = getTrackOrder(drivers),
+        leaderCompletedLaps = getLeaderCompletedLaps(),
+        drsEnabled = isDrsEnabled(rules),
+        wetTrack = isTrackWet(rules)
+    }
+end 
+
 --- Updates and returns race control variables
 --- @return carsOnTrackCount number
 --- @return leaderCompletedLaps number
 --- @return drsEnabled boolean
 --- @return wetTrack boolean
 function rc.getRaceControl()
+    local drivers = DRIVERS
     local rules = F1RegsConfig.data.RULES
-    local drivers = DRIVERS
-    local carsOnTrackCount = getTrackOrder(drivers)
-    local leaderCompletedLaps = getLeaderCompletedLaps()
-    local drsEnabled = isDrsEnabled(rules)
-    local wetTrack = isTrackWet(rules)
-
-    return readOnly{
-        carsOnTrackCount = carsOnTrackCount,
-        leaderCompletedLaps = leaderCompletedLaps,
-        drsEnabled = drsEnabled,
-        wetTrack = wetTrack
-    }
-end
-
---- Drives Race Control sessions amd driver loop
----@param sessionType ac.SessionTypes
-function rc.session(sessionType)
-    local racecontrol = rc.getRaceControl()
-    local drivers = DRIVERS
+    local racecontrol = update(rules,drivers)
     audioHandler()
 
-    for i=0, #drivers do
+    for i=0, drivers do
         local driver = drivers[i]
         driver:update()
         DRIVERS[i] = run(racecontrol,sessionType,driver)
@@ -189,6 +185,8 @@ function rc.session(sessionType)
     end
     
     connect.storeRaceControlData(racecontrol)
+    
+    return racecontrol
 end
 
 
