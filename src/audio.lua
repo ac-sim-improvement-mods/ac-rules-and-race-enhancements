@@ -11,7 +11,7 @@ DRS_BEEP:setVolume(acMainVolume * F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsCon
 DRS_FLAP:setSource("./assets/audio/drs-flap.wav"):setAutoPlay(false)
 DRS_FLAP:setVolume(acMainVolume * F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_FLAP/100)
     
-local function audio.formula1(sim,driver)
+local function formula1(sim,driver)
     if sim.cameraMode < 3 and sim.isWindowForeground then
         if driver.drsBeepFx and driver.car.drsAvailable and driver.drsAvailable then
             driver.drsBeepFx = false
@@ -31,7 +31,7 @@ function audio.driver()
     local sim = ac.getSim()
     local driver = DRIVERS[sim.focusedCar]
  
-    audio.formula1  (sim,driver)
+    formula1(sim,driver)
 end
 
 return audio

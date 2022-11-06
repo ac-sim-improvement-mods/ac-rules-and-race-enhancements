@@ -172,34 +172,32 @@ local function update(drivers)
         drsEnabled = drsEnabled,
         wetTrack = wetTrack
     }
-end 
+end
+
+local racecontrol = nil
 
 --- Updates and returns race control variables
---- @return carsOnTrackCount number
---- @return leaderCompletedLaps number
---- @return drsEnabled boolean
---- @return wetTrack boolean
+--- @return racecontrol rc
 function rc.getRaceControl()
     local drivers = DRIVERS
+    local lastUpdate = racecontrol
+    racecontrol = update(drivers)
 
-    local racecontrol = update(drivers)
-    audioHandler()
-
-    if racecontrol then
-        if not racecontrol.drsEnabled and rc.getRaceControl().drsEnabled then
+    if lastUpdate then
+        if not lastUpdate.drsEnabled and racecontrol.drsEnabled then
             popup.notification("DRS ENABLED")
         end
 
-        if not racecontrol.wetTrack and rc.getRaceControl().wetTrack then
+        if not lastUpdate.wetTrack and racecontrol.wetTrack then
             popup.notification("DRS DISABLED | WET TRACK")
         end
 
-        if racecontrol.wetTrack and not rc.getRaceControl().wetTrack then
+        if lastUpdate.wetTrack and not racecontrol.wetTrack then
             popup.notification("DRS ENABLED IN 2 LAPS")
         end
     end
 
-    for i=0, drivers do
+    for i=0, #drivers do
         local driver = drivers[i]
         driver:update()
         DRIVERS[i] = run(racecontrol,sessionType,driver)

@@ -10,15 +10,15 @@ require 'src/init'
 require 'src/ui/debug_menu'
 require 'src/ui/settings_menu'
 require 'src/ui/notifications'
-local audio = 'src/audio'
+local audio = nil
 local _rc = require 'src/race_control'
-local rc = _rc.getRaceControl()
+local rc = nil
 
 INITIALIZED = false
 RESTARTED = false
 REBOOT = false
 
-DRS_ZONES = {}
+F1RegsConfig = nil
 
 --- Check if AC has restarted
 --- @param sim ac.getSim()
@@ -39,6 +39,7 @@ local function errorCheck()
 end
 
 function script.update(dt)
+    local sim = ac.getSim()
     errorCheck()
     restartCheck(sim)
 
@@ -56,6 +57,7 @@ function script.update(dt)
     else
         if sim.isInMainMenu or sim.isSessionStarted then
             INITIALIZED = initialize()
+            audio = require 'src/audio'
         end
     end
 end
@@ -65,7 +67,7 @@ function script.windowMain(dt)
 end
 
 function script.windowDebug(dt)
-    debugMenu(rc)
+    if INITIALIZED then debugMenu(rc) end
 end
 
 function script.windowSettings(dt)

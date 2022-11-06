@@ -1,5 +1,8 @@
 local popup = {}
 
+NOTIFICATION_TIMER = 0
+NOTIFICATION_TEXT = ''
+
 --- Override function to add clarity and default values for drawing text
 local function drawText(textdraw)
     if not textdraw.margin then

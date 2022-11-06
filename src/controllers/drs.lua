@@ -1,5 +1,7 @@
 local drs = {}
 
+DRS_ZONES = {}
+
 ---@class DRS_Points
 ---@param fileName string
 ---@return DRS_Points

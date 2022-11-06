@@ -5,10 +5,11 @@ function getDelta(sim,driver1,driver2)
 ---@diagnostic disable-next-line: return-type-mismatch
     local driver1pos = driver1.car.splinePosition
     local driver2pos = driver2.car.splinePosition
-    if driver1 > driver2 then
+
     if driver1pos > driver2pos then
         driver2pos = driver2pos + 1
     end
+    
     return (driver2pos - driver1pos) / (driver.car.speedKmh / 3.6) * sim.trackLengthM
 end
 

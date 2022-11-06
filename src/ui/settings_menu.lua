@@ -1,6 +1,6 @@
 local popup = require 'src/ui/notifications'
 
-function settingsMenu()
+function settingsMenu(rc)
     local scriptVersion = SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")"
     ac.setWindowTitle("settings", "F1 Regs Settings      "..scriptVersion)
     ui.pushFont(ui.Font.Small)
