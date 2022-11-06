@@ -40,8 +40,8 @@ rc.WeekendSessions = {
 
 ---Returns leaders completed lap count.
 ---@return lapCount number
-local function getLeaderCompletedLaps()
-    for i=0, ac.getSim().carsCount - 1 do
+local function getLeaderCompletedLaps(sim)
+    for i=0, sim.carsCount - 1 do
         local car = ac.getCar(i)
 
         if car.racePosition == 1 then
@@ -53,8 +53,8 @@ end
 ---Returns whether DRS is enabled or not
 ---@param rules F1RegsConfig.data.RULES
 ---@return drsEnabled boolean
-local function isDrsEnabled(rules)
-    if getLeaderCompletedLaps() + 1 >= rules.DRS_ACTIVATION_LAP then
+local function isDrsEnabled(rules,leaderCompletedLaps)
+    if leaderCompletedLaps + 1 >= rules.DRS_ACTIVATION_LAP then
         return true
     else
         return false
@@ -64,8 +64,7 @@ end
 ---Returns whether the track is too wet for DRS enabled or not
 ---@param rules F1RegsConfig.data.RULES
 ---@return wetTrack boolean
-local function isTrackWet(rules)
-    local sim = ac.getSim()
+local function isTrackWet(rules,sim)
     local wet_limit = rules.DRS_WET_LIMIT/100
     local track_wetness = sim.rainWetness
     local track_puddles = sim.rainWater
@@ -160,9 +159,9 @@ local function update(rules,drivers)
         sim = ac.getSim(),
         session = ac.getSession(),
         carsOnTrackCount = getTrackOrder(drivers),
-        leaderCompletedLaps = getLeaderCompletedLaps(),
-        drsEnabled = isDrsEnabled(rules),
-        wetTrack = isTrackWet(rules)
+        leaderCompletedLaps = getLeaderCompletedLaps(sim),
+        drsEnabled = isDrsEnabled(rules,leaderCompletedLaps),
+        wetTrack = isTrackWet(rules,sim)
     }
 end 
 
