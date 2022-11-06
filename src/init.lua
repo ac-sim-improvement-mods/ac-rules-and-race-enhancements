@@ -64,14 +64,6 @@ function initialize()
         end
     end
 
-    local acVolume = ac.getAudioVolume(ac.AudioChannel.Main)
-
-    DRS_BEEP:setSource("./assets/audio/drs-available-beep.wav"):setAutoPlay(false)
-    DRS_BEEP:setVolume(acVolume * F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_BEEP/100)
-
-    DRS_FLAP:setSource("./assets/audio/drs-flap.wav"):setAutoPlay(false)
-    DRS_FLAP:setVolume(acVolume * F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_FLAP/100)
-
     -- Get DRS Zones from track data folder
     DRS_ZONES = DrsZones("drs_zones.ini")
 

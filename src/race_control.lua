@@ -7,6 +7,8 @@ local popup = require 'src/ui/notifications'
 
 local rc = {}
 
+DRIVERS = {}
+
 function readOnly( t )
     local proxy = {}
     local mt = {
@@ -39,8 +41,8 @@ rc.WeekendSessions = {
 
 ---Returns leaders completed lap count.
 ---@return lapCount number
-local function getLeaderCompletedLaps()
-    for i=0, ac.getSim().carsCount - 1 do
+local function getLeaderCompletedLaps(sim)
+    for i=0, sim.carsCount - 1 do
         local car = ac.getCar(i)
 
         if car.racePosition == 1 then
@@ -52,8 +54,8 @@ end
 ---Returns whether DRS is enabled or not
 ---@param rules F1RegsConfig.data.RULES
 ---@return drsEnabled boolean
-local function isDrsEnabled(rules)
-    if getLeaderCompletedLaps() + 1 >= rules.DRS_ACTIVATION_LAP then
+local function isDrsEnabled(rules,leaderCompletedLaps)
+    if leaderCompletedLaps + 1 >= rules.DRS_ACTIVATION_LAP then
         return true
     else
         return false
@@ -63,8 +65,7 @@ end
 ---Returns whether the track is too wet for DRS enabled or not
 ---@param rules F1RegsConfig.data.RULES
 ---@return wetTrack boolean
-local function isTrackWet(rules)
-    local sim = ac.getSim()
+local function isTrackWet(rules,sim)
     local wet_limit = rules.DRS_WET_LIMIT/100
     local track_wetness = sim.rainWetness
     local track_puddles = sim.rainWater
@@ -154,32 +155,35 @@ local function run(racecontrol,sessionType,driver)
     return driver
 end
 
+local function update(drivers)
+    local sim = ac.getSim()
+    local session = ac.getSession(sim.currentSessionIndex)
+    local rules = F1RegsConfig.data.RULES
+    local carsOnTrackCount = getTrackOrder(drivers)
+    local leaderCompletedLaps = getLeaderCompletedLaps(sim)
+    local drsEnabled = isDrsEnabled(rules,leaderCompletedLaps)
+    local wetTrack = isTrackWet(rules,sim)
+
+    return readOnly{
+        sim = sim,
+        session = session,
+        carsOnTrackCount = carsOnTrackCount,
+        leaderCompletedLaps = leaderCompletedLaps,
+        drsEnabled = drsEnabled,
+        wetTrack = wetTrack
+    }
+end 
+
 --- Updates and returns race control variables
 --- @return carsOnTrackCount number
 --- @return leaderCompletedLaps number
 --- @return drsEnabled boolean
 --- @return wetTrack boolean
 function rc.getRaceControl()
-    local rules = F1RegsConfig.data.RULES
     local drivers = DRIVERS
-    local carsOnTrackCount = getTrackOrder(drivers)
-    local leaderCompletedLaps = getLeaderCompletedLaps()
-    local drsEnabled = isDrsEnabled(rules)
-    local wetTrack = isTrackWet(rules)
 
-    return readOnly{
-        carsOnTrackCount = carsOnTrackCount,
-        leaderCompletedLaps = leaderCompletedLaps,
-        drsEnabled = drsEnabled,
-        wetTrack = wetTrack
-    }
-end
-
-local racecontrol = nil
-
---- Drives Race Control sessions amd driver loop
----@param sessionType ac.SessionTypes
-function rc.session(sessionType)
+    local racecontrol = update(drivers)
+    audioHandler()
 
     if racecontrol then
         if not racecontrol.drsEnabled and rc.getRaceControl().drsEnabled then
@@ -195,12 +199,7 @@ function rc.session(sessionType)
         end
     end
 
-    racecontrol = rc.getRaceControl()
-
-    local drivers = DRIVERS
-    audioHandler()
-
-    for i=0, #drivers do
+    for i=0, drivers do
         local driver = drivers[i]
         driver:update()
         DRIVERS[i] = run(racecontrol,sessionType,driver)
@@ -208,6 +207,8 @@ function rc.session(sessionType)
     end
     
     connect.storeRaceControlData(racecontrol)
+    
+    return racecontrol
 end
 
 

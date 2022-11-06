@@ -1,53 +1,74 @@
---- Returns the main driver's track position in meters
----@param index number
----@return number
-function getTrackPositionM(index)
-    return ac.worldCoordinateToTrackProgress(ac.getCar(index).position)*ac.getSim().trackLengthM
-end
-
 --- Returns time delta (s) between the driver and driver ahead on track
 ---@param driver Driver
 ---@return number
-function getDelta(driver)
+function getDelta(sim,driver1,driver2)
 ---@diagnostic disable-next-line: return-type-mismatch
-    local carAheadSplinePosition = ac.getCar(driver.carAhead).splinePosition
-    local carSplinePosition = driver.car.splinePosition
-    if carSplinePosition > carAheadSplinePosition then
-        carAheadSplinePosition = carAheadSplinePosition + 1
+    local driver1pos = driver1.car.splinePosition
+    local driver2pos = driver2.car.splinePosition
+    if driver1 > driver2 then
+    if driver1pos > driver2pos then
+        driver2pos = driver2pos + 1
     end
-    return math.round((carAheadSplinePosition - carSplinePosition) / (driver.car.speedKmh / 3.6) * ac.getSim().trackLengthM,5)
+    return (driver2pos - driver1pos) / (driver.car.speedKmh / 3.6) * sim.trackLengthM
 end
 
+--- Converts session type number to the corresponding session type string
+---@param sim ac.StateSim
+---@return string
+function sessionTypeString(sim)
+    local sessionTypes = {
+        "UNDEFINED",
+        "PRACTICE",
+        "QUALIFY",
+        "RACE",
+        "HOTLAP",
+        "TIME ATTACK",
+        "DRIFT",
+        "DRAG"
+    }
 
---- Returns state of installed CSP version being compatible with F1 Regs
---- @return boolean
-function compatibleCspVersion()
-    if ac.getPatchVersionCode() < CSP_MIN_VERSION_ID then
-        return false
-    else
-        return true
-    end
+    return sessionTypes[sim.raceSessionType + 1]
 end
 
---- Plays DRS audio sounds
-function audioHandler()
-    local sim = ac.getSim()
-    local driver = DRIVERS[sim.focusedCar]
+--- Converts weather type number to the corresponding weather type string
+---@param sim ac.StateSim
+---@return string
+function weatherTypeString(sim)
+    local weatherTypes = {  
+        "Light Thunderstorm", ---Value: 0.
+        "Thunderstorm", ---Value: 1.
+        "Heavy Thunderstorm", ---Value: 2.
+        "Light Drizzle", ---Value: 3.
+        "Drizzle", ---Value: 4.
+        "Heavy Drizzle", ---Value: 5.
+        "Light Rain", ---Value: 6.
+        "Rain", ---Value: 7.
+        "Heavy Rain", ---Value: 8.
+        "Light Snow", ---Value: 9.
+        "Snow", ---Value: 10.
+        "Heavy Snow", ---Value: 11.
+        "Light Sleet", ---Value: 12.
+        "Sleet", ---Value: 13.
+        "Heavy Sleet", ---Value: 14.
+        "Clear", ---Value: 15.
+        "Few Clouds", ---Value: 16.
+        "Scattered Clouds", ---Value: 17.
+        "Broken Clouds", ---Value: 18.
+        "Overcast Clouds", ---Value: 19.
+        "Fog", ---Value: 20.
+        "Mist", ---Value: 21.
+        "Smoke", ---Value: 22.
+        "Haze", ---Value: 23.
+        "Sand", ---Value: 24.
+        "Dust", ---Value: 25.
+        "Squalls", ---Value: 26.
+        "Tornado", ---Value: 27.
+        "Hurricane", ---Value: 28.
+        "Cold", ---Value: 29.
+        "Hot", ---Value: 30.
+        "Windy", ---Value: 31.
+        "Hail", ---Value: 32.
+    }
 
-    if sim.cameraMode < 3 and sim.isWindowForeground then
-        if driver.drsBeepFx and driver.car.drsAvailable and driver.drsAvailable then
-            driver.drsBeepFx = false
-            DRS_BEEP:play()
-        elseif not driver.car.drsAvailable and driver.drsAvailable then
-            driver.drsBeepFx = true
-        end
-    
-        if driver.drsFlapFx ~= driver.car.drsActive then
-            driver.drsFlapFx = driver.car.drsActive
-            DRS_FLAP:play()
-        end
-
-        DRIVERS[sim.focusedCar] = driver
-    end
+    return weatherTypes[sim.weatherType + 1]
 end
-

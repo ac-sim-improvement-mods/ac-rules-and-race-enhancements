@@ -1,5 +1,5 @@
-SCRIPT_VERSION = "0.9.8.1-alpha"
-SCRIPT_VERSION_ID = 0981
+SCRIPT_VERSION = "0.9.8.2-alpha"
+SCRIPT_VERSION_ID = 0982
 SCRIPT_RELEASE_DATE = "2022-10-28"
 CSP_MIN_VERSION = "1.79"
 CSP_MIN_VERSION_ID = 2144
@@ -10,21 +10,15 @@ require 'src/init'
 require 'src/ui/debug_menu'
 require 'src/ui/settings_menu'
 require 'src/ui/notifications'
-
-local rc = require 'src/race_control'
+local audio = 'src/audio'
+local _rc = require 'src/race_control'
+local rc = _rc.getRaceControl()
 
 INITIALIZED = false
 RESTARTED = false
 REBOOT = false
 
 DRS_ZONES = {}
-DRIVERS = {}
-
-DRS_FLAP = ui.MediaPlayer()
-DRS_BEEP = ui.MediaPlayer()
-
-NOTIFICATION_TIMER = 0
-NOTIFICATION_TEXT = ''
 
 --- Check if AC has restarted
 --- @param sim ac.getSim()
@@ -40,14 +34,11 @@ local function errorCheck()
     local error = ac.getLastError()
     if error then
         log(error)
-        INITIALIZED = false
         INITIALIZED = initialize()
     end
 end
 
 function script.update(dt)
-    local sim = ac.getSim()
-
     errorCheck()
     restartCheck(sim)
 
@@ -59,7 +50,8 @@ function script.update(dt)
         if not sim.isInMainMenu and not sim.isSessionStarted then
             RESTARTED = false
         else
-            rc.session(sim.raceSessionType)
+            rc = _rc.getRaceControl()
+            audio.driver()
         end
     else
         if sim.isInMainMenu or sim.isSessionStarted then
@@ -73,11 +65,11 @@ function script.windowMain(dt)
 end
 
 function script.windowDebug(dt)
-    debugMenu(rc.getRaceControl())
+    debugMenu(rc)
 end
 
 function script.windowSettings(dt)
-    settingsMenu(rc.getRaceControl())
+    settingsMenu(rc)
 end
 
 function script.windowNotifications(dt)
