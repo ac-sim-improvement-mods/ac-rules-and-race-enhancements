@@ -162,7 +162,7 @@ function settingsMenu(rc)
             'Duration (seconds) that the "Race Control" banner will stay on screen',
             function (v) return math.round(v,0) end)
 
-            slider(F1RegsConfig, 'NOTIFICATIONS', 'SCALE', 0.1, 1, 1, false, 'Banner Scale: %.1f', 
+            slider(F1RegsConfig, 'NOTIFICATIONS', 'SCALE', 0.1, 5, 1, false, 'Banner Scale: %.1f', 
             'Duration (seconds) that the "Race Control" banner will stay on screen',
             function (v) return math.round(v,2) end)
 

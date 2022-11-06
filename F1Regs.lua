@@ -1,5 +1,5 @@
-SCRIPT_VERSION = "0.9.8.2-alpha"
-SCRIPT_VERSION_ID = 0982
+SCRIPT_VERSION = "0.9.8.3-alpha"
+SCRIPT_VERSION_ID = 0983
 SCRIPT_RELEASE_DATE = "2022-10-28"
 CSP_MIN_VERSION = "1.79"
 CSP_MIN_VERSION_ID = 2144
@@ -67,11 +67,11 @@ function script.windowMain(dt)
 end
 
 function script.windowDebug(dt)
-    if INITIALIZED then debugMenu(rc) end
+    if rc ~= nil then debugMenu(rc) end
 end
 
 function script.windowSettings(dt)
-    settingsMenu(rc)
+    if rc ~= nil then settingsMenu(rc) end
 end
 
 function script.windowNotifications(dt)

@@ -2,8 +2,8 @@ audio = {}
 
 local acMainVolume = ac.getAudioVolume(ac.AudioChannel.Main)
 
-local DRS_FLAP = ui.MediaPlayer()
-local DRS_BEEP = ui.MediaPlayer()
+DRS_FLAP = ui.MediaPlayer()
+DRS_BEEP = ui.MediaPlayer()
 
 DRS_BEEP:setSource("./assets/audio/drs-available-beep.wav"):setAutoPlay(false)
 DRS_BEEP:setVolume(acMainVolume * F1RegsConfig.data.AUDIO.MASTER/100 * F1RegsConfig.data.AUDIO.DRS_BEEP/100)
