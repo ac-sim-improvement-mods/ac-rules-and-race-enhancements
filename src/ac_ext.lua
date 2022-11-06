@@ -8,14 +8,15 @@ end
 --- Returns time delta (s) between the driver and driver ahead on track
 ---@param driver Driver
 ---@return number
-function getDelta(driver)
+function getDelta(sim,driver1,driver2)
 ---@diagnostic disable-next-line: return-type-mismatch
-    local carAheadSplinePosition = ac.getCar(driver.carAhead).splinePosition
-    local carSplinePosition = driver.car.splinePosition
-    if carSplinePosition > carAheadSplinePosition then
-        carAheadSplinePosition = carAheadSplinePosition + 1
+    local driver1pos = driver1.car.splinePosition
+    local driver2pos = driver2.car.splinePosition
+    if driver1 > driver2 then
+    if driver1pos > driver2pos then
+        driver2pos = driver2pos + 1
     end
-    return math.round((carAheadSplinePosition - carSplinePosition) / (driver.car.speedKmh / 3.6) * ac.getSim().trackLengthM,5)
+    return (driver2pos - driver1pos) / (driver.car.speedKmh / 3.6) * sim.trackLengthM
 end
 
 --- Converts session type number to the corresponding session type string
@@ -78,4 +79,3 @@ function weatherTypeString(sim)
 
     return weatherTypes[sim.weatherType + 1]
 end
-
