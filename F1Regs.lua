@@ -23,6 +23,9 @@ DRIVERS = {}
 DRS_FLAP = ui.MediaPlayer()
 DRS_BEEP = ui.MediaPlayer()
 
+NOTIFICATION_TIMER = 0
+NOTIFICATION_TEXT = ''
+
 --- Check if AC has restarted
 --- @param sim ac.getSim()
 local function restartCheck(sim)
@@ -75,4 +78,8 @@ end
 
 function script.windowSettings(dt)
     settingsMenu(rc.getRaceControl())
+end
+
+function script.windowNotifications(dt)
+    notificationHandler(dt)
 end

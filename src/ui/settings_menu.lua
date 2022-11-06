@@ -1,3 +1,5 @@
+local popup = require 'src/ui/notifications'
+
 function settingsMenu()
     local scriptVersion = SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")"
     ac.setWindowTitle("settings", "F1 Regs Settings      "..scriptVersion)
@@ -171,7 +173,7 @@ function settingsMenu()
             end
 
             if ui.button("TEST BANNER", vec2(ui.windowWidth()-77,25), buttonFlags) then
-                showNotification("TEST",10)
+                popup.notification("RACE CONTROL BANNER",10)
             end
 
             ui.newLine(1)

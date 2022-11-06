@@ -3,6 +3,7 @@ local drs = require 'src/controllers/drs'
 local vsc = require 'src/controllers/vsc'
 local ai = require 'src/controllers/ai'
 local connect = require 'src/connection'
+local popup = require 'src/ui/notifications'
 
 local rc = {}
 
@@ -174,10 +175,28 @@ function rc.getRaceControl()
     }
 end
 
+local racecontrol = nil
+
 --- Drives Race Control sessions amd driver loop
 ---@param sessionType ac.SessionTypes
 function rc.session(sessionType)
-    local racecontrol = rc.getRaceControl()
+
+    if racecontrol then
+        if not racecontrol.drsEnabled and rc.getRaceControl().drsEnabled then
+            popup.notification("DRS ENABLED")
+        end
+
+        if not racecontrol.wetTrack and rc.getRaceControl().wetTrack then
+            popup.notification("DRS DISABLED | WET TRACK")
+        end
+
+        if racecontrol.wetTrack and not rc.getRaceControl().wetTrack then
+            popup.notification("DRS ENABLED IN 2 LAPS")
+        end
+    end
+
+    racecontrol = rc.getRaceControl()
+
     local drivers = DRIVERS
     audioHandler()
 
