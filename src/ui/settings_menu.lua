@@ -49,59 +49,22 @@ function settingsMenu(rc)
             -- ui.newLine(1)
         
             ui.header("AI:")
+            slider(F1RegsConfig, 'RULES', 'RACE_REFUELING', 0, 1, 1, true, F1RegsConfig.data.RULES.RACE_REFUELING == 1 and "Race Refueling: ENABLED" or "Race Refueling: DISABLED", 
+            'Enable or disable refueling during a race',
+            function (v) return math.round(v, 0) end)
+            
+            slider(F1RegsConfig, 'RULES', 'AI_AGGRESSION_RUBBERBAND', 0, 1, 1, true, F1RegsConfig.data.RULES.AI_AGGRESSION_RUBBERBAND == 1 and "Alternate AI Attack: ENABLED" or "Alternate AI Attack: DISABLED", 
+            'Increase AI aggression when attacking',
+            function (v) return math.round(v, 0) end)
+
             slider(F1RegsConfig, 'RULES', 'AI_FORCE_PIT_TYRES', 0, 1, 1, true, F1RegsConfig.data.RULES.AI_FORCE_PIT_TYRES == 1 and "Pit New Tyres Rules: ENABLED" or "Pit New Tyres Rules: DISABLED", 
             'Force AI to pit for new tyres when their average tyre life is below AI TYRE LIFE',
             function (v) return math.round(v, 0) end)
+
+            ui.newLine(1)
             
             local driver = DRIVERS[ac.getSim().focusedCar]
             if F1RegsConfig.data.RULES.AI_FORCE_PIT_TYRES == 1 then
-                if driver.car.isAIControlled then
-                    local buttonFlags = ui.ButtonFlags.None
-                    if driver.aiPitting or driver.car.isInPitlane then
-                        buttonFlags = ui.ButtonFlags.Disabled
-                    end
-                    if ui.button("FORCE FOCUSED AI TO PIT NOW", vec2(ui.windowWidth()-77,25), buttonFlags) then
-                        driver.aiPrePitFuel = driver.car.fuel
-                        physics.setCarFuel(driver.index, 0.1)
-                        driver.aiPitCall = true
-                    end
-
-                    -- if ui.button("Awaken Car", vec2(ui.windowWidth()-77,25), ui.ButtonFlags.None) then
-                    --     driver.aiPrePitFuel = 140
-                    --     physics.setCarFuel(driver.index,140)
-                    --     physics.awakeCar(driver.index)
-                    --     physics.setCarFuel(driver.index,140)
-                    --     physics.resetCarState(driver.index)
-                    --     physics.engageGear(driver.index,1)
-                    --     physics.setEngineRPM(driver.index, 13000)
-                    --     physics.setCarVelocity(driver.index,vec3(0,0,5))
-                    -- end
-
-                    ui.newLine(1)
-
-                else
-                    if ui.button("FORCE ALL AI TO PIT NOW", vec2(ui.windowWidth()-77,25), ui.ButtonFlags.None) then
-                        for i=0, #DRIVERS do
-                            local driver = DRIVERS[i]
-                            if driver.car.isAIControlled then
-                                driver.aiPrePitFuel = driver.car.fuel
-                                physics.setCarFuel(driver.index, 0.1)
-                                driver.aiPitCall = true
-                            end
-                        end
-                    end
-
-                    -- if ui.button("TELEPORT ALL AI TO PIT NOW", vec2(ui.windowWidth()-77,25), ui.ButtonFlags.None) then
-                    --     for i=0, #DRIVERS do
-                    --         local driver = DRIVERS[i]
-                    --         if driver.car.isAIControlled then
-                    --             physics.teleportCarTo(driver.index,ac.SpawnSet.Pits)
-                    --         end
-                    --     end
-                    -- end
-
-                    ui.newLine(1)
-                end
 
                 slider(F1RegsConfig, 'RULES', 'AI_AVG_TYRE_LIFE', 0, 100, 1, false, 'Pit Below Avg Tyre Life: %.2f%%', 
                 'AI will pit after average tyre life % is below this value',
@@ -123,14 +86,53 @@ function settingsMenu(rc)
                 slider(F1RegsConfig, 'RULES', 'AI_SINGLE_TYRE_LIFE_RANGE', 0, 15, 1, false, 'Variability: %.2f%%', 
                 "AI will pit if one tyre's life % is below this value",
                 function (v) return math.floor(v / 0.5 + 0.5) * 0.5 end)
+
+                ui.newLine(1)
+
+                if driver.car.isAIControlled then
+                    local buttonFlags = ui.ButtonFlags.None
+                    if driver.aiPitting or driver.car.isInPitlane then
+                        buttonFlags = ui.ButtonFlags.Disabled
+                    end
+                    if ui.button("FORCE FOCUSED AI TO PIT NOW", vec2(ui.windowWidth()-77,25), buttonFlags) then
+                        driver.aiPrePitFuel = driver.car.fuel
+                        physics.setCarFuel(driver.index, 0.1)
+                        driver.aiPitCall = true
+                    end
+
+                    -- if ui.button("Awaken Car", vec2(ui.windowWidth()-77,25), ui.ButtonFlags.None) then
+                    --     driver.aiPrePitFuel = 140
+                    --     physics.setCarFuel(driver.index,140)
+                    --     physics.awakeCar(driver.index)
+                    --     physics.setCarFuel(driver.index,140)
+                    --     physics.resetCarState(driver.index)
+                    --     physics.engageGear(driver.index,1)
+                    --     physics.setEngineRPM(driver.index, 13000)
+                    --     physics.setCarVelocity(driver.index,vec3(0,0,5))
+                    -- end
+                else
+                    if ui.button("FORCE ALL AI TO PIT NOW", vec2(ui.windowWidth()-77,25), ui.ButtonFlags.None) then
+                        for i=0, #DRIVERS do
+                            local driver = DRIVERS[i]
+                            if driver.car.isAIControlled then
+                                driver.aiPrePitFuel = driver.car.fuel
+                                physics.setCarFuel(driver.index, 0.1)
+                                driver.aiPitCall = true
+                            end
+                        end
+                    end
+
+                    -- if ui.button("TELEPORT ALL AI TO PIT NOW", vec2(ui.windowWidth()-77,25), ui.ButtonFlags.None) then
+                    --     for i=0, #DRIVERS do
+                    --         local driver = DRIVERS[i]
+                    --         if driver.car.isAIControlled then
+                    --             physics.teleportCarTo(driver.index,ac.SpawnSet.Pits)
+                    --         end
+                    --     end
+                    -- end
+                end
             end
-
-            ui.newLine(1)
-            slider(F1RegsConfig, 'RULES', 'AI_AGGRESSION_RUBBERBAND', 0, 1, 1, true, F1RegsConfig.data.RULES.AI_AGGRESSION_RUBBERBAND == 1 and "Alternate AI Attack: ENABLED" or "Alternate AI Attack: DISABLED", 
-            'Increase AI aggression when attacking',
-            function (v) return math.round(v, 0) end)
         
-
             ui.newLine(1)
         
             ui.header("MISC:")

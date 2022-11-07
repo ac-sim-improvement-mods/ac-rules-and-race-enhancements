@@ -76,7 +76,7 @@ end
 --- Occurs when a driver is in the pit
 ---@param driver Driver
 local function pitstop(driver)
-    physics.setCarFuel(driver.index, driver.aiPrePitFuel)
+    if F1RegsConfig.data.RULES.RACE_REFUELING == 0 then physics.setCarFuel(driver.index, driver.aiPrePitFuel) end
     driver.aiPitting = false
     driver.tyreLaps = 0
 end
