@@ -51,8 +51,8 @@ function script.update(dt)
         if not sim.isInMainMenu and not sim.isSessionStarted then
             RESTARTED = false
         else
-            rc = _rc.getRaceControl()
-            audio.driver()
+            rc = _rc.getRaceControl(dt,sim)
+            audio.driver(sim)
         end
     else
         if sim.isInMainMenu or sim.isSessionStarted then

@@ -1,16 +1,18 @@
 --- Returns time delta (s) between the driver and driver ahead on track
 ---@param driver Driver
 ---@return number
-function getDelta(sim,driver1,driver2)
+function getDelta(sim,carIndex,car2Index)
 ---@diagnostic disable-next-line: return-type-mismatch
-    local driver1pos = driver1.car.splinePosition
-    local driver2pos = driver2.car.splinePosition
+    local car = ac.getCar(carIndex)
+    local car2 = ac.getCar(car2Index)
+    local carPos = car.splinePosition
+    local car2Pos = car2.splinePosition
 
-    if driver1pos > driver2pos then
-        driver2pos = driver2pos + 1
+    if carPos > car2Pos then
+        car2Pos = car2Pos + 1
     end
     
-    return (driver2pos - driver1pos) / (driver.car.speedKmh / 3.6) * sim.trackLengthM
+    return (car2Pos - carPos) / (car.speedKmh / 3.6) * sim.trackLengthM
 end
 
 --- Converts session type number to the corresponding session type string

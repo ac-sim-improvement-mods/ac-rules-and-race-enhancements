@@ -27,8 +27,7 @@ local function formula1(sim,driver)
     end 
 end 
 
-function audio.driver()
-    local sim = ac.getSim()
+function audio.driver(sim)
     local driver = DRIVERS[sim.focusedCar]
  
     formula1(sim,driver)

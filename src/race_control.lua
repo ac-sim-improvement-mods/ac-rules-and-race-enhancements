@@ -155,8 +155,7 @@ local function run(racecontrol,sessionType,driver)
     return driver
 end
 
-local function update(drivers)
-    local sim = ac.getSim()
+local function update(sim,drivers)
     local session = ac.getSession(sim.currentSessionIndex)
     local rules = F1RegsConfig.data.RULES
     local carsOnTrackCount = getTrackOrder(drivers)
@@ -165,7 +164,6 @@ local function update(drivers)
     local wetTrack = isTrackWet(rules,sim)
 
     return readOnly{
-        sim = sim,
         session = session,
         carsOnTrackCount = carsOnTrackCount,
         leaderCompletedLaps = leaderCompletedLaps,
@@ -178,10 +176,10 @@ local racecontrol = nil
 
 --- Updates and returns race control variables
 --- @return racecontrol rc
-function rc.getRaceControl()
+function rc.getRaceControl(dt,sim)
     local drivers = DRIVERS
     local lastUpdate = racecontrol
-    racecontrol = update(drivers)
+    racecontrol = update(sim,drivers)
 
     if lastUpdate then
         if not lastUpdate.drsEnabled and racecontrol.drsEnabled then
@@ -199,8 +197,8 @@ function rc.getRaceControl()
 
     for i=0, #drivers do
         local driver = drivers[i]
-        driver:update()
-        DRIVERS[i] = run(racecontrol,sessionType,driver)
+        driver:update(dt,sim)
+        DRIVERS[i] = run(racecontrol,sim.raceSessionType,driver)
         connect.storeDriverData(driver)
     end
     
