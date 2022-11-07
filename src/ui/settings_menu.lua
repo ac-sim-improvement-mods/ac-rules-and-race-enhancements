@@ -66,7 +66,40 @@ function settingsMenu(rc)
                         driver.aiPitCall = true
                     end
 
-                    
+                    -- if ui.button("Awaken Car", vec2(ui.windowWidth()-77,25), ui.ButtonFlags.None) then
+                    --     driver.aiPrePitFuel = 140
+                    --     physics.setCarFuel(driver.index,140)
+                    --     physics.awakeCar(driver.index)
+                    --     physics.setCarFuel(driver.index,140)
+                    --     physics.resetCarState(driver.index)
+                    --     physics.engageGear(driver.index,1)
+                    --     physics.setEngineRPM(driver.index, 13000)
+                    --     physics.setCarVelocity(driver.index,vec3(0,0,5))
+                    -- end
+
+                    ui.newLine(1)
+
+                else
+                    if ui.button("FORCE ALL AI TO PIT NOW", vec2(ui.windowWidth()-77,25), ui.ButtonFlags.None) then
+                        for i=0, #DRIVERS do
+                            local driver = DRIVERS[i]
+                            if driver.car.isAIControlled then
+                                driver.aiPrePitFuel = driver.car.fuel
+                                physics.setCarFuel(driver.index, 0.1)
+                                driver.aiPitCall = true
+                            end
+                        end
+                    end
+
+                    -- if ui.button("TELEPORT ALL AI TO PIT NOW", vec2(ui.windowWidth()-77,25), ui.ButtonFlags.None) then
+                    --     for i=0, #DRIVERS do
+                    --         local driver = DRIVERS[i]
+                    --         if driver.car.isAIControlled then
+                    --             physics.teleportCarTo(driver.index,ac.SpawnSet.Pits)
+                    --         end
+                    --     end
+                    -- end
+
                     ui.newLine(1)
                 end
 

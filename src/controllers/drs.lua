@@ -123,7 +123,7 @@ local function setDriverDRS(driver,allowed)
         if not allowed then
             physics.setCarDRS(driver.index, false)
         elseif allowed and 
-            driver.car.brake < 0.5 and driver.car.speedKmh > 50 and getEndLineDistanceM(driver) > 175 then
+            driver.car.brake < 0.5 and driver.car.speedKmh > 100 and getEndLineDistanceM(driver) > 175 and driver.aiPitCall then
             physics.setCarDRS(driver.index, true)
         end
     elseif not allowed then

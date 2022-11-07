@@ -113,7 +113,7 @@ end
 function ai.alternateAttack(driver)
     local delta = driver.carAheadDelta
     local speedMod = math.clamp(200/(driver.car.speedKmh or 200),1,2)
-    local maxAggression = ac.load("app.F1Regs."..driver.index..".AI_Aggression")
+    local maxAggression = driver.aiAggression
     local upcomingTurn = ac.getTrackUpcomingTurn(driver.index)
     local upcomingTurnDistance = upcomingTurn.x
     local upcomingTurnAngle = upcomingTurn.y

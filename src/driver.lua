@@ -12,26 +12,27 @@ end
 ---@param carIndex number
 ---@return Driver
 Driver = class('Driver', function(carIndex)
+    local sim = ac.getSim()
     local index = carIndex
-    
+
     local car = ac.getCar(index)
     local name = ac.getDriverName(index)
 
     local lapsCompleted = car.lapCount
 
     local aiLevel = car.aiLevel
-    local aiAggression = car.aiAggression
+    local aiAggression = ac.load("app.F1Regs."..index..".AI_Aggression") == nil and car.aiAggression or ac.load("app.F1Regs."..index..".AI_Aggression")
     local aiPrePitFuel = 0
     local aiPitCall = false
     local aiPitting = false
-    
+
     local pitstopCount = 0
     local pitstopTime = 0
-    local pitTime = 0
     local pitlane = false
+    local pitlaneTime = 0
     local pitstop = false
     local pitted = false
-    local lapPitted = 0 
+    local lapPitted = 0
     local tyreLaps = 0
 
     local trackPosition = -1
@@ -53,8 +54,11 @@ Driver = class('Driver', function(carIndex)
     local returnRacePosition = -1
     local returnPostionTimer = -1
 
+    local fuelcons = ac.INIConfig.carData(index, 'fuel_cons.ini'):get('FUEL_EVAL', 'KM_PER_LITER', 0.0)
+    local fuelload = ((ac.getSession(sim.currentSessionIndex).laps + 2) * sim.trackLengthM / 1000) / (fuelcons - (fuelcons * 0.1))
+
     if car.isAIControlled and not ac.getSim().isSessionStarted then
-        physics.setCarFuel(index, car.maxFuel)
+        physics.setCarFuel(index, fuelload)
     end
 
     local aiTyreAvgRandom = randomizer(index,F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE_RANGE)
@@ -63,7 +67,7 @@ Driver = class('Driver', function(carIndex)
     log("[Loaded] Driver ["..index.."] "..name)
 
     return {
-        pitlane = pitlane, pitstop = pitstop, pitTime = pitTime, pitstopTime = pitstopTime, pitted = pitted, pitstopCount = pitstopCount, tyreLaps = tyreLaps, lapPitted = lapPitted,
+        pitlaneTime = pitlaneTime, pitlane = pitlane, pitstop = pitstop, pitstopTime = pitstopTime, pitted = pitted, pitstopCount = pitstopCount, tyreLaps = tyreLaps, lapPitted = lapPitted,
         drsBeepFx = drsBeepFx, drsFlapFx = drsFlapFx,
         drsZoneNextId = drsZoneNextId, drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, drsZoneId = drsZoneId, 
         drsActivationZone = drsActivationZone, drsAvailable = drsAvailable, drsCheck = drsCheck,
@@ -110,31 +114,43 @@ local function getPitstopCount(driver)
     return driver.pitstopCount
 end
 
-local function getPitTime(driver)
+local function getPitTime(dt,driver)
     if driver.car.isInPitlane then
-        if driver.pitTime > 0 and not driver.pitlane then
-            driver.pitTime = 0
+        if driver.pitlaneTime > 0 and not driver.pitlane then
             driver.pitlane = true
+            return 0
         else
-            
+            return driver.pitlaneTime + dt
         end
     else
         driver.pitlane = false
+        return driver.pitlaneTime
     end
 end
 
-local function getPitstopTime(driver)
-
+local function getPitstopTime(dt,driver)
+    if driver.car.isInPit then
+        if not driver.pitstop then
+            driver.pitstop = true
+            return 0
+        else
+            return driver.pitstopTime + dt
+        end
+    else
+        driver.pitstop = false
+        return driver.pitstopTime
+    end
 end
 
-function Driver:update(sim)
-    ac.perfBegin('test')
+function Driver:update(dt,sim)
     self.lapPitted = getLapPitted(self)
     self.tyreLaps = getTyreLapCount(self)
     self.pitstopCount = getPitstopCount(self)
-    self.pitTime = getPitTime(self)
-    self.pitstopTime = getPitstopTime(self)
-    self.carAheadDelta = getDelta(sim,self.index,self.carAhead)
-    ac.perfEnd('test')
+    self.pitlaneTime = getPitTime(dt,self)
+    self.pitstopTime = getPitstopTime(dt,self)
+
+    if self.carAhead >= 0 then
+        self.carAheadDelta = getDelta(sim,self.index,self.carAhead)
+    end
 end
 
