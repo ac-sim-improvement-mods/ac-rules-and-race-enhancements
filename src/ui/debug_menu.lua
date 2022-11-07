@@ -2,7 +2,7 @@ function debugMenu(rc)
     local sim = ac.getSim()
     local windowName = "F1 Regs Debug"
     local scriptVersion = SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")"
-    local windowTitle = windowName..string.pad(scriptVersion, ui.windowWidth()-ui.measureText(windowName).x, " ", -1)
+    local windowTitle = windowName.." | "..scriptVersion
 
     ac.setWindowTitle("debug", windowTitle)
 
