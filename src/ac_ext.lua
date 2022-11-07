@@ -1,3 +1,5 @@
+ac_ext = ac
+
 --- Returns time delta (s) between the driver and driver ahead on track
 ---@param driver Driver
 ---@return number
@@ -18,7 +20,7 @@ end
 --- Converts session type number to the corresponding session type string
 ---@param sim ac.StateSim
 ---@return string
-function sessionTypeString(sim)
+function ac_ext.sessionTypeString(sim)
     local sessionTypes = {
         "UNDEFINED",
         "PRACTICE",
@@ -36,7 +38,7 @@ end
 --- Converts weather type number to the corresponding weather type string
 ---@param sim ac.StateSim
 ---@return string
-function weatherTypeString(sim)
+function ac_ext.weatherTypeString(sim)
     local weatherTypes = {  
         "Light Thunderstorm", ---Value: 0.
         "Thunderstorm", ---Value: 1.
@@ -75,3 +77,5 @@ function weatherTypeString(sim)
 
     return weatherTypes[sim.weatherType + 1]
 end
+
+return ac_ext

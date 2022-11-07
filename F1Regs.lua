@@ -3,8 +3,6 @@ SCRIPT_VERSION_ID = 0983
 SCRIPT_RELEASE_DATE = "2022-10-28"
 CSP_MIN_VERSION = "1.79"
 CSP_MIN_VERSION_ID = 2144
-
-require 'src/ac_ext'
 require 'src/utils'
 require 'src/init'
 require 'src/ui/debug_menu'
@@ -13,6 +11,8 @@ require 'src/ui/notifications'
 local audio = nil
 local _rc = require 'src/race_control'
 local rc = nil
+
+ac = require 'src/ac_ext'
 
 INITIALIZED = false
 RESTARTED = false
