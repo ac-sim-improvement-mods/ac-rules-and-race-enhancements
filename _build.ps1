@@ -1,25 +1,14 @@
 $build_dir = "$PSScriptRoot\build"
-$build_ver = ((Get-Content $PSScriptRoot\F1Regs.lua -First 1) -split "`"")[1]
-$app_dir = "$build_dir\assettocorsa\apps\lua\F1Regs"
+$build_ver = ((Get-Content $PSScriptRoot\assettocorsa\apps\lua\F1Regs\F1Regs.lua)[0] -split "`"")[1]
+$build_code = ((Get-Content $PSScriptRoot\assettocorsa\apps\lua\F1Regs\F1Regs.lua)[1] -split "= ")[1]
 
-(Get-Content "$PSScriptRoot\manifest.ini") | ForEach-Object { $_ -replace "VERSION =.+","VERSION = $build_ver"  } | Set-Content "$PSScriptRoot\manifest.ini"
+Write-Output $build_code
 
-if (!(Test-Path $app_dir))
-{
-New-Item -itemType Directory -Path $app_dir
-}
-
-Copy-Item "$PSScriptRoot\extension" -Destination $build_dir\assettocorsa -Recurse -Force
-Copy-Item "$PSScriptRoot\F1Regs.lua" -Destination $app_dir -Force
-Copy-Item "$PSScriptRoot\src" -Destination $app_dir -Recurse -Force
-Copy-Item "$PSScriptRoot\assets" -Destination $app_dir -Recurse -Force
-Copy-Item "$PSScriptRoot\data" -Destination $app_dir -Recurse -Force
-Copy-Item "$PSScriptRoot\manifest.ini" -Destination $app_dir -Force
-Copy-Item "$PSScriptRoot\icon.png" -Destination $app_dir -Force
+(Get-Content "$PSScriptRoot\assettocorsa\apps\lua\F1Regs\manifest.ini") | ForEach-Object { $_ -replace "VERSION =.+","VERSION = $build_ver"  } | Set-Content "$PSScriptRoot\assettocorsa\apps\lua\F1Regs\manifest.ini"
 
 $target_file = "$build_dir\F1Regs_$build_ver.zip"
 if (Test-Path $target_file) {
   Remove-Item $target_file
 }
 
-Compress-Archive -Path $build_dir\assettocorsa\* -DestinationPath $target_file
+Compress-Archive -Path $PSScriptRoot\assettocorsa\* -DestinationPath $target_file

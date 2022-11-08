@@ -117,6 +117,7 @@ function ai.alternateAttack(driver)
     local upcomingTurn = ac.getTrackUpcomingTurn(driver.index)
     local upcomingTurnDistance = upcomingTurn.x
     local upcomingTurnAngle = upcomingTurn.y
+    
 
     if upcomingTurnDistance >= 250 then
         maxAggression = maxAggression + (maxAggression*0.25)
@@ -126,11 +127,17 @@ function ai.alternateAttack(driver)
         end
     end
 
-    local newAggression = delta > 0 and math.lerp(0, maxAggression, 1-delta+0.2) or 0
+    local newAggression = delta > 0 and math.lerp(60, maxAggression, 1-delta+0.2) or 0.6
+
+    local minLevel = 0.90
+    local newLevel = (delta > 0 and delta < 1) and (minLevel + math.lerp(0, 1-minLevel, 1-delta)) or minLevel
 
     if maxAggression ~= nil and maxAggression > 0 then
-        physics.setAIAggression(driver.index, math.clamp(newAggression,0,maxAggression))
+        -- physics.setAIAggression(driver.index, math.clamp(newAggression,0,maxAggression))
     end
+
+    physics.setAIAggression(driver.index, 0)
+    physics.setAILevel(driver.index, math.clamp(newLevel,minLevel,1))
 end
 
 return ai
