@@ -112,7 +112,22 @@ end
 --- Race Control for race sessions
 --- @param rules F1RegsConfig.data.RULES
 --- @param driver Driver
-local function raceSession(racecontrol,rules,driver)
+local function raceSession(lastUpdate,racecontrol,rules,driver)
+        if lastUpdate then
+            if not lastUpdate.drsEnabled and racecontrol.drsEnabled then
+                popup.notification("DRS ENABLED")
+            end
+
+            if not lastUpdate.wetTrack and racecontrol.wetTrack then
+                popup.notification("DRS DISABLED | WET TRACK")
+            end
+
+            if lastUpdate.wetTrack and not racecontrol.wetTrack then
+                popup.notification("DRS ENABLED IN 2 LAPS")
+            end
+        end
+
+
         if driver.car.isAIControlled then
             if rules.AI_FORCE_PIT_TYRES == 1 then ai.pitNewTires(driver) end
             if rules.AI_AGGRESSION_RUBBERBAND == 1 then ai.alternateAttack(driver)  end
@@ -141,11 +156,11 @@ end
 --- @param sessionType ac.SessionTypes
 --- @param rules F1RegsConfig.data.RULES
 --- @param driver Driver
-local function run(racecontrol,sessionType,driver)
+local function run(lastUpdate,racecontrol,sessionType,driver)
     local rules = F1RegsConfig.data.RULES
 
     if sessionType == ac.SessionType.Race then
-        raceSession(racecontrol,rules,driver)
+        raceSession(lastUpdateracecontrol,rules,driver)
     elseif sessionType == ac.SessionType.Qualify then
         qualifySession(racecontrol,rules,driver)
     elseif sessionType == ac.SessionType.Practice then
@@ -181,24 +196,11 @@ function rc.getRaceControl(dt,sim)
     local lastUpdate = racecontrol
     racecontrol = update(sim,drivers)
 
-    if lastUpdate then
-        if not lastUpdate.drsEnabled and racecontrol.drsEnabled then
-            popup.notification("DRS ENABLED")
-        end
-
-        if not lastUpdate.wetTrack and racecontrol.wetTrack then
-            popup.notification("DRS DISABLED | WET TRACK")
-        end
-
-        if lastUpdate.wetTrack and not racecontrol.wetTrack then
-            popup.notification("DRS ENABLED IN 2 LAPS")
-        end
-    end
 
     for i=0, #drivers do
         local driver = drivers[i]
         driver:update(dt,sim)
-        DRIVERS[i] = run(racecontrol,sim.raceSessionType,driver)
+        DRIVERS[i] = run(lastUpdate,racecontrol,sim.raceSessionType,driver)
         connect.storeDriverData(driver)
     end
     
