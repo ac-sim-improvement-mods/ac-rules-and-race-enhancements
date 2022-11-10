@@ -1,5 +1,7 @@
 local ai = {}
 
+AI_LEVEL = 0.1
+
 --- Returns whether driver's average tyre life is below
 --- the limit or not
 ---@param driver Driver
@@ -137,7 +139,9 @@ function ai.alternateAttack(driver)
     end
 
     physics.setAIAggression(driver.index, 0)
-    physics.setAILevel(driver.index, math.clamp(newLevel,minLevel,1))
+    physics.setAILevel(driver.index, AI_LEVEL)
+    -- physics.setAILevel(driver.index, math.clamp(newLevel,minLevel,1))
+
 end
 
 return ai

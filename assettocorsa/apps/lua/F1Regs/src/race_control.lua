@@ -160,7 +160,7 @@ local function run(lastUpdate,racecontrol,sessionType,driver)
     local rules = F1RegsConfig.data.RULES
 
     if sessionType == ac.SessionType.Race then
-        raceSession(lastUpdateracecontrol,rules,driver)
+        raceSession(lastUpdate,racecontrol,rules,driver)
     elseif sessionType == ac.SessionType.Qualify then
         qualifySession(racecontrol,rules,driver)
     elseif sessionType == ac.SessionType.Practice then

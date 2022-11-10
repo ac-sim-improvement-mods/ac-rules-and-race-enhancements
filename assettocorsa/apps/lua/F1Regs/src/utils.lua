@@ -144,5 +144,5 @@ end
 --- Returns state of installed CSP version being compatible with F1 Regs
 --- @return boolean
 function compatibleCspVersion()
-    return ac.getPatchVersionCode() >= CSP_MIN_VERSION_ID and true or false
+    return ac.getPatchVersionCode() >= CSP_MIN_VERSION_CODE and true or false
 end

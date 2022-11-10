@@ -1,7 +1,7 @@
 function debugMenu(rc)
     local sim = ac.getSim()
     local windowName = "F1 Regs Debug"
-    local scriptVersion = SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")"
+    local scriptVersion = SCRIPT_VERSION.." ("..SCRIPT_VERSION_CODE..")"
     local windowTitle = windowName.." | "..scriptVersion
 
     ac.setWindowTitle("debug", windowTitle)
@@ -21,7 +21,7 @@ function debugMenu(rc)
             inLineBulletText("CSP Version", ac.getPatchVersion(),space)
             inLineBulletText("CSP Version Code", ac.getPatchVersionCode(),space)
             inLineBulletText("F1 Regs Version", SCRIPT_VERSION,space)
-            inLineBulletText("F1 Regs Version Code", SCRIPT_VERSION_ID,space)
+            inLineBulletText("F1 Regs Version Code", SCRIPT_VERSION_CODE,space)
             inLineBulletText("F1 Regs Release Date", SCRIPT_BUILD_DATE,space)
             inLineBulletText("Current Date", os.date("%Y-%m-%d"),space)
         end)

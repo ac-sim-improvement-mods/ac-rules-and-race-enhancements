@@ -14,7 +14,7 @@ local F1RegsData = ac.connect({
 --- @param rc race_control
 function connection.storeRaceControlData(rc)
     F1RegsData.connected = true
-    F1RegsData.scriptVersionId = SCRIPT_VERSION_ID
+    F1RegsData.scriptVersionId = SCRIPT_VERSION_CODE
     F1RegsData.drsEnabled = rc.drsEnabled
 end
 
