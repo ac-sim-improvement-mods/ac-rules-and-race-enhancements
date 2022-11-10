@@ -1,6 +1,6 @@
 local popup = require 'src/ui/notifications'
 
-function settingsMenu(rc)
+function settingsMenu(sim,rc)
     local scriptVersion = SCRIPT_VERSION.." ("..SCRIPT_VERSION_ID..")"
     ac.setWindowTitle("settings", "F1 Regs Settings | "..scriptVersion)
     ui.pushFont(ui.Font.Small)
@@ -14,7 +14,7 @@ function settingsMenu(rc)
             function (v) return math.round(v, 0) end)
 
             if F1RegsConfig.data.RULES.DRS_RULES == 1 then
-                DRS_ENABLED_LAP = slider(F1RegsConfig, 'RULES', 'DRS_ACTIVATION_LAP', 1, ac.getSession(ac.getSim().currentSessionIndex).laps, 1, false, 'Activation Lap: %.0f', 
+                DRS_ENABLED_LAP = slider(F1RegsConfig, 'RULES', 'DRS_ACTIVATION_LAP', 1, ac.getSession(sim.currentSessionIndex).laps, 1, false, 'Activation Lap: %.0f', 
                 'First lap to allow DRS activation',
                 function (v) return v end)
                 slider(F1RegsConfig, 'RULES', 'DRS_GAP_DELTA', 100, 2000, 1, false, 'Gap Delta: %.0f ms',
@@ -84,7 +84,7 @@ function settingsMenu(rc)
 
             ui.newLine(1)
             
-            local driver = DRIVERS[ac.getSim().focusedCar]
+            local driver = DRIVERS[sim.focusedCar]
             if F1RegsConfig.data.RULES.AI_FORCE_PIT_TYRES == 1 then
 
                 slider(F1RegsConfig, 'RULES', 'AI_AVG_TYRE_LIFE', 0, 100, 1, false, 'Pit Below Avg Tyre Life: %.2f%%', 
@@ -177,7 +177,9 @@ function settingsMenu(rc)
                 DRS_BEEP:play()
             end
             ui.addIcon(ui.Icons.Play, 10, 0.5, nil, 0)
-
+            if ui.itemHovered() then
+                ui.setTooltip("Test DRS Beep")
+            end
 
             slider(F1RegsConfig, 'AUDIO', 'DRS_FLAP', 0, 100, 1, false, 'DRS Flap: %.0f%%', 
             'DRS Flap Volume',
@@ -189,17 +191,49 @@ function settingsMenu(rc)
                 DRS_FLAP:play()
             end
             ui.addIcon(ui.Icons.Play, 10, 0.5, nil, 0)
+            if ui.itemHovered() then
+                ui.setTooltip("Test DRS Flap")
+            end
+
             ui.newLine(1)
         end)
 
         ui.tabItem("UI", ui.TabItemFlags.None, function ()
             ui.newLine(1)
-            ui.header("RACE CONTROL:")
-            slider(F1RegsConfig, 'NOTIFICATIONS', 'DURATION', 0, 10, 1, false, 'Banner Timer: %.0f s', 
+            ui.header("RACE CONTROL BANNER:")
+
+            slider(F1RegsConfig, 'NOTIFICATIONS', 'X_POS', 0, sim.windowWidth, 1, false, 'X Pos: %.0f', 
             'Duration (seconds) that the "Race Control" banner will stay on screen',
             function (v) return math.round(v,0) end)
 
-            slider(F1RegsConfig, 'NOTIFICATIONS', 'SCALE', 0.1, 5, 1, false, 'Banner Scale: %.1f', 
+            ui.sameLine(0,2)
+
+            if ui.button("##rcbannerxpos", vec2(20, 20), ui.ButtonFlags.None) then
+                F1RegsConfig:set("NOTIFICATIONS", "X_POS", (sim.windowWidth / 2 - 360))
+            end
+            ui.addIcon(ui.Icons.Target, 10, 0.5, nil, 0)
+            if ui.itemHovered() then
+                ui.setTooltip("Center X")
+            end
+
+            slider(F1RegsConfig, 'NOTIFICATIONS', 'Y_POS', 0, sim.windowHeight, 1, false, 'Y Pos: %.0f', 
+            'Duration (seconds) that the "Race Control" banner will stay on screen',
+            function (v) return math.round(v,0) end)
+
+            ui.sameLine(0,2)
+            if ui.button("##rcbannerypos", vec2(20, 20), ui.ButtonFlags.None) then
+                F1RegsConfig.data.NOTIFICATIONS.Y_POS = sim.windowHeight / 2
+            end
+            ui.addIcon(ui.Icons.Target, 10, 0.5, nil, 0)
+            if ui.itemHovered() then
+                ui.setTooltip("Center Y")
+            end
+
+            slider(F1RegsConfig, 'NOTIFICATIONS', 'DURATION', 0, 10, 1, false, 'Timer: %.0f s', 
+            'Duration (seconds) that the "Race Control" banner will stay on screen',
+            function (v) return math.round(v,0) end)
+
+            slider(F1RegsConfig, 'NOTIFICATIONS', 'SCALE', 0.1, 5, 1, false, 'Scale: %.1f', 
             'Duration (seconds) that the "Race Control" banner will stay on screen',
             function (v) return math.round(v,2) end)
 
@@ -218,7 +252,7 @@ function settingsMenu(rc)
 
         ui.tabItem("MISC", ui.TabItemFlags.None, function ()
             ui.newLine(1)
-            
+
             slider(F1RegsConfig, 'RULES', 'PHYSICS_REBOOT', 0, 1, 1, true, F1RegsConfig.data.RULES.PHYSICS_REBOOT == 1 and 'Physics Reboot: ENABLED' or 'Physics Reboot: DISABLED', 
             "Reboot Assetto Corsa if the app doesn't have access to Physics",
             function (v) return math.round(v, 0) end)
