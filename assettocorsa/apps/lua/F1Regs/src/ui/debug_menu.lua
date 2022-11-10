@@ -22,7 +22,7 @@ function debugMenu(rc)
             inLineBulletText("CSP Version Code", ac.getPatchVersionCode(),space)
             inLineBulletText("F1 Regs Version", SCRIPT_VERSION,space)
             inLineBulletText("F1 Regs Version Code", SCRIPT_VERSION_ID,space)
-            inLineBulletText("F1 Regs Release Date", SCRIPT_RELEASE_DATE,space)
+            inLineBulletText("F1 Regs Release Date", SCRIPT_BUILD_DATE,space)
             inLineBulletText("Current Date", os.date("%Y-%m-%d"),space)
         end)
 

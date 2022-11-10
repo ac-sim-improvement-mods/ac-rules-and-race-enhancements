@@ -6,7 +6,7 @@ function settingsMenu(rc)
     ui.pushFont(ui.Font.Small)
 
     ui.tabBar("settingstabbar", ui.TabBarFlags.None, function ()
-        ui.tabItem("GAME", ui.TabItemFlags.None, function ()
+        ui.tabItem("RULES", ui.TabItemFlags.None, function ()
             ui.newLine(1)
             ui.header("DRS:")
             slider(F1RegsConfig, 'RULES', 'DRS_RULES', 0, 1, 1, true, F1RegsConfig.data.RULES.DRS_RULES == 1 and 'DRS Rules: ENABLED' or 'DRS Rules: DISABLED', 
@@ -48,16 +48,37 @@ function settingsMenu(rc)
             -- end
             -- ui.newLine(1)
         
-            ui.header("AI:")
+            ui.header("PIT STOPS:")
             slider(F1RegsConfig, 'RULES', 'RACE_REFUELING', 0, 1, 1, true, F1RegsConfig.data.RULES.RACE_REFUELING == 1 and "Race Refueling: ENABLED" or "Race Refueling: DISABLED", 
             'Enable or disable refueling during a race',
             function (v) return math.round(v, 0) end)
             
+            ui.newLine(1)
+            -- ui.newLine(5)
+        
+            -- if ui.button("APPLY SETTINGS", vec2(ui.windowWidth()-40,25), ui.ButtonFlags.None) then
+            --     -- Load config file
+            --     F1RegsConfig = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings.ini", {
+            --         RULES = { DRS_RULES = ac.INIConfig.OptionalNumber, DRS_ACTIVATION_LAP = ac.INIConfig.OptionalNumber, 
+            --         DRS_GAP_DELTA = ac.INIConfig.OptionalNumber, DRS_WET_DISABLE = ac.INIConfig.OptionalNumber, DRS_WET_LIMIT = ac.INIConfig.OptionalNumber,
+            --         VSC_RULES = ac.INIConfig.OptionalNumber, VSC_INIT_TIME = ac.INIConfig.OptionalNumber, VSC_DEPLOY_TIME = ac.INIConfig.OptionalNumber,
+            --         AI_FORCE_PIT_TYRES = ac.INIConfig.OptionalNumber, AI_AVG_TYRE_LIFE = ac.INIConfig.OptionalNumber, AI_AGGRESSION_RUBBERBAND = ac.INIConfig.OptionalNumber,
+            --         PHYSICS_REBOOT = ac.INIConfig.OptionalNumber
+            --     }})
+            --     log("[Loaded] Applied config")
+            --     DRS_ENABLED_LAP = F1RegsConfig.data.RULES.DRS_ACTIVATION_LAP
+            -- end
+            ui.newLine(1)
+        end)
+
+        ui.tabItem("AI", ui.TabItemFlags.None, function ()
+            ui.newLine(1)
+
             slider(F1RegsConfig, 'RULES', 'AI_AGGRESSION_RUBBERBAND', 0, 1, 1, true, F1RegsConfig.data.RULES.AI_AGGRESSION_RUBBERBAND == 1 and "Alternate AI Attack: ENABLED" or "Alternate AI Attack: DISABLED", 
             'Increase AI aggression when attacking',
             function (v) return math.round(v, 0) end)
 
-            slider(F1RegsConfig, 'RULES', 'AI_FORCE_PIT_TYRES', 0, 1, 1, true, F1RegsConfig.data.RULES.AI_FORCE_PIT_TYRES == 1 and "Pit New Tyres Rules: ENABLED" or "Pit New Tyres Rules: DISABLED", 
+            slider(F1RegsConfig, 'RULES', 'AI_FORCE_PIT_TYRES', 0, 1, 1, true, F1RegsConfig.data.RULES.AI_FORCE_PIT_TYRES == 1 and "Pit When Tyres Worn: ENABLED" or "Pit When Tyres Worn: DISABLED", 
             'Force AI to pit for new tyres when their average tyre life is below AI TYRE LIFE',
             function (v) return math.round(v, 0) end)
 
@@ -133,26 +154,7 @@ function settingsMenu(rc)
                 end
             end
         
-            ui.newLine(1)
-        
-            ui.header("MISC:")
-            slider(F1RegsConfig, 'RULES', 'PHYSICS_REBOOT', 0, 1, 1, true, F1RegsConfig.data.RULES.PHYSICS_REBOOT == 1 and 'Physics Reboot: ENABLED' or 'Physics Reboot: DISABLED', 
-            "Reboot Assetto Corsa if the app doesn't have access to Physics",
-            function (v) return math.round(v, 0) end)
-            -- ui.newLine(5)
-        
-            -- if ui.button("APPLY SETTINGS", vec2(ui.windowWidth()-40,25), ui.ButtonFlags.None) then
-            --     -- Load config file
-            --     F1RegsConfig = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings.ini", {
-            --         RULES = { DRS_RULES = ac.INIConfig.OptionalNumber, DRS_ACTIVATION_LAP = ac.INIConfig.OptionalNumber, 
-            --         DRS_GAP_DELTA = ac.INIConfig.OptionalNumber, DRS_WET_DISABLE = ac.INIConfig.OptionalNumber, DRS_WET_LIMIT = ac.INIConfig.OptionalNumber,
-            --         VSC_RULES = ac.INIConfig.OptionalNumber, VSC_INIT_TIME = ac.INIConfig.OptionalNumber, VSC_DEPLOY_TIME = ac.INIConfig.OptionalNumber,
-            --         AI_FORCE_PIT_TYRES = ac.INIConfig.OptionalNumber, AI_AVG_TYRE_LIFE = ac.INIConfig.OptionalNumber, AI_AGGRESSION_RUBBERBAND = ac.INIConfig.OptionalNumber,
-            --         PHYSICS_REBOOT = ac.INIConfig.OptionalNumber
-            --     }})
-            --     log("[Loaded] Applied config")
-            --     DRS_ENABLED_LAP = F1RegsConfig.data.RULES.DRS_ACTIVATION_LAP
-            -- end
+
             ui.newLine(1)
         end)
 
@@ -210,6 +212,16 @@ function settingsMenu(rc)
             if ui.button("TEST BANNER", vec2(ui.windowWidth()-77,25), buttonFlags) then
                 popup.notification("RACE CONTROL BANNER",10)
             end
+
+            ui.newLine(1)
+        end)
+
+        ui.tabItem("MISC", ui.TabItemFlags.None, function ()
+            ui.newLine(1)
+            
+            slider(F1RegsConfig, 'RULES', 'PHYSICS_REBOOT', 0, 1, 1, true, F1RegsConfig.data.RULES.PHYSICS_REBOOT == 1 and 'Physics Reboot: ENABLED' or 'Physics Reboot: DISABLED', 
+            "Reboot Assetto Corsa if the app doesn't have access to Physics",
+            function (v) return math.round(v, 0) end)
 
             ui.newLine(1)
         end)

@@ -29,7 +29,6 @@ local function formula1(sim,driver)
             end
         end
 
-    
         if driver.drsFlapFx ~= driver.car.drsActive then
             driver.drsFlapFx = driver.car.drsActive
             DRS_FLAP:play()
