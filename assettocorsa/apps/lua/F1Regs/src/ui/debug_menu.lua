@@ -79,6 +79,7 @@ function debugMenu(rc)
         if driver.car.isAIControlled then
             ui.treeNode("[AI]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
                 physics.getCarInputControls()
+                inLineBulletText("Throttle Limit", "["..math.round(driver.aiThrottleLimitBase*100,2).."] "..math.round(driver.aiThrottleLimit*100,2),space)
                 inLineBulletText("Level", "["..math.round(driver.aiLevel*100,2).."] "..math.round(driver.car.aiLevel*100,2),space)
                 inLineBulletText("Aggression", "["..math.round(ac.load("app.F1Regs."..driver.index..".AI_Aggression")*100,2).."] "..math.round(driver.car.aiAggression*100,2),space)
                 inLineBulletText("Tyre Life Avg Limit", F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom.." %",space,driver)

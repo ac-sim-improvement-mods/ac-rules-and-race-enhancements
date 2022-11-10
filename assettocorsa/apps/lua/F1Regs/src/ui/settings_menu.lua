@@ -257,6 +257,10 @@ function settingsMenu(sim,rc)
             "Reboot Assetto Corsa if the app doesn't have access to Physics",
             function (v) return math.round(v, 0) end)
 
+            AI_THROTTLE_LIMIT = ui.slider("AI Throttle Limit", AI_THROTTLE_LIMIT, 0.01, 1, '%.3f')
+            AI_LEVEL = ui.slider("AI Level", AI_LEVEL, 0.01, 1, '%.3f')
+            AI_AGGRESSION = ui.slider("AI Aggression", AI_AGGRESSION, 0.01, 1, '%.3f')
+
             ui.newLine(1)
         end)
     end)

@@ -25,6 +25,8 @@ Driver = class('Driver', function(carIndex)
     local aiPrePitFuel = 0
     local aiPitCall = false
     local aiPitting = false
+    local aiThrottleLimitBase = car.aiLevel
+    local aiThrottleLimit = car.aiLevel
 
     local pitstopCount = 0
     local pitstopTime = 0
@@ -67,6 +69,7 @@ Driver = class('Driver', function(carIndex)
     log("[Loaded] Driver ["..index.."] "..name)
 
     return {
+        aiThrottleLimitBase = aiThrottleLimitBase, aiThrottleLimit = aiThrottleLimit,
         pitlaneTime = pitlaneTime, pitlane = pitlane, pitstop = pitstop, pitstopTime = pitstopTime, pitted = pitted, pitstopCount = pitstopCount, tyreLaps = tyreLaps, lapPitted = lapPitted,
         drsBeepFx = drsBeepFx, drsFlapFx = drsFlapFx,
         drsZoneNextId = drsZoneNextId, drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, drsZoneId = drsZoneId, 

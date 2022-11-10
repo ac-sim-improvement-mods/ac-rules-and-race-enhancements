@@ -1,6 +1,8 @@
 local ai = {}
 
-AI_LEVEL = 0.1
+AI_THROTTLE_LIMIT = 0.8
+AI_LEVEL = 0.9
+AI_AGGRESSION = 0.25
 
 --- Returns whether driver's average tyre life is below
 --- the limit or not
@@ -120,28 +122,41 @@ function ai.alternateAttack(driver)
     local upcomingTurnDistance = upcomingTurn.x
     local upcomingTurnAngle = upcomingTurn.y
     
+    -- if upcomingTurnDistance >= 250 then
+    --     maxAggression = maxAggression + (maxAggression*0.25)
+    -- else
+    --     if upcomingTurnAngle < 90 then
+    --         maxAggression = maxAggression / speedMod
+    --     end
+    -- end
 
-    if upcomingTurnDistance >= 250 then
-        maxAggression = maxAggression + (maxAggression*0.25)
-    else
-        if upcomingTurnAngle < 90 then
-            maxAggression = maxAggression / speedMod
+    if delta > 0.2 then
+        if math.abs(upcomingTurnAngle) < 30 and upcomingTurnDistance <= 50 then
+            if driver.car.speedKmh < 100 then
+                physics.setAIAggression(driver.index, 1)
+            else
+                physics.setAIAggression(driver.index, 0.6)
+            end
+        elseif upcomingTurnDistance > 200 and delta > 0.5 then
+            physics.setAIAggression(driver.index, 1)
         end
+    else
+        physics.setAIAggression(driver.index, AI_AGGRESSION)
     end
 
-    local newAggression = delta > 0 and math.lerp(60, maxAggression, 1-delta+0.2) or 0.6
-
-    local minLevel = 0.90
-    local newLevel = (delta > 0 and delta < 1) and (minLevel + math.lerp(0, 1-minLevel, 1-delta)) or minLevel
-
-    if maxAggression ~= nil and maxAggression > 0 then
-        -- physics.setAIAggression(driver.index, math.clamp(newAggression,0,maxAggression))
+    if upcomingTurnDistance > 200 or math.abs(upcomingTurnAngle) < 30 then 
+        physics.setAIThrottleLimit(driver.index, 1)
+        driver.aiThrottleLimit= 1
+    else
+        physics.setAIThrottleLimit(driver.index, AI_THROTTLE_LIMIT)
+        driver.aiThrottleLimit= AI_THROTTLE_LIMIT
     end
 
-    physics.setAIAggression(driver.index, 0)
-    physics.setAILevel(driver.index, AI_LEVEL)
-    -- physics.setAILevel(driver.index, math.clamp(newLevel,minLevel,1))
-
+    if delta < 1 then
+        physics.setAILevel(driver.index, 1)
+    else
+        physics.setAILevel(driver.index, AI_LEVEL)
+    end
 end
 
 return ai
