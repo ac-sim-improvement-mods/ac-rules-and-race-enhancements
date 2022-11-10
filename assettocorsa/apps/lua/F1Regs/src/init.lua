@@ -2,7 +2,7 @@ require 'src/driver'
 
 --- Initialize F1 Regs and returns initialized state
 --- @return boolean
-function initialize()
+function initialize(sim)
     log("F1 Regs version: "..SCRIPT_VERSION)
     log("F1 Regs version: "..SCRIPT_VERSION_ID)
     log("CSP version: "..ac.getPatchVersionCode())
@@ -41,6 +41,8 @@ function initialize()
             DRS_FLAP = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 50
         },
         NOTIFICATIONS = {
+            X_POS = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or (sim.windowWidth / 2 - 360),
+            Y_POS = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 50,
             SCALE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
             DURATION = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 5
         }

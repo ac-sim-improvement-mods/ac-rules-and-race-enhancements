@@ -10,6 +10,7 @@ require 'src/init'
 require 'src/ui/debug_menu'
 require 'src/ui/settings_menu'
 require 'src/ui/notifications'
+local sim = ac.getSim()
 local audio = nil
 local _rc = require 'src/race_control'
 local rc = nil
@@ -34,12 +35,12 @@ local function errorCheck()
     local error = ac.getLastError()
     if error then
         log(error)
-        INITIALIZED = initialize()
+        INITIALIZED = initialize(sim)
     end
 end
 
 function script.update(dt)
-    local sim = ac.getSim()
+    sim = ac.getSim()
     errorCheck()
     restartCheck(sim)
 
@@ -56,7 +57,7 @@ function script.update(dt)
         end
     else
         if sim.isInMainMenu or sim.isSessionStarted then
-            INITIALIZED = initialize()
+            INITIALIZED = initialize(sim)
             audio = require 'src/audio'
         end
     end
@@ -64,6 +65,11 @@ end
 
 function script.windowMain(dt)
     -- JUST TO KEEP THE SCRIPT ALIVE
+    if INITIALIZED then
+        ui.transparentWindow('notifications',vec2(F1RegsConfig.data.NOTIFICATIONS.X_POS,F1RegsConfig.data.NOTIFICATIONS.Y_POS),vec2(800,800),function ()
+            notificationHandler(dt)
+        end)
+    end
 end
 
 function script.windowDebug(dt)
@@ -71,9 +77,5 @@ function script.windowDebug(dt)
 end
 
 function script.windowSettings(dt)
-    if rc ~= nil then settingsMenu(rc) end
-end
-
-function script.windowNotifications(dt)
-    notificationHandler(dt)
+    if rc ~= nil then settingsMenu(sim,rc) end
 end
