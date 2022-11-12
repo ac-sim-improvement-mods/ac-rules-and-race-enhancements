@@ -13,10 +13,12 @@ function settingsMenu(sim,rc)
     end
 
     ui.newLine(3)
-    if ui.button(ac.isWindowOpen('main') and "F1 Regulations App | ENABLED" or "F1 Regulations App | DISABLED", vec2(ui.windowWidth()-40,25), ui.ButtonFlags.None) then
+    if ui.button(ac.isWindowOpen('main') and "ENABLED" or "DISABLED", vec2(ui.windowWidth()-40,25), ui.ButtonFlags.None) then
         ac.setWindowOpen('main', not ac.isWindowOpen('main'))
     end
     ui.newLine(3)
+
+    if not ac.isWindowOpen('main') then return end
 
     ui.tabBar("settingstabbar", ui.TabBarFlags.None, function ()
         ui.tabItem("RULES", ui.TabItemFlags.None, function ()
