@@ -142,7 +142,9 @@ end
 --- @param rules F1RegsConfig.data.RULES
 --- @param driver 
 local function qualifySession(racecontrol,rules,driver)
-
+    if driver.car.isAIControlled then
+        ai.qualifying(driver)
+    end
 end
 
 --- Race Control for practice sessions

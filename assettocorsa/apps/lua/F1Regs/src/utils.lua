@@ -109,6 +109,7 @@ end
 function slider(cfg, section, key, from, to, mult, isbool, format, tooltip, preprocess)
   if not cfg.data[section] then error('No such section: '..section, 2) end
   if not cfg.data[section][key] then error('No such key: '..key, 2) end
+  ui.setNextItemWidth(ui.windowWidth()-75)
   local curValue = ui.slider('##'..section..key, mult < 0 and -mult / cfg.data[section][key] or cfg.data[section][key] * mult, from, to, format)
   if tooltip and (ui.itemHovered() or ui.itemActive()) then
     (type(tooltip) == 'function' and ui.tooltip or ui.setTooltip)(tooltip)

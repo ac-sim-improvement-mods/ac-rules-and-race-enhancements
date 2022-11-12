@@ -62,6 +62,11 @@ function debugMenu(rc)
             inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
             inLineBulletText("Track Position", driver.trackPosition.."/"..rc.carsOnTrackCount,space)
             inLineBulletText("Lap", (driver.car.lapCount+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
+            if sim.raceSessionType == ac.SessionType.Qualify then
+                inLineBulletText("Out Lap", upperBool(driver.outLap),space)
+                inLineBulletText("Flying Lap", upperBool(driver.flyingLap),space)
+                inLineBulletText("In Lap", upperBool(driver.inLap),space)
+            end
             inLineBulletText("Last Lap Time", ac.lapTimeToString(driver.car.previousLapTimeMs),space)
             inLineBulletText("Best Lap Time", ac.lapTimeToString(driver.car.bestLapTimeMs),space)
         end)
@@ -78,7 +83,6 @@ function debugMenu(rc)
 
         if driver.car.isAIControlled then
             ui.treeNode("[AI]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
-                physics.getCarInputControls()
                 inLineBulletText("Throttle Limit", "["..math.round(driver.aiThrottleLimitBase*100,2).."] "..math.round(driver.aiThrottleLimit*100,2),space)
                 inLineBulletText("Level", "["..math.round(driver.aiLevel*100,2).."] "..math.round(driver.car.aiLevel*100,2),space)
                 inLineBulletText("Aggression", "["..math.round(ac.load("app.F1Regs."..driver.index..".AI_Aggression")*100,2).."] "..math.round(driver.car.aiAggression*100,2),space)

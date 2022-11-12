@@ -43,7 +43,7 @@ function initialize(sim)
         NOTIFICATIONS = {
             X_POS = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or (sim.windowWidth / 2 - 360),
             Y_POS = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 50,
-            SCALE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
+            SCALE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,   
             DURATION = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 5
         }
     })
@@ -74,6 +74,8 @@ function initialize(sim)
         DRIVERS[i] = Driver(i)
 
         local driver = DRIVERS[i]
+
+        driver.aiThrottleLimitBase = driver.car.aiLevel
 
         if driver.car.isAIControlled and ac.load("app.F1Regs."..driver.index..".AI_Aggression") == nil then
             ac.store("app.F1Regs."..driver.index..".AI_Aggression",DRIVERS[i].aiAggression + 0.03)

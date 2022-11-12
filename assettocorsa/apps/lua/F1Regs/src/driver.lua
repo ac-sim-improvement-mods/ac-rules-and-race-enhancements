@@ -14,19 +14,30 @@ end
 Driver = class('Driver', function(carIndex)
     local sim = ac.getSim()
     local index = carIndex
-
     local car = ac.getCar(index)
     local name = ac.getDriverName(index)
-
     local lapsCompleted = car.lapCount
 
-    local aiLevel = car.aiLevel
-    local aiAggression = ac.load("app.F1Regs."..index..".AI_Aggression") == nil and car.aiAggression or ac.load("app.F1Regs."..index..".AI_Aggression")
+    ac.storage({
+        aiLevelDefault = car.aiLevel,
+        aiAggressionDefault = car.aiAggression
+    }, index)
+
+    local aiThrottleLimitBase = 1
+    local aiThrottleLimit = 1
+    local aiLevel = 0.9
+    local aiAggression = 0
     local aiPrePitFuel = 0
     local aiPitCall = false
     local aiPitting = false
-    local aiThrottleLimitBase = car.aiLevel
-    local aiThrottleLimit = car.aiLevel
+    local aiSplineOffset = 0
+    local aiMoveAside = false
+    local aiSpeedUp = false
+
+    local outLap = false
+    local flyingLap = false
+    local inLap = false
+    local inLapCount = 0
 
     local pitstopCount = 0
     local pitstopTime = 0
@@ -57,19 +68,32 @@ Driver = class('Driver', function(carIndex)
     local returnPostionTimer = -1
 
     local fuelcons = ac.INIConfig.carData(index, 'fuel_cons.ini'):get('FUEL_EVAL', 'KM_PER_LITER', 0.0)
-    local fuelload = ((ac.getSession(sim.currentSessionIndex).laps + 2) * sim.trackLengthM / 1000) / (fuelcons - (fuelcons * 0.1))
+    local fuelload = 0
+    local fuelPerLap =  (sim.trackLengthM / 1000) / (fuelcons - (fuelcons * 0.1))
 
-    if car.isAIControlled and not ac.getSim().isSessionStarted then
+    if sim.raceSessionType == ac.SessionType.Race then 
+        fuelload = ((ac.getSession(sim.currentSessionIndex).laps + 2) * fuelPerLap)
+    elseif sim.raceSessionType == ac.SessionType.Qualify then
+        fuelload = 3.5 * fuelPerLap
+    end
+
+    if car.isAIControlled and not sim.isSessionStarted then
         physics.setCarFuel(index, fuelload)
     end
 
     local aiTyreAvgRandom = randomizer(index,F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE_RANGE)
     local aiTyreSingleRandom = randomizer(index, F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE_RANGE)
 
+    local stored = ac.storage({
+        aiLevelDefault = car.aiLevel,
+        aiAggressionDefault = car.aiAggression
+    }, index)
+
     log("[Loaded] Driver ["..index.."] "..name)
 
     return {
-        aiThrottleLimitBase = aiThrottleLimitBase, aiThrottleLimit = aiThrottleLimit,
+        aiSplineOffset = aiSplineOffset, aiSpeedUp = aiSpeedUp, aiMoveAside = aiMoveAside, inLapCount = inLapCount, inLap = inLap, flyingLap = flyingLap, outLap = outLap,
+        fuelPerLap = fuelPerLap, aiThrottleLimitBase = aiThrottleLimitBase, aiThrottleLimit = aiThrottleLimit,
         pitlaneTime = pitlaneTime, pitlane = pitlane, pitstop = pitstop, pitstopTime = pitstopTime, pitted = pitted, pitstopCount = pitstopCount, tyreLaps = tyreLaps, lapPitted = lapPitted,
         drsBeepFx = drsBeepFx, drsFlapFx = drsFlapFx,
         drsZoneNextId = drsZoneNextId, drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, drsZoneId = drsZoneId, 
