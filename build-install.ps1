@@ -1,4 +1,4 @@
-& "$PSScriptRoot\_build.ps1"
+& "$PSScriptRoot\build.ps1"
 
 $ac_dir = "E:\Games\Steam\steamapps\common\"
 
