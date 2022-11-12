@@ -1,9 +1,22 @@
 local popup = require 'src/ui/notifications'
 
+SPLINE_OFFSET = 0
+
 function settingsMenu(sim,rc)
     local scriptVersion = SCRIPT_VERSION.." ("..SCRIPT_VERSION_CODE..")"
     ac.setWindowTitle("settings", "F1 Regs Settings | "..scriptVersion)
-    ui.pushFont(ui.Font.Small)
+
+    if sim.isInMainMenu then
+        ui.pushFont(ui.Font.Title)
+        ui.textAligned('F1 Regulations Settings', vec2(0.5, 0.5), vec2(ui.availableSpaceX(), 34))
+        ui.popFont()
+    end
+
+    ui.newLine(3)
+    if ui.button(ac.isWindowOpen('main') and "F1 Regulations App | ENABLED" or "F1 Regulations App | DISABLED", vec2(ui.windowWidth()-40,25), ui.ButtonFlags.None) then
+        ac.setWindowOpen('main', not ac.isWindowOpen('main'))
+    end
+    ui.newLine(3)
 
     ui.tabBar("settingstabbar", ui.TabBarFlags.None, function ()
         ui.tabItem("RULES", ui.TabItemFlags.None, function ()
@@ -110,47 +123,49 @@ function settingsMenu(sim,rc)
 
                 ui.newLine(1)
 
-                if driver.car.isAIControlled then
-                    local buttonFlags = ui.ButtonFlags.None
-                    if driver.aiPitting or driver.car.isInPitlane then
-                        buttonFlags = ui.ButtonFlags.Disabled
-                    end
-                    if ui.button("FORCE FOCUSED AI TO PIT NOW", vec2(ui.windowWidth()-77,25), buttonFlags) then
-                        driver.aiPrePitFuel = driver.car.fuel
-                        physics.setCarFuel(driver.index, 0.1)
-                        driver.aiPitCall = true
-                    end
+                if not sim.isInMainMenu then
+                    if driver.car.isAIControlled then
+                        local buttonFlags = ui.ButtonFlags.None
+                        if driver.aiPitting or driver.car.isInPitlane then
+                            buttonFlags = ui.ButtonFlags.Disabled
+                        end
+                        if ui.button("FORCE FOCUSED AI TO PIT NOW", vec2(ui.windowWidth()-77,25), buttonFlags) then
+                            driver.aiPrePitFuel = driver.car.fuel
+                            physics.setCarFuel(driver.index, 0.1)
+                            driver.aiPitCall = true
+                        end
 
-                    -- if ui.button("Awaken Car", vec2(ui.windowWidth()-77,25), ui.ButtonFlags.None) then
-                    --     driver.aiPrePitFuel = 140
-                    --     physics.setCarFuel(driver.index,140)
-                    --     physics.awakeCar(driver.index)
-                    --     physics.setCarFuel(driver.index,140)
-                    --     physics.resetCarState(driver.index)
-                    --     physics.engageGear(driver.index,1)
-                    --     physics.setEngineRPM(driver.index, 13000)
-                    --     physics.setCarVelocity(driver.index,vec3(0,0,5))
-                    -- end
-                else
-                    if ui.button("FORCE ALL AI TO PIT NOW", vec2(ui.windowWidth()-77,25), ui.ButtonFlags.None) then
-                        for i=0, #DRIVERS do
-                            local driver = DRIVERS[i]
-                            if driver.car.isAIControlled then
-                                driver.aiPrePitFuel = driver.car.fuel
-                                physics.setCarFuel(driver.index, 0.1)
-                                driver.aiPitCall = true
+                        -- if ui.button("Awaken Car", vec2(ui.windowWidth()-77,25), ui.ButtonFlags.None) then
+                        --     driver.aiPrePitFuel = 140
+                        --     physics.setCarFuel(driver.index,140)
+                        --     physics.awakeCar(driver.index)
+                        --     physics.setCarFuel(driver.index,140)
+                        --     physics.resetCarState(driver.index)
+                        --     physics.engageGear(driver.index,1)
+                        --     physics.setEngineRPM(driver.index, 13000)
+                        --     physics.setCarVelocity(driver.index,vec3(0,0,5))
+                        -- end
+                    else
+                        if ui.button("FORCE ALL AI TO PIT NOW", vec2(ui.windowWidth()-77,25), ui.ButtonFlags.None) then
+                            for i=0, #DRIVERS do
+                                local driver = DRIVERS[i]
+                                if driver.car.isAIControlled then
+                                    driver.aiPrePitFuel = driver.car.fuel
+                                    physics.setCarFuel(driver.index, 0.1)
+                                    driver.aiPitCall = true
+                                end
                             end
                         end
-                    end
 
-                    -- if ui.button("TELEPORT ALL AI TO PIT NOW", vec2(ui.windowWidth()-77,25), ui.ButtonFlags.None) then
-                    --     for i=0, #DRIVERS do
-                    --         local driver = DRIVERS[i]
-                    --         if driver.car.isAIControlled then
-                    --             physics.teleportCarTo(driver.index,ac.SpawnSet.Pits)
-                    --         end
-                    --     end
-                    -- end
+                        -- if ui.button("TELEPORT ALL AI TO PIT NOW", vec2(ui.windowWidth()-77,25), ui.ButtonFlags.None) then
+                        --     for i=0, #DRIVERS do
+                        --         local driver = DRIVERS[i]
+                        --         if driver.car.isAIControlled then
+                        --             physics.teleportCarTo(driver.index,ac.SpawnSet.Pits)
+                        --         end
+                        --     end
+                        -- end
+                    end
                 end
             end
         
@@ -257,9 +272,16 @@ function settingsMenu(sim,rc)
             "Reboot Assetto Corsa if the app doesn't have access to Physics",
             function (v) return math.round(v, 0) end)
 
-            AI_THROTTLE_LIMIT = ui.slider("AI Throttle Limit", AI_THROTTLE_LIMIT, 0.01, 1, '%.3f')
-            AI_LEVEL = ui.slider("AI Level", AI_LEVEL, 0.01, 1, '%.3f')
-            AI_AGGRESSION = ui.slider("AI Aggression", AI_AGGRESSION, 0.01, 1, '%.3f')
+            -- if ui.button("AI COMP OVERRIDE "..upperBool(AI_COMP_OVERRIDE), vec2(ui.windowWidth()-77,25), ui.ButtonFlags.None) then
+            --     AI_COMP_OVERRIDE = not AI_COMP_OVERRIDE
+            -- end
+
+            -- AI_THROTTLE_LIMIT = ui.slider("AI Throttle Limit", AI_THROTTLE_LIMIT, 0.01, 1, '%.3f')
+            -- AI_LEVEL = ui.slider("AI Level", AI_LEVEL, 0.01, 1, '%.3f')
+            -- AI_AGGRESSION = ui.slider("AI Aggression", AI_AGGRESSION, 0.01, 1, '%.3f')
+
+            -- SPLINE_OFFSET = ui.slider("SPLINE", SPLINE_OFFSET, -10, 10, '%.3f')
+            -- physics.setAISplineOffset(sim.focusedCar, SPLINE_OFFSET)
 
             ui.newLine(1)
         end)

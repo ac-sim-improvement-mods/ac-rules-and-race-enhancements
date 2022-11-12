@@ -1,6 +1,6 @@
-SCRIPT_VERSION_CODE = 9903
+SCRIPT_VERSION_CODE = 10091
 SCRIPT_VERSION = "0.9.9.0-alpha"
-SCRIPT_BUILD_DATE = "2022-11-10"
+SCRIPT_BUILD_DATE = "2022-11-12"
 CSP_MIN_VERSION_CODE = 2144
 CSP_MIN_VERSION = "1.79"
 
@@ -44,10 +44,14 @@ function script.update(dt)
     errorCheck()
     restartCheck(sim)
 
-    -- A simple On/Off for F1 Regs
-    if not ac.isWindowOpen("main") then return end
+    if sim.isInMainMenu then
+        ac.setWindowOpen('settings_setup', true)
+        ac.setWindowOpen('main_setup', true)
+    end
 
     if INITIALIZED then
+        -- A simple On/Off for F1 Regs
+        if not ac.isWindowOpen('main') then return end
         if REBOOT and F1RegsConfig.data.RULES.PHYSICS_REBOOT == 1 then ac.restartAssettoCorsa() end
         if not sim.isInMainMenu and not sim.isSessionStarted then
             RESTARTED = false
@@ -65,6 +69,7 @@ end
 
 function script.windowMain(dt)
     -- JUST TO KEEP THE SCRIPT ALIVE
+
     if INITIALIZED then
         ui.transparentWindow('notifications',vec2(F1RegsConfig.data.NOTIFICATIONS.X_POS,F1RegsConfig.data.NOTIFICATIONS.Y_POS),vec2(800,800),function ()
             notificationHandler(dt)
@@ -76,6 +81,6 @@ function script.windowDebug(dt)
     if rc ~= nil then debugMenu(rc) end
 end
 
-function script.windowSettings(dt)
-    if rc ~= nil then settingsMenu(sim,rc) end
+function script.windowSettings()
+   settingsMenu(sim)
 end
