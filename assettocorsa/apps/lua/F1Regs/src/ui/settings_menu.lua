@@ -104,7 +104,7 @@ function settingsMenu(sim)
         ui.tabItem("AI", ui.TabItemFlags.None, function ()
             ui.newLine(1)
 
-            slider(F1RegsConfig, 'RULES', 'AI_AGGRESSION_RUBBERBAND', 0, 1, 1, true, F1RegsConfig.data.RULES.AI_AGGRESSION_RUBBERBAND == 1 and "Alternate AI Attack: ENABLED" or "Alternate AI Attack: DISABLED", 
+            slider(F1RegsConfig, 'RULES', 'AI_AGGRESSION_RUBBERBAND', 0, 1, 1, true, F1RegsConfig.data.RULES.AI_AGGRESSION_RUBBERBAND == 1 and "Alternate AI Strength: ENABLED" or "Alternate AI Strength: DISABLED", 
             'Increase AI aggression when attacking',
             function (v) return math.round(v, 0) end)
 
