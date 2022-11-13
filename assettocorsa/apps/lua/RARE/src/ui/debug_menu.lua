@@ -1,6 +1,6 @@
 function debugMenu(rc,error)
     local sim = ac.getSim()
-    local windowName = "F1 Regs Debug"
+    local windowName = SCRIPT_SHORT_NAME.." Debug"
     local scriptVersion = SCRIPT_VERSION.." ("..SCRIPT_VERSION_CODE..")"
     local windowTitle = windowName.." | "..scriptVersion
 
@@ -24,14 +24,14 @@ function debugMenu(rc,error)
         ui.treeNode("[INFO]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
             inLineBulletText("CSP Version", ac.getPatchVersion(),space)
             inLineBulletText("CSP Version Code", ac.getPatchVersionCode(),space)
-            inLineBulletText("F1 Regs Version", SCRIPT_VERSION,space)
-            inLineBulletText("F1 Regs Version Code", SCRIPT_VERSION_CODE,space)
-            inLineBulletText("F1 Regs Release Date", SCRIPT_BUILD_DATE,space)
+            inLineBulletText(SCRIPT_SHORT_NAME.." Version", SCRIPT_VERSION,space)
+            inLineBulletText(SCRIPT_SHORT_NAME.." Version Code", SCRIPT_VERSION_CODE,space)
+            inLineBulletText(SCRIPT_SHORT_NAME.." Release Date", SCRIPT_BUILD_DATE,space)
             inLineBulletText("Current Date", os.date("%Y-%m-%d"),space)
         end)
 
         ui.treeNode("["..sessionTypeString(sim).." SESSION]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
-            inLineBulletText("F1 Regs Enabled", upperBool(ac.isWindowOpen("main")),space)
+            inLineBulletText(SCRIPT_SHORT_NAME.." Enabled", upperBool(ac.isWindowOpen("main")),space)
             inLineBulletText("Race Started", upperBool(sim.isSessionStarted),space)
             inLineBulletText("Physics Allowed", upperBool(physics.allowed()),space)
             inLineBulletText("Physics Late", sim.physicsLate,space)
@@ -40,7 +40,7 @@ function debugMenu(rc,error)
             inLineBulletText("Leader Lap", (rc.leaderCompletedLaps+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
         end)
 
-        if F1RegsConfig.data.RULES.VSC_RULES == 1 then
+        if RAREConfig.data.RULES.VSC_RULES == 1 then
             ui.treeNode("[VSC]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
                 inLineBulletText("VSC Called", upperBool(VSC_CALLED),space)
                 inLineBulletText("VSC Deployed", upperBool(VSC_DEPLOYED),space)
@@ -90,8 +90,8 @@ function debugMenu(rc,error)
                 inLineBulletText("Throttle Limit", "["..math.round(driver.aiThrottleLimitBase*100,2).."] "..math.round(driver.aiThrottleLimit*100,2),space)
                 inLineBulletText("Level", "["..math.round(driver.aiLevel*100,2).."] "..math.round(driver.car.aiLevel*100,2),space)
                 inLineBulletText("Aggression", "["..math.round(driver.aiAggression*100,2).."] "..math.round(driver.car.aiAggression*100,2),space)
-                inLineBulletText("Tyre Life Avg Limit", F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom.." %",space,driver)
-                inLineBulletText("Tyre Life Single Limit", F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom.." %",space,driver)
+                inLineBulletText("Tyre Life Avg Limit", RAREConfig.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom.." %",space,driver)
+                inLineBulletText("Tyre Life Single Limit", RAREConfig.data.RULES.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom.." %",space,driver)
                 inLineBulletText("Pitting New Tyres", upperBool(driver.aiPitting),space)
             end)
         end
@@ -140,7 +140,7 @@ function debugMenu(rc,error)
             end)
         end
 
-        if F1RegsConfig.data.RULES.DRS_RULES == 1 then
+        if RAREConfig.data.RULES.DRS_RULES == 1 then
     
             ui.treeNode("[DRS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
                 if driver.car.drsPresent then
@@ -151,7 +151,7 @@ function debugMenu(rc,error)
                         inLineBulletText("Enabled", upperBool(rc.drsEnabled),space)
                         if driver.car.speedKmh >= 1 then inLineBulletText("Delta", math.round(delta,3),space)
                         else inLineBulletText("Delta","---",space )end
-                        inLineBulletText("In Gap", upperBool((delta <= F1RegsConfig.data.RULES.DRS_GAP_DELTA/1000 and delta > 0.0) and true or false),space)
+                        inLineBulletText("In Gap", upperBool((delta <= RAREConfig.data.RULES.DRS_GAP_DELTA/1000 and delta > 0.0) and true or false),space)
                         inLineBulletText("Check", upperBool(driver.drsCheck),space)
                         inLineBulletText("Crossed Detection", upperBool(crossedDetectionLine(driver)),space)
                         inLineBulletText("Available", upperBool(driver.drsAvailable),space)
@@ -189,7 +189,7 @@ function debugMenu(rc,error)
             inLineBulletText("Track Wetness", math.round(sim.rainWetness*100,2).."%",space)
             inLineBulletText("Track Puddles", math.round(sim.rainWater*100,2).."%",space)
             inLineBulletText("Total Wetness", math.round(totalWetness*100,2).."%",space)
-            inLineBulletText("Total Wetness Limit", math.round(F1RegsConfig.data.RULES.DRS_WET_LIMIT,2).."%",space)
+            inLineBulletText("Total Wetness Limit", math.round(RAREConfig.data.RULES.DRS_WET_LIMIT,2).."%",space)
             inLineBulletText("Wet Track", upperBool(rc.wetTrack),space)
         end)
 

@@ -136,7 +136,7 @@ end
 ---@return boolean
 function inDrsRange(driver1)
     local delta = driver1.carAheadDelta
-    return (delta <= F1RegsConfig.data.RULES.DRS_GAP_DELTA/1000 and delta > 0.0) and true or false
+    return (delta <= RAREConfig.data.RULES.DRS_GAP_DELTA/1000 and delta > 0.0) and true or false
 end
 
 function inDeployZone(driver)

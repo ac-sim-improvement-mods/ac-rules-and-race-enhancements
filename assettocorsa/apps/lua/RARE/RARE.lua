@@ -1,3 +1,5 @@
+SCRIPT_NAME = "Rules and Race Enhancements"
+SCRIPT_SHORT_NAME = "RARE"
 SCRIPT_VERSION_CODE = 10270
 SCRIPT_VERSION = "1.0.2.7-preview0"
 SCRIPT_BUILD_DATE = "2022-11-13"
@@ -19,7 +21,7 @@ INITIALIZED = false
 RESTARTED = false
 REBOOT = false
 
-F1RegsConfig = nil
+RAREConfig = nil
 
 --- Check if AC has restarted
 --- @param sim StateSim
@@ -53,9 +55,9 @@ function script.update(dt)
     end
 
     if INITIALIZED then
-        -- A simple On/Off for F1 Regs
+        -- A simple On/Off for the app
         if not ac.isWindowOpen('main') then return end
-        if REBOOT and F1RegsConfig.data.RULES.PHYSICS_REBOOT == 1 then ac.restartAssettoCorsa() end
+        if REBOOT and RAREConfig.data.RULES.PHYSICS_REBOOT == 1 then ac.restartAssettoCorsa() end
         if not sim.isInMainMenu and not sim.isSessionStarted then
             RESTARTED = false
         else
@@ -74,7 +76,7 @@ function script.windowMain(dt)
     -- JUST TO KEEP THE SCRIPT ALIVE
 
     if INITIALIZED then
-        ui.transparentWindow('notifications',vec2(F1RegsConfig.data.NOTIFICATIONS.X_POS,F1RegsConfig.data.NOTIFICATIONS.Y_POS),vec2(800,800),function ()
+        ui.transparentWindow('notifications',vec2(RAREConfig.data.NOTIFICATIONS.X_POS,RAREConfig.data.NOTIFICATIONS.Y_POS),vec2(800,800),function ()
             notificationHandler(dt)
         end)
     end

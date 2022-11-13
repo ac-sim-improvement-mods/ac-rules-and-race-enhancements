@@ -1,7 +1,7 @@
 --- Log messages
 --- @param message string
 function log(message)
-    ac.log("[F1Regs] "..message)
+    ac.log("[RARE] "..message)
 end
 
 --- Lines up bullet text label with text
@@ -23,16 +23,16 @@ function inLineBulletText(label,text,space)
     elseif label == "Delta" then
         if text == "---" then
         ui.textColored("---", rgbm(1,1,1,1))
-        elseif text <= F1RegsConfig.data.RULES.DRS_GAP_DELTA/1000 and text > 0 then
+        elseif text <= RAREConfig.data.RULES.DRS_GAP_DELTA/1000 and text > 0 then
             ui.textColored(text, rgbm(0,1,0,1))
         else
             ui.textColored(text, rgbm(1,0,0,1))
         end
     elseif string.find(label, "Tyre Life") and not string.find(label, "Limit") then
-        if text < F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom or
-            (string.find(label, "Average") and text < F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom) then
+        if text < RAREConfig.data.RULES.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom or
+            (string.find(label, "Average") and text < RAREConfig.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom) then
             ui.textColored(text.." %", rgbm(1,0,0,1))
-        elseif text < F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom then
+        elseif text < RAREConfig.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom then
             ui.textColored(text.." %", rgbm(1,1,0,1))
         else
             ui.textColored(text.." %", rgbm(1,1,1,1))
@@ -69,7 +69,7 @@ end
 MappedConfig = class('MappedConfig', function(filename, map)
   local ini = ac.INIConfig.load(filename)
   local data = ini:mapConfig(map)
-  local key = 'app.F1Regs:'..filename
+  local key = 'app.RARE:'..filename
   -- local original = stringify.tryParse(ac.load(key))
   local original = nil -- TODO: REMOVE THIS LINE
   if not original then
@@ -142,7 +142,7 @@ function slider(cfg, section, key, from, to, mult, isbool, format, tooltip, prep
   return curValue
 end
 
---- Returns state of installed CSP version being compatible with F1 Regs
+--- Returns state of installed CSP version being compatible with this app
 --- @return boolean
 function compatibleCspVersion()
     return ac.getPatchVersionCode() >= CSP_MIN_VERSION_CODE and true or false

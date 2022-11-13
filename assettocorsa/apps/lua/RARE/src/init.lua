@@ -1,15 +1,15 @@
 require 'src/driver'
 local connect = require 'src/connection'
 
---- Initialize F1 Regs and returns initialized state
+--- Initialize RARE and returns initialized state
 --- @return boolean
 function initialize(sim)
-    log("F1 Regs version: "..SCRIPT_VERSION)
-    log("F1 Regs version: "..SCRIPT_VERSION_CODE)
+    log(SCRIPT_NAME.." version: "..SCRIPT_VERSION)
+    log(SCRIPT_NAME.." version: "..SCRIPT_VERSION_CODE)
     log("CSP version: "..ac.getPatchVersionCode())
 
     if not compatibleCspVersion() then
-        ui.toast(ui.Icons.Warning, "[F1Regs] Incompatible CSP version. CSP "..CSP_MIN_VERSION.." ".."("..CSP_MIN_VERSION_CODE..")".." required!")
+        ui.toast(ui.Icons.Warning, "[RARE] Incompatible CSP version. CSP "..CSP_MIN_VERSION.." ".."("..CSP_MIN_VERSION_CODE..")".." required!")
         log("[WARN] Incompatible CSP version. CSP "..CSP_MIN_VERSION.." ".."("..CSP_MIN_VERSION_CODE..")".." required!")
         initialize()
         return false
@@ -17,7 +17,7 @@ function initialize(sim)
 
     local configFile = "settings.ini"
 
-    F1RegsConfig = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/"..configFile, {
+    RAREConfig = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/RARE/"..configFile, {
         RULES = { 
             DRS_RULES = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
             DRS_ACTIVATION_LAP = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 3,
@@ -49,9 +49,9 @@ function initialize(sim)
         }
     })
 
-    log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/"..configFile)
+    log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/RARE/"..configFile)
 
-    if F1RegsConfig.data.RULES.PHYSICS_REBOOT == 1 then
+    if RAREConfig.data.RULES.PHYSICS_REBOOT == 1 then
         if not physics.allowed() then
             local trackSurfaces = MappedConfig(ac.getTrackDataFilename('surfaces.ini'), {
                 _SCRIPTING_PHYSICS = { ALLOW_APPS = 'bullshit' },

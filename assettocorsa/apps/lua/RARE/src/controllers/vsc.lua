@@ -36,14 +36,14 @@ local function enableVSC(sim,best_lap_times)
             
             if VSC_END_TIMER == 1000 and sim.raceFlagType == not ac.FlagType.Caution then
                 ac.log("Virtual Safety Car is ending soon!")
-                ui.toast(ui.Icons.Warning, "[F1Regs] Virtual Safety Car is ending soon!")
+                ui.toast(ui.Icons.Warning, "[RARE] Virtual Safety Car is ending soon!")
             end
             VSC_END_TIMER = VSC_END_TIMER - 1
         else
             physics.overrideRacingFlag(ac.FlagType.None)
             if sim.raceFlagType == not ac.FlagType.Caution then
                 ac.log("Virtual Safety Car ended!")
-                ui.toast(ui.Icons.Warning, "[F1Regs] Virtual Safety Car ended!")
+                ui.toast(ui.Icons.Warning, "[RARE] Virtual Safety Car ended!")
                 VSC_DEPLOYED = false
             else
                 VSC_END_TIMER = 500
@@ -62,7 +62,7 @@ local function controlVSC(sim,driver)
         if driver.car.isAIControlled then
             physics.setAIThrottleLimit(driver.index, 0.3)
         else
-            ui.toast(ui.Icons.Warning, "[F1Regs] Exceeding the pace of the Virtual Safety Car!")
+            ui.toast(ui.Icons.Warning, "[RARE] Exceeding the pace of the Virtual Safety Car!")
         end
     end
 end
