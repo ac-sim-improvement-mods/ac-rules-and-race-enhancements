@@ -1,3 +1,5 @@
+local connect = require 'src/connection'
+
 local function randomizer(index,range)
     math.random()
     for i=0, math.random(index) do
@@ -18,15 +20,10 @@ Driver = class('Driver', function(carIndex)
     local name = ac.getDriverName(index)
     local lapsCompleted = car.lapCount
 
-    ac.storage({
-        aiLevelDefault = car.aiLevel,
-        aiAggressionDefault = car.aiAggression
-    }, index)
-
-    local aiThrottleLimitBase = 1
+    local aiThrottleLimitBase = 0 
     local aiThrottleLimit = 1
-    local aiLevel = 0.9
-    local aiAggression = 0
+    local aiLevel = 0
+    local aiAggression = 0 -- 
     local aiPrePitFuel = 0
     local aiPitCall = false
     local aiPitting = false
@@ -83,11 +80,6 @@ Driver = class('Driver', function(carIndex)
 
     local aiTyreAvgRandom = randomizer(index,F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE_RANGE)
     local aiTyreSingleRandom = randomizer(index, F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE_RANGE)
-
-    local stored = ac.storage({
-        aiLevelDefault = car.aiLevel,
-        aiAggressionDefault = car.aiAggression
-    }, index)
 
     log("[Loaded] Driver ["..index.."] "..name)
 

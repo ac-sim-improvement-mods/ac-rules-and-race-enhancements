@@ -8,6 +8,8 @@ local F1RegsData = ac.connect({
     drsAvailable = ac.StructItem.array(ac.StructItem.boolean(),32),
     carAhead = ac.StructItem.array(ac.StructItem.int16(),32),
     carAheadDelta = ac.StructItem.array(ac.StructItem.float(),32),
+    aiLevelDefault = ac.StructItem.array(ac.StructItem.float(),32),
+    aiAggressionDefault = ac.StructItem.array(ac.StructItem.float(),32),
 },false,ac.SharedNamespace.Shared)
 
 --- Stores race control data
@@ -24,6 +26,21 @@ function connection.storeDriverData(driver)
     F1RegsData.drsAvailable[driver.index] = driver.drsAvailable
     F1RegsData.carAhead[driver.index] = driver.carAhead
     F1RegsData.carAheadDelta[driver.index] = driver.carAheadDelta
+end
+
+--- Stores default AI level and aggression
+--- @param driver Driver
+function connection.storeDefaultData(driver)
+    F1RegsData.aiLevelDefault[driver.index] = driver.car.aiLevel
+    F1RegsData.aiAggressionDefault[driver.index] = driver.car.aiAggression
+end
+
+function connection.getDefaultLevel(index)
+    return F1RegsData.aiLevelDefault[index]
+end
+
+function connection.getDefaultAggression(index)
+    return F1RegsData.aiAggressionDefault[index]
 end
 
 return connection

@@ -1,8 +1,8 @@
 ---@diagnostic disable: return-type-mismatch
+local connect = require 'src/connection'
 local drs = require 'src/controllers/drs'
 local vsc = require 'src/controllers/vsc'
 local ai = require 'src/controllers/ai'
-local connect = require 'src/connection'
 local popup = require 'src/ui/notifications'
 
 local rc = {}
@@ -197,7 +197,6 @@ function rc.getRaceControl(dt,sim)
     local drivers = DRIVERS
     local lastUpdate = racecontrol
     racecontrol = update(sim,drivers)
-
 
     for i=0, #drivers do
         local driver = drivers[i]

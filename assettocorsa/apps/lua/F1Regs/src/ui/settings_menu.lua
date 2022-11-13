@@ -2,21 +2,36 @@ local popup = require 'src/ui/notifications'
 
 SPLINE_OFFSET = 0
 
-function settingsMenu(sim,rc)
+function settingsMenu(sim)
     local scriptVersion = SCRIPT_VERSION.." ("..SCRIPT_VERSION_CODE..")"
     ac.setWindowTitle("settings", "F1 Regs Settings | "..scriptVersion)
 
     if sim.isInMainMenu then
+        ui.newLine(3)
+
         ui.pushFont(ui.Font.Title)
-        ui.textAligned('F1 Regulations Settings', vec2(0.5, 0.5), vec2(ui.availableSpaceX(), 34))
+        ui.textAligned('F1 Regulations', vec2(0.5, 0.5), vec2(ui.availableSpaceX(), 34))
         ui.popFont()
+    
+        
+        ui.sameLine(0,0)
+        ui.drawRectFilled(vec2(350,30),vec2(430,60),ac.isWindowOpen('main') and rgbm(0,1,0,0.5) or rgbm(1,0,0,0.5))
+    
+        ui.sameLine(350,0)
+        ui.setCursor(vec2(350,30))
+        if ui.button(ac.isWindowOpen('main') and "ENABLED" or "DISABLED", vec2(80,30), ui.ButtonFlags.None) then
+            ac.setWindowOpen('main', not ac.isWindowOpen('main'))
+        end
+        if ui.itemHovered() then
+            ui.setTooltip("Enable or Disable F1 Regulations App")
+        end
     end
 
-    ui.newLine(3)
-    if ui.button(ac.isWindowOpen('main') and "ENABLED" or "DISABLED", vec2(ui.windowWidth()-40,25), ui.ButtonFlags.None) then
-        ac.setWindowOpen('main', not ac.isWindowOpen('main'))
+    if ac.isWindowOpen('main') then
+        ui.newLine(3)
+    else
+        ui.newLine(0)
     end
-    ui.newLine(3)
 
     if not ac.isWindowOpen('main') then return end
 
@@ -48,7 +63,7 @@ function settingsMenu(sim,rc)
                 end
             end
             ui.newLine(1)
-        
+
             -- ui.header("VSC:")
             -- slider(F1RegsConfig, 'RULES', 'VSC_RULES', 0, 1, 1, true, F1RegsConfig.data.RULES.VSC_RULES == 1 and "VSC Rules: ENABLED" or "VSC Rules: DISABLED", 
             -- 'Enable a Virtual Safety Car to be deployed',
@@ -62,15 +77,15 @@ function settingsMenu(sim,rc)
             --     function (v) return math.round(v, 0) end)
             -- end
             -- ui.newLine(1)
-        
+
             ui.header("PIT STOPS:")
             slider(F1RegsConfig, 'RULES', 'RACE_REFUELING', 0, 1, 1, true, F1RegsConfig.data.RULES.RACE_REFUELING == 1 and "Race Refueling: ENABLED" or "Race Refueling: DISABLED", 
             'Enable or disable refueling during a race',
             function (v) return math.round(v, 0) end)
-            
+
             ui.newLine(1)
             -- ui.newLine(5)
-        
+
             -- if ui.button("APPLY SETTINGS", vec2(ui.windowWidth()-40,25), ui.ButtonFlags.None) then
             --     -- Load config file
             --     F1RegsConfig = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/F1Regs/settings.ini", {
@@ -98,7 +113,7 @@ function settingsMenu(sim,rc)
             function (v) return math.round(v, 0) end)
 
             ui.newLine(1)
-            
+
             local driver = DRIVERS[sim.focusedCar]
             if F1RegsConfig.data.RULES.AI_FORCE_PIT_TYRES == 1 then
 
@@ -288,4 +303,6 @@ function settingsMenu(sim,rc)
             ui.newLine(1)
         end)
     end)
+
+    ui.setCursor(vec2(0,601))
 end

@@ -1,6 +1,6 @@
-SCRIPT_VERSION_CODE = 10096
+SCRIPT_VERSION_CODE = 10267
 SCRIPT_VERSION = "0.9.9.0-alpha"
-SCRIPT_BUILD_DATE = "2022-11-12"
+SCRIPT_BUILD_DATE = "2022-11-13"
 CSP_MIN_VERSION_CODE = 2144
 CSP_MIN_VERSION = "1.79"
 
@@ -36,12 +36,15 @@ local function errorCheck()
     if error then
         log(error)
         INITIALIZED = initialize(sim)
+
+        return error
     end
+
+    return nil
 end
 
 function script.update(dt)
     sim = ac.getSim()
-    errorCheck()
     restartCheck(sim)
 
     if sim.isInMainMenu then
@@ -78,7 +81,7 @@ function script.windowMain(dt)
 end
 
 function script.windowDebug(dt)
-    if rc ~= nil then debugMenu(rc) end
+    if rc ~= nil then debugMenu(rc,errorCheck()) end
 end
 
 function script.windowSettings()

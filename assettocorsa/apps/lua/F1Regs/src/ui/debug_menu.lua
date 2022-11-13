@@ -1,4 +1,4 @@
-function debugMenu(rc)
+function debugMenu(rc,error)
     local sim = ac.getSim()
     local windowName = "F1 Regs Debug"
     local scriptVersion = SCRIPT_VERSION.." ("..SCRIPT_VERSION_CODE..")"
@@ -16,6 +16,10 @@ function debugMenu(rc)
         local math = math
         local space = 200
         ui.pushFont(ui.Font.Small)
+
+        if error then
+            ui.textColored(error, rgbm(1,0,0,1))
+        end
 
         ui.treeNode("[INFO]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
             inLineBulletText("CSP Version", ac.getPatchVersion(),space)
@@ -85,7 +89,7 @@ function debugMenu(rc)
             ui.treeNode("[AI]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
                 inLineBulletText("Throttle Limit", "["..math.round(driver.aiThrottleLimitBase*100,2).."] "..math.round(driver.aiThrottleLimit*100,2),space)
                 inLineBulletText("Level", "["..math.round(driver.aiLevel*100,2).."] "..math.round(driver.car.aiLevel*100,2),space)
-                inLineBulletText("Aggression", "["..math.round(ac.load("app.F1Regs."..driver.index..".AI_Aggression")*100,2).."] "..math.round(driver.car.aiAggression*100,2),space)
+                inLineBulletText("Aggression", "["..math.round(driver.aiAggression*100,2).."] "..math.round(driver.car.aiAggression*100,2),space)
                 inLineBulletText("Tyre Life Avg Limit", F1RegsConfig.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom.." %",space,driver)
                 inLineBulletText("Tyre Life Single Limit", F1RegsConfig.data.RULES.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom.." %",space,driver)
                 inLineBulletText("Pitting New Tyres", upperBool(driver.aiPitting),space)

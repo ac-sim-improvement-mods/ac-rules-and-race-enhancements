@@ -1,4 +1,5 @@
 require 'src/driver'
+local connect = require 'src/connection'
 
 --- Initialize F1 Regs and returns initialized state
 --- @return boolean
@@ -75,13 +76,16 @@ function initialize(sim)
 
         local driver = DRIVERS[i]
 
-        driver.aiThrottleLimitBase = driver.car.aiLevel
-
-        if driver.car.isAIControlled and ac.load("app.F1Regs."..driver.index..".AI_Aggression") == nil then
-            ac.store("app.F1Regs."..driver.index..".AI_Aggression",DRIVERS[i].aiAggression + 0.03)
-        end
+        driver.aiLevel = connect.getDefaultLevel(i) ~= 0 and connect.getDefaultLevel(i) or driver.car.aiLevel
+        ac.debug(i, math.lerp(0.5,1,1-((1-driver.aiLevel)/0.3)))
+        driver.aiThrottleLimitBase = math.lerp(0.5,1,1-((1-driver.aiLevel)/0.3))
+        driver.aiAggression = connect.getDefaultAggression(i) ~= 0 and connect.getDefaultAggression(i) or driver.car.aiAggression
+        
+        physics.setAILevel(driver.index, driver.aiLevel)
+        physics.setAIAggression(driver.index, driver.aiAggression)
+        connect.storeDefaultData(driver)
     end
 
     log("[Initialized]")
-    return true
+    return true 
 end
