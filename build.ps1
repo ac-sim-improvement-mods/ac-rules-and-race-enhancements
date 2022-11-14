@@ -7,6 +7,7 @@ $build_ver = $build_code[0] + "." + $build_code[1] + "." + $build_code[2] + "." 
 
 $date = Get-Date -Format "yyyy-MM-dd"
 
+(Get-Content "$PSScriptRoot\assettocorsa\apps\lua\RARE\RARE.lua") | ForEach-Object { $_ -replace "SCRIPT_VERSION =.+","SCRIPT_VERSION = `"$build_ver`""  } | Set-Content "$PSScriptRoot\assettocorsa\apps\lua\RARE\RARE.lua"
 (Get-Content "$PSScriptRoot\assettocorsa\apps\lua\RARE\manifest.ini") | ForEach-Object { $_ -replace "VERSION =.+","VERSION = $build_ver"  } | Set-Content "$PSScriptRoot\assettocorsa\apps\lua\RARE\manifest.ini"
 (Get-Content "$PSScriptRoot\assettocorsa\apps\lua\RARE\RARE.lua") | ForEach-Object { $_ -replace "SCRIPT_BUILD_DATE =.+","SCRIPT_BUILD_DATE = `"$date`""  } | Set-Content "$PSScriptRoot\assettocorsa\apps\lua\RARE\RARE.lua"
 (Get-Content "$PSScriptRoot\assettocorsa\apps\lua\RARE\RARE.lua") | ForEach-Object { $_ -replace "SCRIPT_VERSION_CODE =.+","SCRIPT_VERSION_CODE = $build_code"  } | Set-Content "$PSScriptRoot\assettocorsa\apps\lua\RARE\RARE.lua"

@@ -15,11 +15,11 @@ function settingsMenu(sim)
     
         
         ui.sameLine(0,0)
-        ui.drawRectFilled(vec2(350,30),vec2(430,60),ac.isWindowOpen('main') and rgbm(0,1,0,0.5) or rgbm(1,0,0,0.5))
+        ui.drawRectFilled(vec2(380,30),vec2(420,60),ac.isWindowOpen('main') and rgbm(0,1,0,0.5) or rgbm(1,0,0,0.5))
     
-        ui.sameLine(350,0)
-        ui.setCursor(vec2(400,30))
-        if ui.button(ac.isWindowOpen('main') and "ENABLED" or "DISABLED", vec2(80,30), ui.ButtonFlags.None) then
+        ui.sameLine(380,0)
+        ui.setCursor(vec2(380,30))
+        if ui.button(ac.isWindowOpen('main') and "ON" or "OFF", vec2(40,30), ui.ButtonFlags.None) then
             ac.setWindowOpen('main', not ac.isWindowOpen('main'))
         end
         if ui.itemHovered() then
