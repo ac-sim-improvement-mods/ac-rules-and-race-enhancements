@@ -1,2 +1,2 @@
-# ac-F1-Regulations
-Helps Assetto Corsa's F1 simulation be more in line with real life.
+# Assetto Corsa Rules and Race Enhancements Mod
+A mod for Assetto Corsa that adds F1 DRS rules, AI pit for new tyres, tyre strategies for AI, and enhances AI for races, qualifying, and practices.
