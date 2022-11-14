@@ -1,7 +1,9 @@
 $build_dir = "$PSScriptRoot\build"
-$build_ver = ((Get-Content $PSScriptRoot\assettocorsa\apps\lua\RARE\RARE.lua)[1] -split "`"")[1]
-$build_code = ((Get-Content $PSScriptRoot\assettocorsa\apps\lua\RARE\RARE.lua)[0] -split "= ")[1]
+$build_ver = ((Get-Content $PSScriptRoot\assettocorsa\apps\lua\RARE\RARE.lua)[2] -split "`"")[1]
+$build_code = ((Get-Content $PSScriptRoot\assettocorsa\apps\lua\RARE\RARE.lua)[3] -split "= ")[1]
 $build_code = [int]$build_code + 1
+$build_code = [string]$build_code
+$build_ver = $build_code[0] + "." + $build_code[1] + "." + $build_code[2] + "." + $build_code[3] + ".preview" + $build_code[4] 
 
 $date = Get-Date -Format "yyyy-MM-dd"
 
