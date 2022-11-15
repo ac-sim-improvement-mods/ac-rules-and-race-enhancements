@@ -1,3 +1,4 @@
+local connect = require 'src/connection'
 require 'src/driver'
 
 --- Initialize RARE and returns initialized state
