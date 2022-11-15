@@ -20,10 +20,10 @@ Driver = class('Driver', function(carIndex)
     local name = ac.getDriverName(index)
     local lapsCompleted = car.lapCount
 
-    local aiThrottleLimitBase = 0 
+    local aiThrottleLimitBase = 0
     local aiThrottleLimit = 1
     local aiLevel = 0
-    local aiAggression = 0 -- 
+    local aiAggression = 0
     local aiPrePitFuel = 0
     local aiPitCall = false
     local aiPitting = false
