@@ -299,6 +299,10 @@ function settingsMenu(sim)
             -- SPLINE_OFFSET = ui.slider("SPLINE", SPLINE_OFFSET, -10, 10, '%.3f')
             -- physics.setAISplineOffset(sim.focusedCar, SPLINE_OFFSET)
 
+            if ui.button("RESET TRACK PHYSICS", vec2(40,30), ui.ButtonFlags.None) then
+                ac.setWindowOpen('main', not ac.isWindowOpen('main'))
+            end
+
             ui.newLine(1)
         end)
     end)
