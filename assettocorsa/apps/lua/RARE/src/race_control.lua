@@ -55,10 +55,11 @@ end
 ---@param rules RAREConfig.data.RULES
 ---@return drsEnabled boolean
 local function isDrsEnabled(rules,leaderCompletedLaps)
-    if leaderCompletedLaps + 1 >= rules.DRS_ACTIVATION_LAP then
-        return true
+    local drsActivationLap = rules.DRS_ACTIVATION_LAP
+    if leaderCompletedLaps + 1 >= drsActivationLap then
+        return true, drsActivationLap
     else
-        return false
+        return false, drsActivationLap
     end
 end
 
@@ -177,7 +178,7 @@ local function update(sim,drivers)
     local rules = RAREConfig.data.RULES
     local carsOnTrackCount = getTrackOrder(drivers)
     local leaderCompletedLaps = getLeaderCompletedLaps(sim)
-    local drsEnabled = isDrsEnabled(rules,leaderCompletedLaps)
+    local drsEnabled,drsEnabledLap = isDrsEnabled(rules,leaderCompletedLaps)
     local wetTrack = isTrackWet(rules,sim)
 
     return readOnly{
@@ -185,6 +186,7 @@ local function update(sim,drivers)
         carsOnTrackCount = carsOnTrackCount,
         leaderCompletedLaps = leaderCompletedLaps,
         drsEnabled = drsEnabled,
+        drsEnabledLap = drsEnabledLap,
         wetTrack = wetTrack
     }
 end
