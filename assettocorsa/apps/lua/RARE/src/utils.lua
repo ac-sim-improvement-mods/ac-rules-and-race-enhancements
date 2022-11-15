@@ -12,7 +12,7 @@ function inLineBulletText(label,text,space)
     if not space then
         space = 10
     end
-    
+
     local driver = DRIVERS[ac.getSim().focusedCar]
     ui.bulletText(label)
     ui.sameLine(space, 0)

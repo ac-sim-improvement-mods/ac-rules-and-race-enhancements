@@ -1,5 +1,3 @@
-local connect = require 'src/connection'
-
 local function randomizer(index,range)
     math.random()
     for i=0, math.random(index) do

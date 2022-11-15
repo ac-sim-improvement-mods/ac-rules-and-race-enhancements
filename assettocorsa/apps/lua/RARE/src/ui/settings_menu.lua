@@ -12,11 +12,10 @@ function settingsMenu(sim)
         ui.pushFont(ui.Font.Title)
         ui.textAligned(SCRIPT_NAME, vec2(0.5, 0.5), vec2(ui.availableSpaceX(), 34))
         ui.popFont()
-    
-        
+
         ui.sameLine(0,0)
         ui.drawRectFilled(vec2(380,30),vec2(420,60),ac.isWindowOpen('main') and rgbm(0,1,0,0.5) or rgbm(1,0,0,0.5))
-    
+
         ui.sameLine(380,0)
         ui.setCursor(vec2(380,30))
         if ui.button(ac.isWindowOpen('main') and "ON" or "OFF", vec2(40,30), ui.ButtonFlags.None) then

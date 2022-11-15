@@ -204,9 +204,9 @@ function rc.getRaceControl(dt,sim)
         DRIVERS[i] = run(lastUpdate,racecontrol,sim.raceSessionType,driver)
         connect.storeDriverData(driver)
     end
-    
+
     connect.storeRaceControlData(racecontrol)
-    
+
     return racecontrol
 end
 

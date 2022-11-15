@@ -57,10 +57,10 @@ function initialize(sim)
                 _SCRIPTING_PHYSICS = { ALLOW_APPS = 'bullshit' },
                 SURFACE_0 = { WAV_PITCH = 'bullshit' }
             })
-        
+
             trackSurfaces:set('_SCRIPTING_PHYSICS', 'ALLOW_APPS', '1')
             trackSurfaces:set('SURFACE_0', 'WAV_PITCH', 'extended-0')
-    
+
             REBOOT = true
             return true
         else
@@ -80,7 +80,7 @@ function initialize(sim)
         ac.debug(i, math.lerp(0.5,1,1-((1-driver.aiLevel)/0.3)))
         driver.aiThrottleLimitBase = math.lerp(0.5,1,1-((1-driver.aiLevel)/0.3))
         driver.aiAggression = connect.aiAggressionDefault(i) ~= 0 and connect.aiAggressionDefault(i) or driver.car.aiAggression
-        
+
         physics.setAILevel(driver.index, driver.aiLevel)
         physics.setAIAggression(driver.index, driver.aiAggression)
         connect.storeDefaultAIData(driver)

@@ -1,7 +1,5 @@
 local ai = {}
 
-local connect = require 'src/connection'
-
 AI_COMP_OVERRIDE = false
 AI_THROTTLE_LIMIT = 0.8
 AI_LEVEL = 0.9
