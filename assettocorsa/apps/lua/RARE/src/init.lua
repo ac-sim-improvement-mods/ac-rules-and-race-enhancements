@@ -1,5 +1,5 @@
 require 'src/driver'
-local connect = require 'src/connection'
+1
 
 --- Initialize RARE and returns initialized state
 --- @return boolean
@@ -76,14 +76,14 @@ function initialize(sim)
 
         local driver = DRIVERS[i]
 
-        driver.aiLevel = connect.getDefaultLevel(i) ~= 0 and connect.getDefaultLevel(i) or driver.car.aiLevel
+        driver.aiLevel = connect.aiLevelDefault(i) ~= 0 and connect.aiLevelDefault(i) or driver.car.aiLevel
         ac.debug(i, math.lerp(0.5,1,1-((1-driver.aiLevel)/0.3)))
         driver.aiThrottleLimitBase = math.lerp(0.5,1,1-((1-driver.aiLevel)/0.3))
-        driver.aiAggression = connect.getDefaultAggression(i) ~= 0 and connect.getDefaultAggression(i) or driver.car.aiAggression
+        driver.aiAggression = connect.aiAggressionDefault(i) ~= 0 and connect.aiAggressionDefault(i) or driver.car.aiAggression
         
         physics.setAILevel(driver.index, driver.aiLevel)
         physics.setAIAggression(driver.index, driver.aiAggression)
-        connect.storeDefaultData(driver)
+        connect.storeDefaultAIData(driver)
     end
 
     log("[Initialized]")
