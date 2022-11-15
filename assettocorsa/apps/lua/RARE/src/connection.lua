@@ -1,6 +1,6 @@
 local connection = {}
 
-local = ac.connect({
+local RareData = ac.connect({
     ac.StructItem.key('RareData'),
     connected = ac.StructItem.boolean(),
     scriptVersionId = ac.StructItem.int16(),

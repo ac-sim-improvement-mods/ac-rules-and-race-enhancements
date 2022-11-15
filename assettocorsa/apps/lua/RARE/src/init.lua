@@ -1,5 +1,4 @@
 require 'src/driver'
-1
 
 --- Initialize RARE and returns initialized state
 --- @return boolean
@@ -87,5 +86,5 @@ function initialize(sim)
     end
 
     log("[Initialized]")
-    return true 
+    return true
 end
