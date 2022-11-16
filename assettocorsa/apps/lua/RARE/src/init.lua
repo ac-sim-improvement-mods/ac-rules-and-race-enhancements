@@ -69,17 +69,24 @@ function initialize(sim)
     end
 
     -- Get DRS Zones from track data folder
-    DRS_ZONES = DrsZones("drs_zones.ini")
+    try(function ()
+        DRS_ZONES = DrsZones("drs_zones.ini")
+    end, function (err)
+        log("[ERROR]"..err)
+        log("[ERROR] Failed to load DRS Zones!")
+    end)
 
     for i=0, ac.getSim().carsCount-1 do
         DRIVERS[i] = Driver(i)
 
         local driver = DRIVERS[i]
 
-        driver.aiLevel = connect.aiLevelDefault(i) ~= 0 and connect.aiLevelDefault(i) or driver.car.aiLevel
-        ac.debug(i, math.lerp(0.5,1,1-((1-driver.aiLevel)/0.3)))
-        driver.aiThrottleLimitBase = math.lerp(0.5,1,1-((1-driver.aiLevel)/0.3))
-        driver.aiAggression = connect.aiAggressionDefault(i) ~= 0 and connect.aiAggressionDefault(i) or driver.car.aiAggression
+        if driver.car.isAIControlled then
+            driver.aiLevel = connect.aiLevelDefault(i) ~= 0 and connect.aiLevelDefault(i) or driver.car.aiLevel
+            ac.debug(i, math.lerp(0.5,1,1-((1-driver.aiLevel)/0.3)))
+            driver.aiThrottleLimitBase = math.lerp(0.5,1,1-((1-driver.aiLevel)/0.3))
+            driver.aiAggression = connect.aiAggressionDefault(i) ~= 0 and connect.aiAggressionDefault(i) or driver.car.aiAggression
+        end
 
         physics.setAILevel(driver.index, driver.aiLevel)
         physics.setAIAggression(driver.index, driver.aiAggression)
