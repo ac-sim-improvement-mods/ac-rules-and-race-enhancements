@@ -52,7 +52,7 @@ local function getLeaderCompletedLaps(sim)
 end
 
 ---Returns whether DRS is enabled or not
----@param rules RAREConfig.data.RULES
+---@param rules RARECONFIG.data.RULES
 ---@return drsEnabled boolean
 local function isDrsEnabled(rules,leaderCompletedLaps)
     local drsActivationLap = rules.DRS_ACTIVATION_LAP
@@ -64,7 +64,7 @@ local function isDrsEnabled(rules,leaderCompletedLaps)
 end
 
 ---Returns whether the track is too wet for DRS enabled or not
----@param rules RAREConfig.data.RULES
+---@param rules RARECONFIG.data.RULES
 ---@return wetTrack boolean
 local function isTrackWet(rules,sim)
     local wet_limit = rules.DRS_WET_LIMIT/100
@@ -111,7 +111,7 @@ local function getTrackOrder(drivers)
 end
 
 --- Race Control for race sessions
---- @param rules RAREConfig.data.RULES
+--- @param rules RARECONFIG.data.RULES
 --- @param driver Driver
 local function raceSession(lastUpdate,racecontrol,rules,driver)
         if lastUpdate then
@@ -140,7 +140,7 @@ local function raceSession(lastUpdate,racecontrol,rules,driver)
 end
 
 --- Race Control for qualify sessions
---- @param rules RAREConfig.data.RULES
+--- @param rules RARECONFIG.data.RULES
 --- @param driver 
 local function qualifySession(racecontrol,rules,driver)
     if driver.car.isAIControlled then
@@ -149,7 +149,7 @@ local function qualifySession(racecontrol,rules,driver)
 end
 
 --- Race Control for practice sessions
---- @param rules RAREConfig.data.RULES
+--- @param rules RARECONFIG.data.RULES
 --- @param driver 
 local function practiceSession(racecontrol,rules,driver)
 
@@ -157,10 +157,10 @@ end
 
 --- Switch for runnimg the different kinds of sessioms
 --- @param sessionType ac.SessionTypes
---- @param rules RAREConfig.data.RULES
+--- @param rules RARECONFIG.data.RULES
 --- @param driver Driver
 local function run(lastUpdate,racecontrol,sessionType,driver)
-    local rules = RAREConfig.data.RULES
+    local rules = RARECONFIG.data.RULES
 
     if sessionType == ac.SessionType.Race then
         raceSession(lastUpdate,racecontrol,rules,driver)
@@ -175,7 +175,7 @@ end
 
 local function update(sim,drivers)
     local session = ac.getSession(sim.currentSessionIndex)
-    local rules = RAREConfig.data.RULES
+    local rules = RARECONFIG.data.RULES
     local carsOnTrackCount = getTrackOrder(drivers)
     local leaderCompletedLaps = getLeaderCompletedLaps(sim)
     local drsEnabled,drsEnabledLap = isDrsEnabled(rules,leaderCompletedLaps)
@@ -211,6 +211,5 @@ function rc.getRaceControl(dt,sim)
 
     return racecontrol
 end
-
 
 return rc

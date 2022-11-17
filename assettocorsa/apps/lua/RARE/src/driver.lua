@@ -76,8 +76,8 @@ Driver = class('Driver', function(carIndex)
         physics.setCarFuel(index, fuelload)
     end
 
-    local aiTyreAvgRandom = randomizer(index,RAREConfig.data.RULES.AI_AVG_TYRE_LIFE_RANGE)
-    local aiTyreSingleRandom = randomizer(index, RAREConfig.data.RULES.AI_SINGLE_TYRE_LIFE_RANGE)
+    local aiTyreAvgRandom = randomizer(index,RARECONFIG.data.RULES.AI_AVG_TYRE_LIFE_RANGE)
+    local aiTyreSingleRandom = randomizer(index, RARECONFIG.data.RULES.AI_SINGLE_TYRE_LIFE_RANGE)
 
     log("[Loaded] Driver ["..index.."] "..name)
 
@@ -99,30 +99,21 @@ end, class.NoInitialize)
 ---@param driver Driver
 ---@return number
 local function getLapPitted(driver)
-    if driver.tyreLaps > 0 and driver.car.isInPitlane then
-       return driver.car.lapCount
-    else
-        return driver.lapPitted
-    end
+    return (driver.tyreLaps > 0 and driver.car.isInPitlane) and driver.car.lapCount or driver.lapPitted
 end
 
 --- Returns tyre lap count
 ---@param driver Driver
 ---@return number
 local function getTyreLapCount(driver)
-    if driver.car.isInPitlane and not driver.pitted then
-        return driver.tyreLaps
-    else
-        return driver.car.lapCount - driver.lapPitted
-    end
-    
+    return (driver.car.isInPitlane and not driver.pitted) and driver.tyreLaps or (driver.car.lapCount - driver.lapPitted)
 end
 
 local function getPitstopCount(driver)
     if driver.car.isInPit and not driver.pitted then
         driver.pitted = true
-        driver.aiTyreAvgRandom = randomizer(driver.index,RAREConfig.data.RULES.AI_AVG_TYRE_LIFE_RANGE)
-        driver.aiTyreSingleRandom = randomizer(driver.index,RAREConfig.data.RULES.AI_SINGLE_TYRE_LIFE_RANGE)
+        driver.aiTyreAvgRandom = randomizer(driver.index,RARECONFIG.data.RULES.AI_AVG_TYRE_LIFE_RANGE)
+        driver.aiTyreSingleRandom = randomizer(driver.index,RARECONFIG.data.RULES.AI_SINGLE_TYRE_LIFE_RANGE)
         return driver.pitstopCount + 1
     elseif not driver.car.isInPitlane and driver.pitted then
         driver.pitted = false

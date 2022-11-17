@@ -10,7 +10,7 @@ AI_AGGRESSION = 0.25
 ---@param driver Driver
 ---@return bool
 local function avgTyreWearBelowLimit(driver)
-    local avgTyreLimit = 1 - (RAREConfig.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom)/100
+    local avgTyreLimit = 1 - (RARECONFIG.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom)/100
     local avgTyreWear = (driver.car.wheels[0].tyreWear +
                             driver.car.wheels[1].tyreWear +
                             driver.car.wheels[2].tyreWear +
@@ -33,7 +33,7 @@ ai.QualifyLap = {
 ---@param driver Driver
 ---@return bool
 local function singleTyreWearBelowLimit(driver)
-    local singleTyreLimit = 1 - (RAREConfig.data.RULES.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom)/100
+    local singleTyreLimit = 1 - (RARECONFIG.data.RULES.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom)/100
 
     if driver.car.wheels[0].tyreWear > singleTyreLimit or
             driver.car.wheels[1].tyreWear > singleTyreLimit or
@@ -91,7 +91,7 @@ end
 --- Occurs when a driver is in the pit
 ---@param driver Driver
 local function pitstop(driver)
-    if RAREConfig.data.RULES.RACE_REFUELING == 0 then physics.setCarFuel(driver.index, driver.aiPrePitFuel) end
+    if RARECONFIG.data.RULES.RACE_REFUELING == 0 then physics.setCarFuel(driver.index, driver.aiPrePitFuel) end
     driver.aiPitting = false
     driver.tyreLaps = 0
 end

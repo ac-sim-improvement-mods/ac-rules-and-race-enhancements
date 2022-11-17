@@ -6,10 +6,10 @@ DRS_FLAP = ui.MediaPlayer()
 DRS_BEEP = ui.MediaPlayer()
 
 DRS_BEEP:setSource("./assets/audio/drs-available-beep.wav"):setAutoPlay(false)
-DRS_BEEP:setVolume(acMainVolume * RAREConfig.data.AUDIO.MASTER/100 * RAREConfig.data.AUDIO.DRS_BEEP/100)
+DRS_BEEP:setVolume(acMainVolume * RARECONFIG.data.AUDIO.MASTER/100 * RARECONFIG.data.AUDIO.DRS_BEEP/100)
 
 DRS_FLAP:setSource("./assets/audio/drs-flap.wav"):setAutoPlay(false)
-DRS_FLAP:setVolume(acMainVolume * RAREConfig.data.AUDIO.MASTER/100 * RAREConfig.data.AUDIO.DRS_FLAP/100)
+DRS_FLAP:setVolume(acMainVolume * RARECONFIG.data.AUDIO.MASTER/100 * RARECONFIG.data.AUDIO.DRS_FLAP/100)
 
 local function formula1(sim,driver)
     if sim.cameraMode < 3 and sim.isWindowForeground then
@@ -33,8 +33,8 @@ local function formula1(sim,driver)
             driver.drsFlapFx = driver.car.drsActive
             DRS_FLAP:play()
         end
-    end 
-end 
+    end
+end
 
 function audio.driver(sim)
     local driver = DRIVERS[sim.focusedCar]

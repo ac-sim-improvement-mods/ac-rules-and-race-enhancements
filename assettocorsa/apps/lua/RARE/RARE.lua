@@ -14,14 +14,13 @@ require 'src/ui/settings_menu'
 require 'src/ui/notifications'
 local sim = ac.getSim()
 local audio = nil
-local _rc = require 'src/race_control'
-local rc = nil
+local rc = require 'src/race_control'
+local racecontrol = nil
 
 INITIALIZED = false
 RESTARTED = false
 REBOOT = false
-
-RAREConfig = nil
+RARECONFIG = nil
 
 --- Check if AC has restarted
 --- @param sim StateSim
@@ -38,11 +37,10 @@ local function errorCheck()
     if error then
         log(error)
         INITIALIZED = initialize(sim)
-
         return error
+    else
+        return nil
     end
-
-    return nil
 end
 
 function script.update(dt)
@@ -57,11 +55,11 @@ function script.update(dt)
     if INITIALIZED then
         -- A simple On/Off for the app
         if not ac.isWindowOpen('main') then return end
-        if REBOOT and RAREConfig.data.RULES.PHYSICS_REBOOT == 1 then ac.restartAssettoCorsa() end
+        if REBOOT and RARECONFIG.data.RULES.PHYSICS_REBOOT == 1 then ac.restartAssettoCorsa() end
         if not sim.isInMainMenu and not sim.isSessionStarted then
             RESTARTED = false
         else
-            rc = _rc.getRaceControl(dt,sim)
+            racecontrol = rc.getRaceControl(dt,sim)
             audio.driver(sim)
         end
     else
@@ -76,14 +74,22 @@ function script.windowMain(dt)
     -- JUST TO KEEP THE SCRIPT ALIVE
 
     if INITIALIZED then
-        ui.transparentWindow('notifications',vec2(RAREConfig.data.NOTIFICATIONS.X_POS,RAREConfig.data.NOTIFICATIONS.Y_POS),vec2(800,800),function ()
+        ui.transparentWindow('notifications',vec2(RARECONFIG.data.NOTIFICATIONS.X_POS,RARECONFIG.data.NOTIFICATIONS.Y_POS),vec2(800,800),function ()
             notificationHandler(dt)
         end)
     end
 end
 
 function script.windowDebug(dt)
-    if rc ~= nil then debugMenu(rc,errorCheck()) end
+    local windowName = SCRIPT_SHORT_NAME.." Debug"
+    local scriptVersion = SCRIPT_VERSION.." ("..SCRIPT_VERSION_CODE..")"
+    local windowTitle = windowName.." | "..scriptVersion
+    local error = errorCheck()
+    ac.setWindowTitle("debug", windowTitle)
+
+    if INITIALIZED and not sim.isInMainMenu and racecontrol ~= nil then
+        debugMenu(sim,racecontrol,error)
+    end
 end
 
 function script.windowSettings()
