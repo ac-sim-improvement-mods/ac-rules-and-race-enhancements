@@ -25,7 +25,7 @@ end
 ai.QualifyLap = {
     OutLap = 0,
     FlyingLap = 1,
-    InLap = 3
+    InLap = 2
 } 
 
 --- Returns whether one of a driver's tyre life is below
