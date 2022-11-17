@@ -63,8 +63,6 @@ function initialize(sim)
 
             REBOOT = true
             return true
-        else
-            physics.overrideRacingFlag(ac.FlagType.None)
         end
     end
 
