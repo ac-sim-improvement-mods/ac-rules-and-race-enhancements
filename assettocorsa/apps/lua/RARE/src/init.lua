@@ -16,7 +16,6 @@ function initialize(sim)
     end
 
     local configFile = "settings.ini"
-
     RAREConfig = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/RARE/"..configFile, {
         RULES = { 
             DRS_RULES = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
@@ -48,7 +47,6 @@ function initialize(sim)
             DURATION = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 5
         }
     })
-
     log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/RARE/"..configFile)
 
     if RAREConfig.data.RULES.PHYSICS_REBOOT == 1 then
@@ -72,6 +70,8 @@ function initialize(sim)
     end, function (err)
         log("[ERROR]"..err)
         log("[ERROR] Failed to load DRS Zones!")
+    end, function ()
+        
     end)
 
     for i=0, ac.getSim().carsCount-1 do
