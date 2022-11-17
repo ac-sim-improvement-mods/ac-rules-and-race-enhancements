@@ -20,13 +20,13 @@ DrsZones = class('DRS_Points', function()
         -- Extract DRS detection points from drs_zones.ini
         detectionData = try(function()
             return ini.sections['ZONE_'..index]['DETECTION'][1]
-        end, function () end)
+        end, function () log("[WARN] Failed to load a detection line for DRS Zone "..index) end)
         startData = try(function()
             return ini.sections['ZONE_'..index]['START'][1]
-        end, function () end)
+        end, function () log("[WARN] Failed to load a start line for DRS Zone "..index) end)
         endData = try(function()
             return ini.sections['ZONE_'..index]['END'][1]
-        end, function () end)
+        end, function () log("[WARN] Failed to load a end line for DRS Zone "..index) end)
 
         -- If data is nil, break the while loop
         if detectionData == nil or startData == nil or endData == nil then break end
@@ -49,8 +49,8 @@ end, class.NoInitialize)
 --- Checks if driver is before the detection line, not in the pits, 
 --- not in a drs zone, and within 1 second of the car ahead on track
 ---@param driver Driver
-local function setDrsAvailable(driver)
-    if not driver.car.isInPitlane then
+local function setDrsAvailable(driver,drsEnabled)
+    if not driver.car.isInPitlane and drsEnabled then
         local inDrsZone = driver.car.drsAvailable
         local inDrsRange = inDrsRange(driver)
 
@@ -92,23 +92,13 @@ local function setDriverDrsZones(driver)
         else
             if detectionDistance < closestDetection then
                 closestDetection = detectionDistance
-
                 drsZoneNext = i
             end
         end
     end
 
-    if drsZoneNext == 0 then
-        drsZone = #detectionZones
-    else
-        drsZone = drsZoneNext - 1
-    end
-
-    if drsZone == 0 then
-        drsZonePrev = #detectionZones
-    else
-        drsZonePrev = drsZone - 1
-    end
+    drsZone = drsZoneNext == 0 and #detectionZones or drsZoneNext - 1
+    drsZonePrev = drsZone == 0 and #detectionZones or drsZone - 1
 
     driver.drsZoneNextId = drsZoneNext
     driver.drsZoneId = drsZone
@@ -136,7 +126,8 @@ end
 ---@return boolean
 function inDrsRange(driver1)
     local delta = driver1.carAheadDelta
-    return (delta <= RAREConfig.data.RULES.DRS_GAP_DELTA/1000 and delta > 0.0) and true or false
+    local deltaLimit = RAREConfig.data.RULES.DRS_GAP_DELTA/1000
+    return (delta <= deltaLimit and delta > 0.0) and true or false
 end
 
 function inDeployZone(driver)
@@ -150,16 +141,11 @@ function inDeployZone(driver)
         if track_pos >= 0 and track_pos < start_line then
             track_pos = track_pos + 1
         end
-
         start_line = start_line + 1
     end
 
     -- If driver is between the end zone of the previous DRS zone, and the detection line of the upcoming DRS zone
-    if track_pos >= detection_line and track_pos < start_line then
-        return true
-    else
-        return false
-    end
+    return (track_pos >= detection_line and track_pos < start_line) and true or false
 end
 
 --- Returns the main driver's distance to the detection line in meters
@@ -232,12 +218,8 @@ end
 --- @param drsEnabled boolean
 function drs.controller(driver,drsEnabled)
     setDriverDrsZones(driver)
-    setDrsAvailable(driver)
-    if drsEnabled then
-        setDriverDRS(driver,driver.drsAvailable)
-    else
-        setDriverDRS(driver,false)
-    end
+    setDrsAvailable(driver,drsEnabled)
+    setDriverDRS(driver,drsEnabled and driver.drsAvailable or false)
 end
 
 return drs
