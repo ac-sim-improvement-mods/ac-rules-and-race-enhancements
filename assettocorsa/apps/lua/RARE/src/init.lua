@@ -87,9 +87,20 @@ function initialize(sim)
         local driver = DRIVERS[i]
 
         if driver.car.isAIControlled then
+            local fuelcons = ac.INIConfig.carData(driver.index, 'fuel_cons.ini'):get('FUEL_EVAL', 'KM_PER_LITER', 0.0)
+            local fuelload = 0
+            local fuelPerLap =  (sim.trackLengthM / 1000) / (fuelcons - (fuelcons * 0.1))
+        
+            if sim.raceSessionType == ac.SessionType.Race then 
+                fuelload = ((ac.getSession(sim.currentSessionIndex).laps + 2) * fuelPerLap)
+            elseif sim.raceSessionType == ac.SessionType.Qualify then
+                fuelload = 3.5 * fuelPerLap
+            end
+        
+            physics.setCarFuel(driver.index, fuelload)
+        
             driver.aiLevel = connect.aiLevelDefault(i) ~= 0 and connect.aiLevelDefault(i) or driver.car.aiLevel
-            ac.debug(i, math.lerp(0.5,1,1-((1-driver.aiLevel)/0.3)))
-            driver.aiThrottleLimitBase = math.lerp(0.5,1,1-((1-driver.aiLevel)/0.3))
+            driver.aiThrottleLimitBase = driver.aiLevel
             driver.aiAggression = connect.aiAggressionDefault(i) ~= 0 and connect.aiAggressionDefault(i) or driver.car.aiAggression
         end
 

@@ -241,16 +241,10 @@ function ai.alternateAttack(driver)
     --     end
     -- end
 
-    if delta > 0.2 then
-        if math.abs(upcomingTurnAngle) < 30 and upcomingTurnDistance <= 50 then
-            if driver.car.speedKmh < 100 then
-                physics.setAIAggression(driver.index, 1)
-            else
-                physics.setAIAggression(driver.index, 0.6)
-            end
-        elseif upcomingTurnDistance > 200 and delta > 0.5 then
-            physics.setAIAggression(driver.index, 1)
-        end
+    if upcomingTurnDistance > 200 and delta > 0.5 then
+        physics.setAIAggression(driver.index, 1)
+    else
+        physics.setAIAggression(driver.index, 0.25)
     end
 
     if delta < 1 then
@@ -263,18 +257,19 @@ function ai.alternateAttack(driver)
         end
     end
 
-    if upcomingTurnDistance > 200 or math.abs(upcomingTurnAngle) < 30 then
-        physics.setAIThrottleLimit(driver.index, 1)
-        driver.aiThrottleLimit= 1
+    if upcomingTurnDistance > 50 then
+        driver.aiThrottleLimit = math.clamp(driver.aiThrottleLimit+0.001, driver.aiThrottleLimitBase, 1)
     else
         if not override then
-            physics.setAIThrottleLimit(driver.index, driver.aiThrottleLimitBase)
-            driver.aiThrottleLimit = driver.aiThrottleLimitBase
+            driver.aiThrottleLimit = math.clamp(
+                driver.aiThrottleLimit - 0.005,
+                math.lerp(driver.aiThrottleLimitBase,1,math.clamp((driver.aiLevel/2)-math.abs(upcomingTurnAngle)/100,0,driver.aiLevel)),
+                1)
         else
-            physics.setAIThrottleLimit(driver.index, AI_THROTTLE_LIMIT)
             driver.aiThrottleLimit = AI_THROTTLE_LIMIT
         end
     end
+    physics.setAIThrottleLimit(driver.index, driver.aiThrottleLimit)
 end
 
 return ai

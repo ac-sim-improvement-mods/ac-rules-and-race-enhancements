@@ -12,7 +12,6 @@ end
 ---@param carIndex number
 ---@return Driver
 Driver = class('Driver', function(carIndex)
-    local sim = ac.getSim()
     local index = carIndex
     local car = ac.getCar(index)
     local name = ac.getDriverName(index)
@@ -62,20 +61,6 @@ Driver = class('Driver', function(carIndex)
     local returnRacePosition = -1
     local returnPostionTimer = -1
 
-    local fuelcons = ac.INIConfig.carData(index, 'fuel_cons.ini'):get('FUEL_EVAL', 'KM_PER_LITER', 0.0)
-    local fuelload = 0
-    local fuelPerLap =  (sim.trackLengthM / 1000) / (fuelcons - (fuelcons * 0.1))
-
-    if sim.raceSessionType == ac.SessionType.Race then 
-        fuelload = ((ac.getSession(sim.currentSessionIndex).laps + 2) * fuelPerLap)
-    elseif sim.raceSessionType == ac.SessionType.Qualify then
-        fuelload = 3.5 * fuelPerLap
-    end
-
-    if car.isAIControlled and not sim.isSessionStarted then
-        physics.setCarFuel(index, fuelload)
-    end
-
     local aiTyreAvgRandom = randomizer(index,RARECONFIG.data.RULES.AI_AVG_TYRE_LIFE_RANGE)
     local aiTyreSingleRandom = randomizer(index, RARECONFIG.data.RULES.AI_SINGLE_TYRE_LIFE_RANGE)
 
@@ -83,7 +68,7 @@ Driver = class('Driver', function(carIndex)
 
     return {
         aiSplineOffset = aiSplineOffset, aiSpeedUp = aiSpeedUp, aiMoveAside = aiMoveAside, inLapCount = inLapCount, inLap = inLap, flyingLap = flyingLap, outLap = outLap,
-        fuelPerLap = fuelPerLap, aiThrottleLimitBase = aiThrottleLimitBase, aiThrottleLimit = aiThrottleLimit,
+        aiThrottleLimitBase = aiThrottleLimitBase, aiThrottleLimit = aiThrottleLimit,
         pitlaneTime = pitlaneTime, pitlane = pitlane, pitstop = pitstop, pitstopTime = pitstopTime, pitted = pitted, pitstopCount = pitstopCount, tyreLaps = tyreLaps, lapPitted = lapPitted,
         drsBeepFx = drsBeepFx, drsFlapFx = drsFlapFx,
         drsZoneNextId = drsZoneNextId, drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, drsZoneId = drsZoneId, 
