@@ -144,7 +144,7 @@ end
 --- @param driver 
 local function qualifySession(racecontrol,rules,driver)
     if driver.car.isAIControlled then
-        ai.qualifying(driver)
+        --ai.qualifying(driver)
     end
 end
 
