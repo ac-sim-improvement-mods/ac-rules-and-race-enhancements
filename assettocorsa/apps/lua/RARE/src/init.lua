@@ -50,11 +50,11 @@ function initialize(sim)
         log("[Loaded] Config file: "..ac.getFolder(ac.FolderID.ACApps).."/lua/RARE/"..configFile)
         return true
     end,function (err)
-
+        log("[ERROR] Failed to load config")
+        return false
     end,function ()
 
     end)
-
 
     if RARECONFIG.data.RULES.PHYSICS_REBOOT == 1 then
         if not physics.allowed() then
@@ -76,10 +76,12 @@ function initialize(sim)
         DRS_ZONES = DrsZones("drs_zones.ini")
         return true
     end, function (err)
-        log("[ERROR]"..err)
-        log("[ERROR] Failed to load DRS Zones!")
+        log("[WARN]"..err)
+        log("[WARN] Failed to load DRS Zones!")
     end, function ()
     end)
+
+    local driverIni = ac.INIConfig.load(ac.getFolder(ac.FolderID.ACApps).."/lua/RARE/drivers.ini",ac.INIFormat.Default)
 
     for i=0, ac.getSim().carsCount-1 do
         DRIVERS[i] = Driver(i)
@@ -90,18 +92,27 @@ function initialize(sim)
             local fuelcons = ac.INIConfig.carData(driver.index, 'fuel_cons.ini'):get('FUEL_EVAL', 'KM_PER_LITER', 0.0)
             local fuelload = 0
             local fuelPerLap =  (sim.trackLengthM / 1000) / (fuelcons - (fuelcons * 0.1))
-        
+
             if sim.raceSessionType == ac.SessionType.Race then 
                 fuelload = ((ac.getSession(sim.currentSessionIndex).laps + 2) * fuelPerLap)
             elseif sim.raceSessionType == ac.SessionType.Qualify then
                 fuelload = 3.5 * fuelPerLap
             end
-        
+
             physics.setCarFuel(driver.index, fuelload)
-        
-            driver.aiLevel = connect.aiLevelDefault(i) ~= 0 and connect.aiLevelDefault(i) or driver.car.aiLevel
-            driver.aiThrottleLimitBase = driver.aiLevel
-            driver.aiAggression = connect.aiAggressionDefault(i) ~= 0 and connect.aiAggressionDefault(i) or driver.car.aiAggression
+
+            if FIRST_LAUNCH then
+                driverIni:setAndSave('AI_'..driver.index, 'AI_LEVEL', driver.car.aiLevel)
+                driverIni:setAndSave('AI_'..driver.index, 'AI_AGGRESSION', driver.car.aiAggression)
+
+                driver.aiLevel = driver.car.aiLevel
+                driver.aiThrottleLimitBase = driver.aiLevel
+                driver.aiAggression = driver.car.aiAggression
+            else
+                driver.aiLevel = driverIni:get('AI_'..driver.index, 'AI_LEVEL', driver.car.aiLevel)
+                driver.aiThrottleLimitBase = driver.aiLevel
+                driver.aiAggression = driverIni:get('AI_'..driver.index, 'AI_AGGRESSION', driver.car.aiAggression)
+            end
         end
 
         physics.setAILevel(driver.index, driver.aiLevel)
@@ -110,5 +121,6 @@ function initialize(sim)
     end
 
     log("[Initialized]")
+    FIRST_LAUNCH = false
     return true
 end
