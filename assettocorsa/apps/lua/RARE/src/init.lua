@@ -14,8 +14,8 @@ function initialize(sim)
         return false
     end
 
+    local configFile = "settings.ini"
     try(function ()
-        local configFile = "settings.ini"
         RARECONFIG = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/RARE/"..configFile, {
             RULES = { 
                 DRS_RULES = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
@@ -32,7 +32,7 @@ function initialize(sim)
                 AI_SINGLE_TYRE_LIFE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 30,
                 AI_SINGLE_TYRE_LIFE_RANGE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 2.5,
                 AI_ALTERNATE_LEVEL = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
-                AI_RELATIVE_SCALING = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
+                AI_RELATIVE_SCALING = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
                 AI_RELATIVE_LEVEL = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
                 RACE_REFUELING = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
                 PHYSICS_REBOOT = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1
@@ -103,23 +103,24 @@ function initialize(sim)
 
             physics.setCarFuel(driver.index, fuelload)
 
-            if FIRST_LAUNCH and not sim.isSessionStarted then
-
-                if RARECONFIG.RULES.AI_ALTERNATE_SCALING == 1 then
-                    driver.aiLevel = driver.car.aiLevel * RARECONFIG.RULES.AI_ALTERNATE_LEVEL/100
-                    driver.aiThrottleLimitBase = math.lerp(0.5,1,1-((1-driver.car.aiLevel)/0.3))
-                    driver.aiAggression = driver.car.aiAggression
+            if FIRST_LAUNCH and ((sim.raceSessionType == ac.SessionType.Race and not sim.isSessionStarted) or sim.raceSessionType == ac.SessionType.Qualify)then
+                log("First initialization")
+                if RARECONFIG.data.RULES.AI_RELATIVE_SCALING == 1 then
+                    driver.aiLevel = driver.car.aiLevel * RARECONFIG.data.RULES.AI_RELATIVE_LEVEL/100
+                    log("Using relative AI level scaling")
                 else
+                    log("Using default AI level scaling")
                     driver.aiLevel = driver.car.aiLevel
-                    driver.aiThrottleLimitBase = math.lerp(0.5,1,1-((1-driver.car.aiLevel)/0.3))
-                    driver.aiAggression = driver.car.aiAggression
                 end
 
+                driver.aiThrottleLimitBase = math.lerp(0.5,1,1-((1-driver.aiLevel)/0.3))
+                driver.aiAggression = driver.car.aiAggression
 
-                driverIni:setAndSave('AI_'..driver.index, 'AI_LEVEL', driver.car.aiLevel)
+                driverIni:setAndSave('AI_'..driver.index, 'AI_LEVEL', driver.aiLevel)
                 driverIni:setAndSave('AI_'..driver.index, 'AI_THROTTLE_LIMIT', driver.aiThrottleLimitBase)
                 driverIni:setAndSave('AI_'..driver.index, 'AI_AGGRESSION', driver.car.aiAggression)
             else
+                log("Loading saved AI values")
                 driver.aiLevel = driverIni:get('AI_'..driver.index, 'AI_LEVEL', driver.car.aiLevel)
                 driver.aiThrottleLimitBase = driverIni:get('AI_'..driver.index, 'AI_THROTTLE_LIMIT', math.lerp(0.5,1,1-((1-driver.car.aiLevel)/0.3)))
                 driver.aiAggression = driverIni:get('AI_'..driver.index, 'AI_AGGRESSION', driver.car.aiAggression)

@@ -128,7 +128,6 @@ local function raceSession(lastUpdate,racecontrol,rules,driver)
             end
         end
 
-
         if driver.car.isAIControlled then
             if rules.AI_FORCE_PIT_TYRES == 1 then ai.pitNewTires(driver) end
             if rules.AI_ALTERNATE_LEVEL == 1 then ai.alternateAttack(driver)  end
@@ -145,6 +144,7 @@ end
 local function qualifySession(racecontrol,rules,driver)
     if driver.car.isAIControlled then
         --ai.qualifying(driver)
+        if rules.AI_ALTERNATE_LEVEL == 1 then ai.alternateAttack(driver)  end
     end
 end
 

@@ -107,9 +107,12 @@ function settingsMenu(sim)
             'Increase AI aggression when attacking',
             function (v) return math.round(v, 0) end)
 
-            slider(RARECONFIG, 'RULES', 'AI_RELATIVE_LEVEL', 70, 100, 1, true, RARECONFIG.data.RULES.AI_RELATIVE_LEVEL == 1 and "Relative AI Level %f%%" or "Relative AI Level %f%%", 
+            slider(RARECONFIG, 'RULES', 'AI_RELATIVE_LEVEL', 70, 100, 1, true, RARECONFIG.data.RULES.AI_RELATIVE_LEVEL == 1 and "Relative AI Level %.0f%%" or "Relative AI Level %.0f%%", 
             'Increase AI aggression when attacking',
-            function (v) return math.round(v, 0) end)
+            function (v) 
+                FIRST_LAUNCH = false
+                initialize(sim)
+                return math.round(v, 0) end)
 
             slider(RARECONFIG, 'RULES', 'AI_ALTERNATE_LEVEL', 0, 1, 1, true, RARECONFIG.data.RULES.AI_ALTERNATE_LEVEL == 1 and "Alternate AI Strength: ENABLED" or "Alternate AI Strength: DISABLED", 
             'Increase AI aggression when attacking',
