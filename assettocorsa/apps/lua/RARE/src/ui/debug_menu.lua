@@ -154,6 +154,7 @@ function debugMenu(sim,rc,error)
                     inLineBulletText("End Line", tostring(getEndLineDistanceM(driver)).." m",space)
                     inLineBulletText("Track Progress M", tostring(math.round(driver.car.splinePosition*sim.trackLengthM,5)).." m",space)
                     inLineBulletText("Track Progress %", tostring(math.round(driver.car.splinePosition*100,2)).." %",space)
+                    inLineBulletText("Upcoming Turn", ac.getTrackUpcomingTurn(driver.car.index),space)
                 else ui.bulletText("IN PITS") end
             else
                 ui.bulletText("DRS not present")
@@ -186,7 +187,6 @@ function debugMenu(sim,rc,error)
         inLineBulletText("Brake", math.round(driver.car.brake,5),space)
         inLineBulletText("Clutch", math.round(driver.car.clutch,5),space)
         inLineBulletText("Steer",  math.round(driver.car.steer,5),space)
-        inLineBulletText("Upcoming Turn", ac.getTrackUpcomingTurn(driver.car.index),space)
     end)
 
     ui.treeNode("[SCRIPT CONTROLLER INPUTS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()

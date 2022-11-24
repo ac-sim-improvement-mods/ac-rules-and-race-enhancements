@@ -8,13 +8,13 @@ local RareData = ac.connect({
     drsAvailable = ac.StructItem.array(ac.StructItem.boolean(),32),
     carAhead = ac.StructItem.array(ac.StructItem.int16(),32),
     carAheadDelta = ac.StructItem.array(ac.StructItem.float(),32),
-},false,ac.SharedNamespace.Shared)
+},true,ac.SharedNamespace.Shared)
 
 local RareDataAIDefaults = ac.connect({
     ac.StructItem.key('RareDataAIDefaults'),
     aiLevelDefault = ac.StructItem.array(ac.StructItem.float(),32),
     aiAggressionDefault = ac.StructItem.array(ac.StructItem.float(),32),
-},false,ac.SharedNamespace.Shared)
+},true,ac.SharedNamespace.Shared)
 
 --- Stores race control data
 --- @param rc race_control

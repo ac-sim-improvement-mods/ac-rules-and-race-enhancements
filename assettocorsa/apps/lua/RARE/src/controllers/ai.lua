@@ -241,34 +241,53 @@ function ai.alternateAttack(driver)
     --     end
     -- end
 
-    if upcomingTurnDistance > 200 and delta > 0.5 then
+    if upcomingTurnDistance > 200 and delta < 0.5 then
         physics.setAIAggression(driver.index, 1)
-    else
+    elseif delta > 0.5 then
         physics.setAIAggression(driver.index, 0.25)
+    else
+        physics.setAIAggression(driver.index, 0)
     end
 
-    if delta < 1 then
-        physics.setAILevel(driver.index, 1)
+    local carAhead = ac.getCar(driver.carAhead)
+    local turnType = upcomingTurnAngle < 0 and 1 or -1
+    driver.aiSplineOffset = 0.5 * turnType
+
+    if upcomingTurnDistance > 150 and delta > 0.05 and delta < 0.35 and driver.car.speedKmh > 100 and carAhead.speedKmh > 100 then
+        physics.setAISplineOffset(driver.carAhead, driver.aiSplineOffset)
+        physics.setAISplineOffset(driver.index, driver.aiSplineOffset)
+        physics.setAIAggression(driver.index, 1)
     else
-        if not override then
-            physics.setAILevel(driver.index, 0.9)
-        else
-            physics.setAILevel(driver.index, AI_LEVEL)
-        end
+        physics.setAISplineOffset(driver.index, 0)
     end
 
     if upcomingTurnDistance > 50 then
-        driver.aiThrottleLimit = math.clamp(driver.aiThrottleLimit+0.001, driver.aiThrottleLimitBase, 1)
+        driver.aiThrottleLimit = math.applyLag(driver.aiThrottleLimit,1,0.99,ac.getScriptDeltaT())
     else
         if not override then
-            driver.aiThrottleLimit = math.clamp(
-                driver.aiThrottleLimit - 0.005,
-                math.lerp(driver.aiThrottleLimitBase,1,math.clamp((driver.aiLevel/2)-math.abs(upcomingTurnAngle)/100,0,driver.aiLevel)),
-                1)
+            driver.aiThrottleLimit =  math.applyLag(driver.aiThrottleLimit,driver.aiThrottleLimitBase,0.96,ac.getScriptDeltaT())
         else
             driver.aiThrottleLimit = AI_THROTTLE_LIMIT
         end
     end
+    if upcomingTurnDistance < 100 and  upcomingTurnDistance < 0 and upcomingTurnAngle > 30 then
+        if delta < 1 then
+            physics.setAILevel(driver.index, math.clamp(driver.aiLevel,0,0.9)+0.1)
+        else
+            if not override then
+                physics.setAILevel(driver.index, driver.aiLevel)
+            else
+                physics.setAILevel(driver.index, AI_LEVEL)
+            end
+        end
+    else
+        if delta < 1 then
+            physics.setAILevel(driver.index, 1)
+        else
+            physics.setAILevel(driver.index, 0.9)
+        end
+    end
+
     physics.setAIThrottleLimit(driver.index, driver.aiThrottleLimit)
 end
 

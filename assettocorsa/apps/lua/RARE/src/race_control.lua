@@ -131,7 +131,7 @@ local function raceSession(lastUpdate,racecontrol,rules,driver)
 
         if driver.car.isAIControlled then
             if rules.AI_FORCE_PIT_TYRES == 1 then ai.pitNewTires(driver) end
-            if rules.AI_AGGRESSION_RUBBERBAND == 1 then ai.alternateAttack(driver)  end
+            if rules.AI_ALTERNATE_LEVEL == 1 then ai.alternateAttack(driver)  end
         end
 
         if rules.DRS_RULES == 1 then drs.controller(driver,racecontrol.drsEnabled) else driver.drsAvailable = true end
