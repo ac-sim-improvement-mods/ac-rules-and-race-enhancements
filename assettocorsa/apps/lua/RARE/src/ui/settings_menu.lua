@@ -91,7 +91,7 @@ function settingsMenu(sim)
             --         RULES = { DRS_RULES = ac.INIConfig.OptionalNumber, DRS_ACTIVATION_LAP = ac.INIConfig.OptionalNumber, 
             --         DRS_GAP_DELTA = ac.INIConfig.OptionalNumber, DRS_WET_DISABLE = ac.INIConfig.OptionalNumber, DRS_WET_LIMIT = ac.INIConfig.OptionalNumber,
             --         VSC_RULES = ac.INIConfig.OptionalNumber, VSC_INIT_TIME = ac.INIConfig.OptionalNumber, VSC_DEPLOY_TIME = ac.INIConfig.OptionalNumber,
-            --         AI_FORCE_PIT_TYRES = ac.INIConfig.OptionalNumber, AI_AVG_TYRE_LIFE = ac.INIConfig.OptionalNumber, AI_AGGRESSION_RUBBERBAND = ac.INIConfig.OptionalNumber,
+            --         AI_FORCE_PIT_TYRES = ac.INIConfig.OptionalNumber, AI_AVG_TYRE_LIFE = ac.INIConfig.OptionalNumber, AI_ALTERNATE_LEVEL = ac.INIConfig.OptionalNumber,
             --         PHYSICS_REBOOT = ac.INIConfig.OptionalNumber
             --     }})
             --     log("[Loaded] Applied config")
@@ -103,7 +103,15 @@ function settingsMenu(sim)
         ui.tabItem("AI", ui.TabItemFlags.None, function ()
             ui.newLine(1)
 
-            slider(RARECONFIG, 'RULES', 'AI_AGGRESSION_RUBBERBAND', 0, 1, 1, true, RARECONFIG.data.RULES.AI_AGGRESSION_RUBBERBAND == 1 and "Alternate AI Strength: ENABLED" or "Alternate AI Strength: DISABLED", 
+            slider(RARECONFIG, 'RULES', 'AI_RELATIVE_SCALING', 0, 1, 1, true, RARECONFIG.data.RULES.AI_RELATIVE_SCALING == 1 and "Relative AI Scaling: ENABLED" or "Relative AI Scaling: DISABLED", 
+            'Increase AI aggression when attacking',
+            function (v) return math.round(v, 0) end)
+
+            slider(RARECONFIG, 'RULES', 'AI_RELATIVE_LEVEL', 70, 100, 1, true, RARECONFIG.data.RULES.AI_RELATIVE_LEVEL == 1 and "Relative AI Level %f%%" or "Relative AI Level %f%%", 
+            'Increase AI aggression when attacking',
+            function (v) return math.round(v, 0) end)
+
+            slider(RARECONFIG, 'RULES', 'AI_ALTERNATE_LEVEL', 0, 1, 1, true, RARECONFIG.data.RULES.AI_ALTERNATE_LEVEL == 1 and "Alternate AI Strength: ENABLED" or "Alternate AI Strength: DISABLED", 
             'Increase AI aggression when attacking',
             function (v) return math.round(v, 0) end)
 
@@ -292,16 +300,12 @@ function settingsMenu(sim)
             --     AI_COMP_OVERRIDE = not AI_COMP_OVERRIDE
             -- end
 
-            -- AI_THROTTLE_LIMIT = ui.slider("AI Throttle Limit", AI_THROTTLE_LIMIT, 0.01, 1, '%.3f')
-            -- AI_LEVEL = ui.slider("AI Level", AI_LEVEL, 0.01, 1, '%.3f')
-            -- AI_AGGRESSION = ui.slider("AI Aggression", AI_AGGRESSION, 0.01, 1, '%.3f')
-
             -- SPLINE_OFFSET = ui.slider("SPLINE", SPLINE_OFFSET, -10, 10, '%.3f')
             -- physics.setAISplineOffset(sim.focusedCar, SPLINE_OFFSET)
 
-            if ui.button("RESET TRACK PHYSICS", vec2(40,30), ui.ButtonFlags.None) then
-                ac.setWindowOpen('main', not ac.isWindowOpen('main'))
-            end
+            -- if ui.button("RESET TRACK PHYSICS", vec2(40,30), ui.ButtonFlags.None) then
+            --     ac.setWindowOpen('main', not ac.isWindowOpen('main'))
+            -- end
 
             ui.newLine(1)
         end)
