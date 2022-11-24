@@ -1,8 +1,8 @@
 SCRIPT_NAME = "Rules and Race Enhancements"
 SCRIPT_SHORT_NAME = "RARE"
-SCRIPT_VERSION = "1.0.3.4"
-SCRIPT_VERSION_CODE = 10347
-SCRIPT_BUILD_DATE = "2022-11-17"
+SCRIPT_VERSION = "1.0.4.5"
+SCRIPT_VERSION_CODE = 10453
+SCRIPT_BUILD_DATE = "2022-11-23"
 CSP_MIN_VERSION_CODE = 2144
 CSP_MIN_VERSION = "1.79"
 
@@ -12,11 +12,13 @@ require 'src/init'
 require 'src/ui/debug_menu'
 require 'src/ui/settings_menu'
 require 'src/ui/notifications'
+require 'src/ui/leaderboard'
 local sim = ac.getSim()
 local audio = nil
 local rc = require 'src/race_control'
 local racecontrol = nil
 
+FIRST_LAUNCH = true
 INITIALIZED = false
 RESTARTED = false
 REBOOT = false
@@ -76,6 +78,11 @@ function script.windowMain(dt)
     if INITIALIZED then
         ui.transparentWindow('notifications',vec2(RARECONFIG.data.NOTIFICATIONS.X_POS,RARECONFIG.data.NOTIFICATIONS.Y_POS),vec2(800,800),function ()
             notificationHandler(dt)
+        end)
+
+
+        ui.transparentWindow('1',vec2(700,700),vec2(1000,1000),function ()
+            drawF1Leaderboard()
         end)
     end
 end
