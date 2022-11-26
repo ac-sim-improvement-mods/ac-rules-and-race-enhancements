@@ -140,7 +140,7 @@ end
 
 --- Race Control for qualify sessions
 --- @param rules RARECONFIG.data.RULES
---- @param driver 
+--- @param driver Driver
 local function qualifySession(racecontrol,rules,driver)
     if driver.car.isAIControlled then
         --ai.qualifying(driver)
@@ -150,7 +150,7 @@ end
 
 --- Race Control for practice sessions
 --- @param rules RARECONFIG.data.RULES
---- @param driver 
+--- @param driver Driver
 local function practiceSession(racecontrol,rules,driver)
 
 end
@@ -182,6 +182,7 @@ local function update(sim,drivers)
     local wetTrack = isTrackWet(rules,sim)
 
     return readOnly{
+        sim = sim,
         session = session,
         carsOnTrackCount = carsOnTrackCount,
         leaderCompletedLaps = leaderCompletedLaps,
@@ -205,6 +206,12 @@ function rc.getRaceControl(dt,sim)
         driver:update(dt,sim)
         DRIVERS[i] = run(lastUpdate,racecontrol,sim.raceSessionType,driver)
         connect.storeDriverData(driver)
+
+        if sim.isInMainMenu then
+            physics.setGentleStop(driver.index,true)
+        else
+            physics.setGentleStop(driver.index,false)
+        end
     end
 
     connect.storeRaceControlData(racecontrol)
