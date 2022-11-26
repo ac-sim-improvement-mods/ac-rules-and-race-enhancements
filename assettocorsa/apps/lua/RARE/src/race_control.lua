@@ -131,6 +131,19 @@ local function raceSession(lastUpdate,racecontrol,rules,driver)
         if driver.car.isAIControlled then
             if rules.AI_FORCE_PIT_TYRES == 1 then ai.pitNewTires(driver) end
             if rules.AI_ALTERNATE_LEVEL == 1 then ai.alternateAttack(driver)  end
+
+            if racecontrol.sim.isInMainMenu and not racecontrol.sim.isSessionStarted then
+                physics.setGentleStop(driver.index,true)
+            else
+                physics.setGentleStop(driver.index,false)
+            end
+
+        else
+            if racecontrol.sim.isInMainMenu then
+                physics.setGentleStop(driver.index,true)
+            else
+                physics.setGentleStop(driver.index,false)
+            end
         end
 
         if rules.DRS_RULES == 1 then drs.controller(driver,racecontrol.drsEnabled) else driver.drsAvailable = true end
@@ -206,12 +219,6 @@ function rc.getRaceControl(dt,sim)
         driver:update(dt,sim)
         DRIVERS[i] = run(lastUpdate,racecontrol,sim.raceSessionType,driver)
         connect.storeDriverData(driver)
-
-        if sim.isInMainMenu then
-            physics.setGentleStop(driver.index,true)
-        else
-            physics.setGentleStop(driver.index,false)
-        end
     end
 
     connect.storeRaceControlData(racecontrol)
