@@ -37,7 +37,7 @@ function settingsMenu(sim)
     ui.tabBar("settingstabbar", ui.TabBarFlags.None, function ()
         ui.tabItem("RULES", ui.TabItemFlags.None, function ()
             ui.newLine(1)
-            ui.header("DRS:")
+            ui.header("DRS")
             slider(RARECONFIG, 'RULES', 'DRS_RULES', 0, 1, 1, true, RARECONFIG.data.RULES.DRS_RULES == 1 and 'DRS Rules: ENABLED' or 'DRS Rules: DISABLED', 
             'Enable DRS being controlled by the app',
             function (v) return math.round(v, 0) end)
@@ -77,7 +77,7 @@ function settingsMenu(sim)
             -- end
             -- ui.newLine(1)
 
-            ui.header("PIT STOPS:")
+            ui.header("PIT STOPS")
             slider(RARECONFIG, 'RULES', 'RACE_REFUELING', 0, 1, 1, true, RARECONFIG.data.RULES.RACE_REFUELING == 1 and "Race Refueling: ENABLED" or "Race Refueling: DISABLED", 
             'Enable or disable refueling during a race',
             function (v) return math.round(v, 0) end)
@@ -103,21 +103,27 @@ function settingsMenu(sim)
         ui.tabItem("AI", ui.TabItemFlags.None, function ()
             ui.newLine(1)
 
-            slider(RARECONFIG, 'RULES', 'AI_RELATIVE_SCALING', 0, 1, 1, true, RARECONFIG.data.AI.AI_RELATIVE_SCALING == 1 and "Relative AI Scaling: ENABLED" or "Relative AI Scaling: DISABLED", 
+            ui.header("LEVEL")
+            slider(RARECONFIG, 'AI', 'AI_ALTERNATE_LEVEL', 0, 1, 1, true, RARECONFIG.data.AI.AI_ALTERNATE_LEVEL == 1 and "Alternate AI Strength: ENABLED" or "Alternate AI Strength: DISABLED", 
             'Increase AI aggression when attacking',
             function (v) return math.round(v, 0) end)
 
-            slider(RARECONFIG, 'RULES', 'AI_RELATIVE_LEVEL', 70, 100, 1, true, RARECONFIG.data.AI.AI_RELATIVE_LEVEL == 1 and "Relative AI Level %.0f%%" or "Relative AI Level %.0f%%", 
+            ui.newLine(1)
+
+            slider(RARECONFIG, 'AI', 'AI_RELATIVE_SCALING', 0, 1, 1, true, RARECONFIG.data.AI.AI_RELATIVE_SCALING == 1 and "Relative AI Scaling: ENABLED" or "Relative AI Scaling: DISABLED", 
+            'Increase AI aggression when attacking',
+            function (v) return math.round(v, 0) end)
+
+            slider(RARECONFIG, 'AI', 'AI_RELATIVE_LEVEL', 70, 100, 1, true, RARECONFIG.data.AI.AI_RELATIVE_LEVEL == 1 and "Relative AI Level %.0f%%" or "Relative AI Level %.0f%%", 
             'Increase AI aggression when attacking',
             function (v) 
                 FIRST_LAUNCH = false
                 initialize(sim)
                 return math.round(v, 0) end)
 
-            slider(RARECONFIG, 'RULES', 'AI_ALTERNATE_LEVEL', 0, 1, 1, true, RARECONFIG.data.AI.AI_ALTERNATE_LEVEL == 1 and "Alternate AI Strength: ENABLED" or "Alternate AI Strength: DISABLED", 
-            'Increase AI aggression when attacking',
-            function (v) return math.round(v, 0) end)
+            ui.newLine(1)
 
+            ui.header("TYRES")
             slider(RARECONFIG, 'AI', 'AI_FORCE_PIT_TYRES', 0, 1, 1, true, RARECONFIG.data.AI.AI_FORCE_PIT_TYRES == 1 and "Pit When Tyres Worn: ENABLED" or "Pit When Tyres Worn: DISABLED", 
             'Force AI to pit for new tyres when their average tyre life is below AI TYRE LIFE',
             function (v) return math.round(v, 0) end)
@@ -140,7 +146,7 @@ function settingsMenu(sim)
 
                 ui.newLine(1)
 
-                slider(RARECONFIG, 'RUAILES', 'AI_SINGLE_TYRE_LIFE', 0, RARECONFIG.data.AI.AI_AVG_TYRE_LIFE, 1, false, 'Pit Below Single Tyre Life: %.2f%%', 
+                slider(RARECONFIG, 'AI', 'AI_SINGLE_TYRE_LIFE', 0, RARECONFIG.data.AI.AI_AVG_TYRE_LIFE, 1, false, 'Pit Below Single Tyre Life: %.2f%%', 
                 "AI will pit if one tyre's life % is below this value",
                 function (v) return math.floor(v / 0.5 + 0.5) * 0.5 end)
 
@@ -202,7 +208,7 @@ function settingsMenu(sim)
 
         ui.tabItem("AUDIO", ui.TabItemFlags.None, function ()
             ui.newLine(1)
-            ui.header("VOLUME:")
+            ui.header("VOLUME")
             local acVolume = ac.getAudioVolume(ac.AudioChannel.Main)
 
             slider(RARECONFIG, 'AUDIO', 'MASTER', 0, 100, 1, false, 'Master: %.0f%%', 
@@ -242,7 +248,7 @@ function settingsMenu(sim)
 
         ui.tabItem("UI", ui.TabItemFlags.None, function ()
             ui.newLine(1)
-            ui.header("RACE CONTROL BANNER:")
+            ui.header("RACE CONTROL BANNER")
 
             slider(RARECONFIG, 'NOTIFICATIONS', 'X_POS', 0, sim.windowWidth, 1, false, 'X Pos: %.0f', 
             'Duration (seconds) that the "Race Control" banner will stay on screen',
