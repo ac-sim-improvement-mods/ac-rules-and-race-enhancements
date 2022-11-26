@@ -103,48 +103,48 @@ function settingsMenu(sim)
         ui.tabItem("AI", ui.TabItemFlags.None, function ()
             ui.newLine(1)
 
-            slider(RARECONFIG, 'RULES', 'AI_RELATIVE_SCALING', 0, 1, 1, true, RARECONFIG.data.RULES.AI_RELATIVE_SCALING == 1 and "Relative AI Scaling: ENABLED" or "Relative AI Scaling: DISABLED", 
+            slider(RARECONFIG, 'RULES', 'AI_RELATIVE_SCALING', 0, 1, 1, true, RARECONFIG.data.AI.AI_RELATIVE_SCALING == 1 and "Relative AI Scaling: ENABLED" or "Relative AI Scaling: DISABLED", 
             'Increase AI aggression when attacking',
             function (v) return math.round(v, 0) end)
 
-            slider(RARECONFIG, 'RULES', 'AI_RELATIVE_LEVEL', 70, 100, 1, true, RARECONFIG.data.RULES.AI_RELATIVE_LEVEL == 1 and "Relative AI Level %.0f%%" or "Relative AI Level %.0f%%", 
+            slider(RARECONFIG, 'RULES', 'AI_RELATIVE_LEVEL', 70, 100, 1, true, RARECONFIG.data.AI.AI_RELATIVE_LEVEL == 1 and "Relative AI Level %.0f%%" or "Relative AI Level %.0f%%", 
             'Increase AI aggression when attacking',
             function (v) 
                 FIRST_LAUNCH = false
                 initialize(sim)
                 return math.round(v, 0) end)
 
-            slider(RARECONFIG, 'RULES', 'AI_ALTERNATE_LEVEL', 0, 1, 1, true, RARECONFIG.data.RULES.AI_ALTERNATE_LEVEL == 1 and "Alternate AI Strength: ENABLED" or "Alternate AI Strength: DISABLED", 
+            slider(RARECONFIG, 'RULES', 'AI_ALTERNATE_LEVEL', 0, 1, 1, true, RARECONFIG.data.AI.AI_ALTERNATE_LEVEL == 1 and "Alternate AI Strength: ENABLED" or "Alternate AI Strength: DISABLED", 
             'Increase AI aggression when attacking',
             function (v) return math.round(v, 0) end)
 
-            slider(RARECONFIG, 'RULES', 'AI_FORCE_PIT_TYRES', 0, 1, 1, true, RARECONFIG.data.RULES.AI_FORCE_PIT_TYRES == 1 and "Pit When Tyres Worn: ENABLED" or "Pit When Tyres Worn: DISABLED", 
+            slider(RARECONFIG, 'AI', 'AI_FORCE_PIT_TYRES', 0, 1, 1, true, RARECONFIG.data.AI.AI_FORCE_PIT_TYRES == 1 and "Pit When Tyres Worn: ENABLED" or "Pit When Tyres Worn: DISABLED", 
             'Force AI to pit for new tyres when their average tyre life is below AI TYRE LIFE',
             function (v) return math.round(v, 0) end)
 
             ui.newLine(1)
 
             local driver = DRIVERS[sim.focusedCar]
-            if RARECONFIG.data.RULES.AI_FORCE_PIT_TYRES == 1 then
+            if RARECONFIG.data.AI.AI_FORCE_PIT_TYRES == 1 then
 
-                slider(RARECONFIG, 'RULES', 'AI_AVG_TYRE_LIFE', 0, 100, 1, false, 'Pit Below Avg Tyre Life: %.2f%%', 
+                slider(RARECONFIG, 'AI', 'AI_AVG_TYRE_LIFE', 0, 100, 1, false, 'Pit Below Avg Tyre Life: %.2f%%', 
                 'AI will pit after average tyre life % is below this value',
                 function (v) 
-                    RARECONFIG.data.RULES.AI_SINGLE_TYRE_LIFE = math.clamp(RARECONFIG.data.RULES.AI_SINGLE_TYRE_LIFE,0,math.floor(v / 0.5 + 0.5) * 0.5)
+                    RARECONFIG.data.AI.AI_SINGLE_TYRE_LIFE = math.clamp(RARECONFIG.data.AI.AI_SINGLE_TYRE_LIFE,0,math.floor(v / 0.5 + 0.5) * 0.5)
                     return math.floor(v / 0.5 + 0.5) * 0.5 
                 end)
 
-                slider(RARECONFIG, 'RULES', 'AI_AVG_TYRE_LIFE_RANGE', 0, 15, 1, false, 'Variability: %.2f%%', 
+                slider(RARECONFIG, 'AI', 'AI_AVG_TYRE_LIFE_RANGE', 0, 15, 1, false, 'Variability: %.2f%%', 
                 "AI will pit if one tyre's life % is below this value",
                 function (v) return math.floor(v / 0.5 + 0.5) * 0.5 end)
 
                 ui.newLine(1)
 
-                slider(RARECONFIG, 'RULES', 'AI_SINGLE_TYRE_LIFE', 0, RARECONFIG.data.RULES.AI_AVG_TYRE_LIFE, 1, false, 'Pit Below Single Tyre Life: %.2f%%', 
+                slider(RARECONFIG, 'RUAILES', 'AI_SINGLE_TYRE_LIFE', 0, RARECONFIG.data.AI.AI_AVG_TYRE_LIFE, 1, false, 'Pit Below Single Tyre Life: %.2f%%', 
                 "AI will pit if one tyre's life % is below this value",
                 function (v) return math.floor(v / 0.5 + 0.5) * 0.5 end)
 
-                slider(RARECONFIG, 'RULES', 'AI_SINGLE_TYRE_LIFE_RANGE', 0, 15, 1, false, 'Variability: %.2f%%', 
+                slider(RARECONFIG, 'AI', 'AI_SINGLE_TYRE_LIFE_RANGE', 0, 15, 1, false, 'Variability: %.2f%%', 
                 "AI will pit if one tyre's life % is below this value",
                 function (v) return math.floor(v / 0.5 + 0.5) * 0.5 end)
 
@@ -295,7 +295,7 @@ function settingsMenu(sim)
         ui.tabItem("MISC", ui.TabItemFlags.None, function ()
             ui.newLine(1)
 
-            slider(RARECONFIG, 'RULES', 'PHYSICS_REBOOT', 0, 1, 1, true, RARECONFIG.data.RULES.PHYSICS_REBOOT == 1 and 'Physics Reboot: ENABLED' or 'Physics Reboot: DISABLED', 
+            slider(RARECONFIG, 'MISC', 'PHYSICS_REBOOT', 0, 1, 1, true, RARECONFIG.data.MISC.PHYSICS_REBOOT == 1 and 'Physics Reboot: ENABLED' or 'Physics Reboot: DISABLED', 
             "Reboot Assetto Corsa if the app doesn't have access to Physics",
             function (v) return math.round(v, 0) end)
 

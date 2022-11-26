@@ -10,7 +10,7 @@ AI_AGGRESSION = 0.25
 ---@param driver Driver
 ---@return bool
 local function avgTyreWearBelowLimit(driver)
-    local avgTyreLimit = 1 - (RARECONFIG.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom)/100
+    local avgTyreLimit = 1 - (RARECONFIG.data.AI.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom)/100
     local avgTyreWear = (driver.car.wheels[0].tyreWear +
                             driver.car.wheels[1].tyreWear +
                             driver.car.wheels[2].tyreWear +
@@ -33,7 +33,7 @@ ai.QualifyLap = {
 ---@param driver Driver
 ---@return bool
 local function singleTyreWearBelowLimit(driver)
-    local singleTyreLimit = 1 - (RARECONFIG.data.RULES.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom)/100
+    local singleTyreLimit = 1 - (RARECONFIG.data.AI.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom)/100
 
     if driver.car.wheels[0].tyreWear > singleTyreLimit or
             driver.car.wheels[1].tyreWear > singleTyreLimit or
