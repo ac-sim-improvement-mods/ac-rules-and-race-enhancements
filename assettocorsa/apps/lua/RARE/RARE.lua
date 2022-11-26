@@ -1,8 +1,8 @@
 SCRIPT_NAME = "Rules and Race Enhancements"
 SCRIPT_SHORT_NAME = "RARE"
-SCRIPT_VERSION = "1.0.4.6"
-SCRIPT_VERSION_CODE = 10468
-SCRIPT_BUILD_DATE = "2022-11-23"
+SCRIPT_VERSION = "1.0.5.2.preview0"
+SCRIPT_VERSION_CODE = 10520
+SCRIPT_BUILD_DATE = "2022-11-26"
 CSP_MIN_VERSION_CODE = 2144
 CSP_MIN_VERSION = "1.79"
 
@@ -57,7 +57,7 @@ function script.update(dt)
     if INITIALIZED then
         -- A simple On/Off for the app
         if not ac.isWindowOpen('main') then return end
-        if REBOOT and RARECONFIG.data.RULES.PHYSICS_REBOOT == 1 then ac.restartAssettoCorsa() end
+        if REBOOT and RARECONFIG.data.MISC.PHYSICS_REBOOT == 1 then ac.restartAssettoCorsa() end
         if not sim.isInMainMenu and not sim.isSessionStarted then
             RESTARTED = false
         else
