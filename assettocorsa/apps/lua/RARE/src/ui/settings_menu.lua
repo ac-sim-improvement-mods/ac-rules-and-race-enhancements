@@ -14,15 +14,21 @@ function settingsMenu(sim)
         ui.popFont()
 
         ui.sameLine(0,0)
-        ui.drawRectFilled(vec2(380,30),vec2(420,60),ac.isWindowOpen('main') and rgbm(0,1,0,0.5) or rgbm(1,0,0,0.5))
+        ui.drawRectFilled(vec2(380,30),vec2(420,60),(ac.isWindowOpen('main') and physics.allowed()) and rgbm(0,1,0,0.5) or rgbm(1,0,0,0.5))
 
         ui.sameLine(380,0)
         ui.setCursor(vec2(380,30))
-        if ui.button(ac.isWindowOpen('main') and "ON" or "OFF", vec2(40,30), ui.ButtonFlags.None) then
+        local enabledButtonFlags = physics.allowed() and ui.ButtonFlags.None or ui.ButtonFlags.Disabled
+        if ui.button((ac.isWindowOpen('main') and physics.allowed()) and "ON" or "OFF", vec2(40,30), enabledButtonFlags) then
             ac.setWindowOpen('main', not ac.isWindowOpen('main'))
         end
+
         if ui.itemHovered() then
-            ui.setTooltip("Enable or Disable "..SCRIPT_SHORT_NAME.." app")
+            if physics.allowed() then
+                ui.setTooltip("Enable or Disable "..SCRIPT_SHORT_NAME.." app")
+            else
+                ui.setTooltip("Enable Physics Reboot in 'MISC' settings, and reboot AC to enable RARE")
+            end
         end
     end
 
@@ -105,17 +111,17 @@ function settingsMenu(sim)
 
             ui.header("LEVEL")
             slider(RARECONFIG, 'AI', 'AI_ALTERNATE_LEVEL', 0, 1, 1, true, RARECONFIG.data.AI.AI_ALTERNATE_LEVEL == 1 and "Alternate AI Strength: ENABLED" or "Alternate AI Strength: DISABLED", 
-            'Increase AI aggression when attacking',
+            'Changes the default AI level to be more competitive',
             function (v) return math.round(v, 0) end)
 
             ui.newLine(1)
 
             slider(RARECONFIG, 'AI', 'AI_RELATIVE_SCALING', 0, 1, 1, true, RARECONFIG.data.AI.AI_RELATIVE_SCALING == 1 and "Relative AI Scaling: ENABLED" or "Relative AI Scaling: DISABLED", 
-            'Increase AI aggression when attacking',
+            'Scales the AI level to whatever Relative AI Level is\nUsed for easy level adjustment',
             function (v) return math.round(v, 0) end)
 
             slider(RARECONFIG, 'AI', 'AI_RELATIVE_LEVEL', 70, 100, 1, true, RARECONFIG.data.AI.AI_RELATIVE_LEVEL == 1 and "Relative AI Level %.0f%%" or "Relative AI Level %.0f%%", 
-            'Increase AI aggression when attacking',
+            "Relative AI level, for easier scaling with BoP'd grids",
             function (v) 
                 FIRST_LAUNCH = false
                 initialize(sim)
@@ -301,9 +307,27 @@ function settingsMenu(sim)
         ui.tabItem("MISC", ui.TabItemFlags.None, function ()
             ui.newLine(1)
 
-            slider(RARECONFIG, 'MISC', 'PHYSICS_REBOOT', 0, 1, 1, true, RARECONFIG.data.MISC.PHYSICS_REBOOT == 1 and 'Physics Reboot: ENABLED' or 'Physics Reboot: DISABLED', 
-            "Reboot Assetto Corsa if the app doesn't have access to Physics",
+            slider(RARECONFIG, 'MISC', 'PHYSICS_REBOOT', 0, 1, 1, true, RARECONFIG.data.MISC.PHYSICS_REBOOT == 1 and 'Auto App Injection Reboot: ENABLED' or 'Auto App Injection Reboot: DISABLED', 
+            "If the app can't access physics\nAutomatically inject necessary lines into surfaces.ini\nReboot Assetto Corsa",
             function (v) return math.round(v, 0) end)
+
+            ui.newLine(1)
+
+            local injectionButtonFlag = physics.allowed() and ui.ButtonFlags.Disabled or ui.ButtonFlags.None
+            if ui.button('App Injection Reboot', vec2(ui.windowWidth()-77,25), injectionButtonFlag) then
+                setTrackSurfaces()
+            end
+            if ui.itemHovered() then
+                ui.setTooltip("Inject necessary lines into surfaces.ini\nReboot Assetto Corsa")
+            end
+
+            local revertButtonFlag = physics.allowed() and ui.ButtonFlags.None or ui.ButtonFlags.Disabled
+            if ui.button('Revert App Injection', vec2(ui.windowWidth()-77,25), revertButtonFlag) then
+                resetTrackSurfaces()
+            end
+            if ui.itemHovered() then
+                ui.setTooltip("NECESSARY FOR PLAYING ONLINE\n\nRevert surfaces.ini\nReboot Assetto Corsa")
+            end
 
             -- if ui.button("AI COMP OVERRIDE "..upperBool(AI_COMP_OVERRIDE), vec2(ui.windowWidth()-77,25), ui.ButtonFlags.None) then
             --     AI_COMP_OVERRIDE = not AI_COMP_OVERRIDE
@@ -322,3 +346,4 @@ function settingsMenu(sim)
 
     ui.setCursor(vec2(0,601))
 end
+

@@ -147,3 +147,35 @@ end
 function compatibleCspVersion()
     return ac.getPatchVersionCode() >= CSP_MIN_VERSION_CODE and true or false
 end
+
+function resetTrackSurfaces()
+    local config = ac.INIConfig.load(ac.getFolder(ac.FolderID.ACApps).."/lua/RARE/settings.ini",ac.INIFormat.Default)
+    local surfacesFile = ac.getTrackDataFilename('surfaces.ini')
+    local surfacesFileBackup = ac.getTrackDataFilename('_surfaces.ini')
+    if physics.allowed() then
+        if config:get('MISC','PHYSICS_REBOOT',1) == 0 then
+            if io.fileExists(surfacesFileBackup) then
+              io.deleteFile(surfacesFile)
+              io.copyFile(surfacesFileBackup, surfacesFile, false)
+              REBOOT = true
+            end
+        else
+            RARECONFIG.data.MISC.PHYSICS_REBOOT = 0
+            config:setAndSave('MISC','PHYSICS_REBOOT',0)
+            resetTrackSurfaces()
+        end
+    end
+end
+
+function setTrackSurfaces()
+    local surfacesFile = ac.getTrackDataFilename('surfaces.ini')
+    local surfacesFileBackup = ac.getTrackDataFilename('_surfaces.ini')
+    local surfacesIni = ac.INIConfig.load(surfacesFile,ac.INIFormat.Default)
+
+    if not physics.allowed() then
+        io.copyFile(surfacesFile,surfacesFileBackup, false)
+        surfacesIni:setAndSave('SURFACE_0', 'WAV_PITCH', 'extended-0')
+        surfacesIni:setAndSave('_SCRIPTING_PHYSICS', 'ALLOW_APPS', '1')
+        REBOOT = true
+    end
+end

@@ -36,7 +36,7 @@ function initialize(sim)
                 AI_SINGLE_TYRE_LIFE_RANGE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 2.5,
                 AI_ALTERNATE_LEVEL = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
                 AI_RELATIVE_SCALING = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
-                AI_RELATIVE_LEVEL = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
+                AI_RELATIVE_LEVEL = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 100,
             },
             AUDIO = { 
                 MASTER = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 100,
@@ -63,20 +63,9 @@ function initialize(sim)
     end)
 
     if RARECONFIG.data.MISC.PHYSICS_REBOOT == 1 then
-        if not physics.allowed() then
-            local trackSurfaces = MappedConfig(ac.getTrackDataFilename('surfaces.ini'), {
-                _SCRIPTING_PHYSICS = { ALLOW_APPS = 'nil' },
-                SURFACE_0 = { WAV_PITCH = 'nil' }
-            })
-
-            trackSurfaces:set('_SCRIPTING_PHYSICS', 'ALLOW_APPS', '1')
-            trackSurfaces:set('SURFACE_0', 'WAV_PITCH', 'extended-0')
-
-            REBOOT = true
-            return true
-        end
+        setTrackSurfaces()
     end
-
+    
     -- Get DRS Zones from track data folder
     try(function ()
         DRS_ZONES = DrsZones("drs_zones.ini")
