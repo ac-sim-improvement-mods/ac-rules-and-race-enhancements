@@ -85,7 +85,7 @@ function initialize(sim)
         DRIVERS[i] = Driver(i)
 
         local driver = DRIVERS[i]
-
+        
         if driver.car.isAIControlled then
             local fuelcons = ac.INIConfig.carData(driver.index, 'fuel_cons.ini'):get('FUEL_EVAL', 'KM_PER_LITER', 0.0)
             local fuelload = 0
