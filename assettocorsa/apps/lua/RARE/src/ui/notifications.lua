@@ -29,7 +29,8 @@ local function drawRaceControl(text)
     local yAlign = -145
     local fontSize = 32
     local bannerHeight = 95
-    local bannerWidth = ui.measureDWriteText(text,30).x + 5
+    local bannerWidth = ui.measureDWriteText(text,fontSize * 0.8125).x + 40
+
 
     -- Race Control dark blue rect
     ui.drawRectFilled(
@@ -68,12 +69,12 @@ local function drawRaceControl(text)
     drawText{
         string = text,
         fontSize = fontSize * 0.8125,
-        xPos = 149 + bannerWidth/2,
+        xPos = 110 + bannerWidth/2,
         yPos = yAlign + 21,
         xAlign = ui.Alignment.Center,
         yAlign = ui.Alignment.Center,
         color = rgbm(0.07, 0.12, 0.23, 1),
-        margin = vec2(420, 350)
+        margin = vec2(500, 350)
     }
 
     ui.beginScale()

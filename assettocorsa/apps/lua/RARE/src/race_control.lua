@@ -120,7 +120,7 @@ local function raceSession(lastUpdate,racecontrol,config,driver)
             end
 
             if not lastUpdate.wetTrack and racecontrol.wetTrack then
-                popup.notification("DRS DISABLED | WET TRACK")
+                popup.notification("DRS DISABLED - WET TRACK")
             end
 
             if lastUpdate.wetTrack and not racecontrol.wetTrack then

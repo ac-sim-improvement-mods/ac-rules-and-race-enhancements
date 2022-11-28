@@ -1,7 +1,7 @@
 SCRIPT_NAME = "Rules and Race Enhancements"
 SCRIPT_SHORT_NAME = "RARE"
-SCRIPT_VERSION = "1.0.5.5.preview5"
-SCRIPT_VERSION_CODE = 10555
+SCRIPT_VERSION = "1.0.6.0"
+SCRIPT_VERSION_CODE = 10605
 SCRIPT_BUILD_DATE = "2022-11-28"
 CSP_MIN_VERSION_CODE = 2144
 CSP_MIN_VERSION = "1.79"
@@ -76,7 +76,7 @@ function script.windowMain(dt)
     -- JUST TO KEEP THE SCRIPT ALIVE
 
     if INITIALIZED then
-        ui.transparentWindow('notifications',vec2(RARECONFIG.data.NOTIFICATIONS.X_POS,RARECONFIG.data.NOTIFICATIONS.Y_POS),vec2(800,800),function ()
+        ui.transparentWindow('notifications',vec2(RARECONFIG.data.NOTIFICATIONS.X_POS,RARECONFIG.data.NOTIFICATIONS.Y_POS),vec2(1200,500),function ()
             notificationHandler(dt)
         end)
 
