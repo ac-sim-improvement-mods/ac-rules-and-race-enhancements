@@ -117,7 +117,7 @@ function settingsMenu(sim)
             ui.newLine(1)
 
             slider(RARECONFIG, 'AI', 'AI_RELATIVE_SCALING', 0, 1, 1, true, RARECONFIG.data.AI.AI_RELATIVE_SCALING == 1 and "Relative AI Scaling: ENABLED" or "Relative AI Scaling: DISABLED", 
-            'Scales the AI level to whatever Relative AI Level is\nUsed for easy level adjustment',
+            'Enables relative AI scaling',
             function (v) return math.round(v, 0) end)
 
             slider(RARECONFIG, 'AI', 'AI_RELATIVE_LEVEL', 70, 100, 1, true, RARECONFIG.data.AI.AI_RELATIVE_LEVEL == 1 and "Relative AI Level %.0f%%" or "Relative AI Level %.0f%%", 
