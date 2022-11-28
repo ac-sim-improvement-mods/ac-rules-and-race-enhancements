@@ -133,7 +133,7 @@ local function raceSession(lastUpdate,racecontrol,config,driver)
             if config.AI.AI_ALTERNATE_LEVEL == 1 then ai.alternateAttack(driver)  end
         end
 
-        if config.RULES.DRS_RULES == 1 then drs.controller(driver,racecontrol.drsEnabled) else driver.drsAvailable = true end
+        if config.RULES.DRS_RULES == 1 then drs.controller(racecontrol.sim,driver,racecontrol.drsEnabled) else driver.drsAvailable = true end
 
         return driver
 end

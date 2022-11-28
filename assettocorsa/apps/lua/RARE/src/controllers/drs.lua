@@ -107,8 +107,11 @@ end
 
 --- Locks the specified driver's DRS
 ---@param driver Driver
-local function setDriverDRS(driver,allowed)
-    physics.allowCarDRS(driver.index,not allowed)
+local function setDriverDRS(sim,driver,allowed)
+    if not sim.isOnlineRace then
+        physics.allowCarDRS(driver.index,not allowed)
+    end
+
     if driver.car.isAIControlled then
         if not allowed then
             physics.setCarDRS(driver.index, false)
@@ -216,10 +219,10 @@ end
 --- Control driver's DRS deployment
 --- @param driver Driver
 --- @param drsEnabled boolean
-function drs.controller(driver,drsEnabled)
+function drs.controller(sim,driver,drsEnabled)
     setDriverDrsZones(driver)
     setDrsAvailable(driver,drsEnabled)
-    setDriverDRS(driver,drsEnabled and driver.drsAvailable or false)
+    setDriverDRS(sim,driver,drsEnabled and driver.drsAvailable or false)
 end
 
 return drs
