@@ -34,7 +34,7 @@ function initialize(sim)
                 AI_AVG_TYRE_LIFE_RANGE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 15,
                 AI_SINGLE_TYRE_LIFE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 30,
                 AI_SINGLE_TYRE_LIFE_RANGE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 2.5,
-                AI_ALTERNATE_LEVEL = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
+                AI_ALTERNATE_LEVEL = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
                 AI_RELATIVE_SCALING = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
                 AI_RELATIVE_LEVEL = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 100,
             },
@@ -76,7 +76,10 @@ function initialize(sim)
     end, function ()
     end)
 
-    local driverIni = ac.INIConfig.load(ac.getFolder(ac.FolderID.ACApps).."/lua/RARE/drivers.ini",ac.INIFormat.Default)
+    if not io.dirExists(ac.getFolder(ac.FolderID.ACApps).."/lua/RARE/data") then
+        io.createDir(ac.getFolder(ac.FolderID.ACApps).."/lua/RARE/data")
+    end
+    local driverIni = ac.INIConfig.load(ac.getFolder(ac.FolderID.ACApps).."/lua/RARE/data/drivers.ini",ac.INIFormat.Default)
 
     for i=0, ac.getSim().carsCount-1 do
         DRIVERS[i] = Driver(i)
@@ -96,28 +99,24 @@ function initialize(sim)
 
             physics.setCarFuel(driver.index, fuelload)
 
-            if FIRST_LAUNCH and ((sim.raceSessionType == ac.SessionType.Race and not sim.isSessionStarted) or sim.raceSessionType == ac.SessionType.Qualify)then
+            if FIRST_LAUNCH then
                 log("First initialization")
-                if RARECONFIG.data.RULES.AI_RELATIVE_SCALING == 1 then
-                    driver.aiLevel = driver.car.aiLevel * RARECONFIG.data.RULES.AI_RELATIVE_LEVEL/100
-                    log("Using relative AI level scaling")
-                else
-                    log("Using default AI level scaling")
-                    driver.aiLevel = driver.car.aiLevel
-                end
-
+                driver.aiLevel = driver.car.aiLevel
                 driver.aiThrottleLimitBase = math.lerp(0.5,1,1-((1-driver.aiLevel)/0.3))
                 driver.aiAggression = driver.car.aiAggression
-
-                driverIni:setAndSave('AI_'..driver.index, 'AI_LEVEL', driver.aiLevel)
+                driverIni:setAndSave('AI_'..driver.index, 'AI_LEVEL', driver.car.aiLevel)
                 driverIni:setAndSave('AI_'..driver.index, 'AI_THROTTLE_LIMIT', driver.aiThrottleLimitBase)
                 driverIni:setAndSave('AI_'..driver.index, 'AI_AGGRESSION', driver.car.aiAggression)
             else
-                log("Loading saved AI values")
                 driver.aiLevel = driverIni:get('AI_'..driver.index, 'AI_LEVEL', driver.car.aiLevel)
                 driver.aiThrottleLimitBase = driverIni:get('AI_'..driver.index, 'AI_THROTTLE_LIMIT', math.lerp(0.5,1,1-((1-driver.car.aiLevel)/0.3)))
                 driver.aiAggression = driverIni:get('AI_'..driver.index, 'AI_AGGRESSION', driver.car.aiAggression)
             end
+        end
+
+        if RARECONFIG.data.AI.AI_RELATIVE_SCALING == 1 then
+            driver.aiLevel = driver.aiLevel * RARECONFIG.data.AI.AI_RELATIVE_LEVEL/100
+            driver.aiThrottleLimitBase = math.lerp(0.5,1,1-((1-driver.aiLevel)/0.3))
         end
 
         physics.setAILevel(driver.index, driver.aiLevel)
