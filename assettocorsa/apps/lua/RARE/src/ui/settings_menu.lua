@@ -27,7 +27,7 @@ function settingsMenu(sim)
             if physics.allowed() then
                 ui.setTooltip("Enable or Disable "..SCRIPT_SHORT_NAME.." app")
             else
-                ui.setTooltip("Enable Physics Reboot in 'MISC' settings, and reboot AC to enable RARE")
+                ui.setTooltip("In 'MISC' settings, click the 'App Injection' button to enable RARE")
             end
         end
     end
@@ -314,7 +314,7 @@ function settingsMenu(sim)
             ui.newLine(1)
 
             local injectionButtonFlag = physics.allowed() and ui.ButtonFlags.Disabled or ui.ButtonFlags.None
-            if ui.button('App Injection Reboot', vec2(ui.windowWidth()-77,25), injectionButtonFlag) then
+            if ui.button('App Injection', vec2(ui.windowWidth()-77,25), injectionButtonFlag) then
                 setTrackSurfaces()
             end
             if ui.itemHovered() then
