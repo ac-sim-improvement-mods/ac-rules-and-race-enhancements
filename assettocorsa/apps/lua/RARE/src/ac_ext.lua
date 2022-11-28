@@ -11,7 +11,7 @@ function getDelta(sim,carIndex,car2Index)
     if carPos > car2Pos then
         car2Pos = car2Pos + 1
     end
-    
+
     return (car2Pos - carPos) / (car.speedKmh / 3.6) * sim.trackLengthM
 end
 

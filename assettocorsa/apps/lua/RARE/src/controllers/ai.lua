@@ -1,7 +1,5 @@
 local ai = {}
 
-local connect = require 'src/connection'
-
 AI_COMP_OVERRIDE = false
 AI_THROTTLE_LIMIT = 0.8
 AI_LEVEL = 0.9
@@ -12,7 +10,7 @@ AI_AGGRESSION = 0.25
 ---@param driver Driver
 ---@return bool
 local function avgTyreWearBelowLimit(driver)
-    local avgTyreLimit = 1 - (RAREConfig.data.RULES.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom)/100
+    local avgTyreLimit = 1 - (RARECONFIG.data.AI.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom)/100
     local avgTyreWear = (driver.car.wheels[0].tyreWear +
                             driver.car.wheels[1].tyreWear +
                             driver.car.wheels[2].tyreWear +
@@ -27,7 +25,7 @@ end
 ai.QualifyLap = {
     OutLap = 0,
     FlyingLap = 1,
-    InLap = 3
+    InLap = 2
 } 
 
 --- Returns whether one of a driver's tyre life is below
@@ -35,7 +33,7 @@ ai.QualifyLap = {
 ---@param driver Driver
 ---@return bool
 local function singleTyreWearBelowLimit(driver)
-    local singleTyreLimit = 1 - (RAREConfig.data.RULES.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom)/100
+    local singleTyreLimit = 1 - (RARECONFIG.data.AI.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom)/100
 
     if driver.car.wheels[0].tyreWear > singleTyreLimit or
             driver.car.wheels[1].tyreWear > singleTyreLimit or
@@ -93,7 +91,7 @@ end
 --- Occurs when a driver is in the pit
 ---@param driver Driver
 local function pitstop(driver)
-    if RAREConfig.data.RULES.RACE_REFUELING == 0 then physics.setCarFuel(driver.index, driver.aiPrePitFuel) end
+    if RARECONFIG.data.RULES.RACE_REFUELING == 0 then physics.setCarFuel(driver.index, driver.aiPrePitFuel) end
     driver.aiPitting = false
     driver.tyreLaps = 0
 end
@@ -243,40 +241,54 @@ function ai.alternateAttack(driver)
     --     end
     -- end
 
-    if delta > 0.2 then
-        if math.abs(upcomingTurnAngle) < 30 and upcomingTurnDistance <= 50 then
-            if driver.car.speedKmh < 100 then
-                physics.setAIAggression(driver.index, 1)
-            else
-                physics.setAIAggression(driver.index, 0.6)
-            end
-        elseif upcomingTurnDistance > 200 and delta > 0.5 then
-            physics.setAIAggression(driver.index, 1)
-        end
+    if upcomingTurnDistance > 200 and delta < 0.5 then
+        physics.setAIAggression(driver.index, 1)
+    elseif delta > 0.5 then
+        physics.setAIAggression(driver.index, 0.25)
+    else
+        physics.setAIAggression(driver.index, 0)
     end
 
-    if delta < 1 then
-        physics.setAILevel(driver.index, 1)
+    local carAhead = ac.getCar(driver.carAhead)
+    local turnType = upcomingTurnAngle < 0 and 1 or -1
+    driver.aiSplineOffset = 0.5 * turnType
+
+    if upcomingTurnDistance > 150 and delta > 0.05 and delta < 0.35 and driver.car.speedKmh > 100 and carAhead.speedKmh > 100 then
+        physics.setAISplineOffset(driver.carAhead, driver.aiSplineOffset)
+        physics.setAISplineOffset(driver.index, driver.aiSplineOffset)
+        physics.setAIAggression(driver.index, 1)
     else
-        if not override then
-            physics.setAILevel(driver.index, 0.9)
-        else
-            physics.setAILevel(driver.index, AI_LEVEL)
-        end
+        physics.setAISplineOffset(driver.index, 0)
     end
 
-    if upcomingTurnDistance > 200 or math.abs(upcomingTurnAngle) < 30 then
-        physics.setAIThrottleLimit(driver.index, 1)
-        driver.aiThrottleLimit= 1
+    if upcomingTurnDistance > 50 then
+        driver.aiThrottleLimit = math.applyLag(driver.aiThrottleLimit,1,0.99,ac.getScriptDeltaT())
     else
         if not override then
-            physics.setAIThrottleLimit(driver.index, driver.aiThrottleLimitBase)
-            driver.aiThrottleLimit = driver.aiThrottleLimitBase
+            driver.aiThrottleLimit =  math.applyLag(driver.aiThrottleLimit,driver.aiThrottleLimitBase,0.96,ac.getScriptDeltaT())
         else
-            physics.setAIThrottleLimit(driver.index, AI_THROTTLE_LIMIT)
             driver.aiThrottleLimit = AI_THROTTLE_LIMIT
         end
     end
+    if upcomingTurnDistance < 100 and  upcomingTurnDistance < 0 and upcomingTurnAngle > 30 then
+        if delta < 1 then
+            physics.setAILevel(driver.index, math.clamp(driver.aiLevel,0,0.9)+0.1)
+        else
+            if not override then
+                physics.setAILevel(driver.index, driver.aiLevel)
+            else
+                physics.setAILevel(driver.index, AI_LEVEL)
+            end
+        end
+    else
+        if delta < 1 then
+            physics.setAILevel(driver.index, 1)
+        else
+            physics.setAILevel(driver.index, 0.9)
+        end
+    end
+
+    physics.setAIThrottleLimit(driver.index, driver.aiThrottleLimit)
 end
 
 return ai

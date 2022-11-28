@@ -33,7 +33,7 @@ local function enableVSC(sim,best_lap_times)
         VSC_START_TIMER = 5
 
         if VSC_END_TIMER > 0 then
-            
+
             if VSC_END_TIMER == 1000 and sim.raceFlagType == not ac.FlagType.Caution then
                 ac.log("Virtual Safety Car is ending soon!")
                 ui.toast(ui.Icons.Warning, "[RARE] Virtual Safety Car is ending soon!")
