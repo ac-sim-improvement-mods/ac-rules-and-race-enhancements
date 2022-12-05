@@ -1,7 +1,7 @@
 SCRIPT_NAME = "Rules and Race Enhancements"
 SCRIPT_SHORT_NAME = "RARE"
 SCRIPT_VERSION = "1.0.6.1"
-SCRIPT_VERSION_CODE = 10610
+SCRIPT_VERSION_CODE = 10613
 SCRIPT_BUILD_DATE = "2022-11-28"
 CSP_MIN_VERSION_CODE = 2144
 CSP_MIN_VERSION = "1.79"
@@ -63,6 +63,7 @@ function script.update(dt)
         else
             racecontrol = rc.getRaceControl(dt,sim)
             audio.driver(sim)
+            physics.setCarAutopilot(true)
         end
     else
         if sim.isInMainMenu or sim.isSessionStarted then

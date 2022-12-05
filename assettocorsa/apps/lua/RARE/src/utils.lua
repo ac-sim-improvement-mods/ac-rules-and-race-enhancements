@@ -29,7 +29,7 @@ function inLineBulletText(label,text,space)
             ui.textColored(text, rgbm(1,0,0,1))
         end
     elseif string.find(label, "Tyre Life") and not string.find(label, "Limit") then
-        if text < RARECONFIG.data.RULES.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom or
+        if text < RARECONFIG.data.AI.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom or
             (string.find(label, "Average") and text < RARECONFIG.data.AI.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom) then
             ui.textColored(text.." %", rgbm(1,0,0,1))
         elseif text < RARECONFIG.data.AI.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom then
