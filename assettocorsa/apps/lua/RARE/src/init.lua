@@ -36,7 +36,7 @@ function initialize(sim)
                 AI_SINGLE_TYRE_LIFE_RANGE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 2.5,
                 AI_ALTERNATE_LEVEL = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
                 AI_RELATIVE_SCALING = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
-                AI_RELATIVE_LEVEL = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 100,
+                AI_RELATIVE_LEVEL = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 100
             },
             AUDIO = { 
                 MASTER = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 100,
@@ -65,7 +65,7 @@ function initialize(sim)
     if RARECONFIG.data.MISC.PHYSICS_REBOOT == 1 then
         setTrackSurfaces()
     end
-    
+
     -- Get DRS Zones from track data folder
     try(function ()
         DRS_ZONES = DrsZones("drs_zones.ini")

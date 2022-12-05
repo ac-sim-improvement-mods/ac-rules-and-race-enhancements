@@ -49,7 +49,7 @@ function settingsMenu(sim)
             function (v) return math.round(v, 0) end)
 
             if RARECONFIG.data.RULES.DRS_RULES == 1 then
-                DRS_ENABLED_LAP = slider(RARECONFIG, 'RULES', 'DRS_ACTIVATION_LAP', 1, ac.getSession(sim.currentSessionIndex).laps, 1, false, 'Activation Lap: %.0f', 
+                DRS_ENABLED_LAP = slider(RARECONFIG, 'RULES', 'DRS_ACTIVATION_LAP', 1, 5, 1, false, 'Activation Lap: %.0f', 
                 'First lap to allow DRS activation',
                 function (v) return v end)
                 slider(RARECONFIG, 'RULES', 'DRS_GAP_DELTA', 100, 2000, 1, false, 'Gap Delta: %.0f ms',

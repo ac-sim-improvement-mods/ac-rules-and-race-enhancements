@@ -174,12 +174,16 @@ local function run(lastUpdate,racecontrol,sessionType,driver)
 end
 
 local function update(sim,drivers)
-    local session = ac.getSession(sim.currentSessionIndex)
     local config = RARECONFIG.data
     local carsOnTrackCount = getTrackOrder(drivers)
     local leaderCompletedLaps = getLeaderCompletedLaps(sim)
     local drsEnabled,drsEnabledLap = isDrsEnabled(config,leaderCompletedLaps)
     local wetTrack = isTrackWet(config,sim)
+    local session = nil
+    
+    if not sim.isOnlineRace then
+        session = ac.getSession(sim.currentSessionIndex)
+    end
 
     return readOnly{
         sim = sim,

@@ -27,7 +27,9 @@ function debugMenu(sim,rc,error)
         inLineBulletText("Physics Late", sim.physicsLate,space)
         inLineBulletText("Track", ac.getTrackName(),space)
         inLineBulletText("Time", string.format("%02d:%02d:%02d", sim.timeHours, sim.timeMinutes, sim.timeSeconds),space)
-        inLineBulletText("Leader Lap", (rc.leaderCompletedLaps+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
+        if not sim.isOnlineRace then
+            inLineBulletText("Leader Lap", (rc.leaderCompletedLaps+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
+        end
     end)
 
     if RARECONFIG.data.RULES.VSC_RULES == 1 then
@@ -55,7 +57,9 @@ function debugMenu(sim,rc,error)
         inLineBulletText("Number", ac.getDriverNumber(driver.car.index),space)
         inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
         inLineBulletText("Track Position", driver.trackPosition.."/"..rc.carsOnTrackCount,space)
-        inLineBulletText("Lap", (driver.car.lapCount+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
+        if not sim.isOnlineRace then
+            inLineBulletText("Lap", (driver.car.lapCount+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
+        end
         if sim.raceSessionType == ac.SessionType.Qualify then
             inLineBulletText("Out Lap", upperBool(driver.outLap),space)
             inLineBulletText("Flying Lap", upperBool(driver.flyingLap),space)
