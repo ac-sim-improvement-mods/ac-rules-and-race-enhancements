@@ -1319,18 +1319,18 @@ ac.NationCode = {
 ---| `ac.CSPModuleID.ChaserCamera` @Chaser Camera.
 ---| `ac.CSPModuleID.ChatShortcuts` @Chat shortcuts.
 ---| `ac.CSPModuleID.ColorfulShadowing` @Colorful shadowing.
----| `ac.CSPModuleID.CustomRenderingModes` @Mode tweaks: custom.
+---| `ac.CSPModuleID.CustomRenderingModes` @Mode tweaks: custom render modes.
 ---| `ac.CSPModuleID.DXGITweaks` @DXGI.
 ---| `ac.CSPModuleID.ExtraFX` @Extra FX.
 ---| `ac.CSPModuleID.FakeShadowsFX` @Fake Shadows FX.
 ---| `ac.CSPModuleID.FFBTweaks` @FFB Tweaks.
 ---| `ac.CSPModuleID.FreerCamera` @Freer Camera.
----| `ac.CSPModuleID.G27Lights` @Logitech G27.
+---| `ac.CSPModuleID.G27Lights` @Logitech G27/29.
+---| `ac.CSPModuleID.GamepadFX` @Gamepad FX.
 ---| `ac.CSPModuleID.General` @General Patch settings.
 ---| `ac.CSPModuleID.GraphicsAdjustments` @Graphic adjustments.
 ---| `ac.CSPModuleID.GrassFX` @Grass FX.
 ---| `ac.CSPModuleID.GUI` @GUI.
----| `ac.CSPModuleID.JoypadAssist` @Gamepad FX.
 ---| `ac.CSPModuleID.LightingFX` @Lighting FX.
 ---| `ac.CSPModuleID.LuaTools` @Lua_tools.
 ---| `ac.CSPModuleID.MumblePlugin` @Mumble_plugin.
@@ -1363,18 +1363,18 @@ ac.CSPModuleID = {
   ChaserCamera = 'chaser_camera', ---Chaser Camera.
   ChatShortcuts = 'chat_shortcuts', ---Chat shortcuts.
   ColorfulShadowing = 'colorful_shadowing', ---Colorful shadowing.
-  CustomRenderingModes = 'custom_rendering_modes', ---Mode tweaks: custom.
+  CustomRenderingModes = 'custom_rendering_modes', ---Mode tweaks: custom render modes.
   DXGITweaks = 'dxgi_tweaks', ---DXGI.
   ExtraFX = 'extra_fx', ---Extra FX.
   FakeShadowsFX = 'fake_shadows_fx', ---Fake Shadows FX.
   FFBTweaks = 'ffb_tweaks', ---FFB Tweaks.
   FreerCamera = 'freer_camera', ---Freer Camera.
-  G27Lights = 'g27_lights', ---Logitech G27.
+  G27Lights = 'g27_lights', ---Logitech G27/29.
+  GamepadFX = 'gamepad_fx', ---Gamepad FX.
   General = 'general', ---General Patch settings.
   GraphicsAdjustments = 'graphics_adjustments', ---Graphic adjustments.
   GrassFX = 'grass_fx', ---Grass FX.
   GUI = 'gui', ---GUI.
-  JoypadAssist = 'joypad_assist', ---Gamepad FX.
   LightingFX = 'lighting_fx', ---Lighting FX.
   LuaTools = 'lua_tools', ---Lua_tools.
   MumblePlugin = 'mumble_plugin', ---Mumble_plugin.
@@ -1448,13 +1448,16 @@ ac.ObjectClass = {
 ---| `ac.GamepadButton.RightThumb` @Value: 0x80.
 ---| `ac.GamepadButton.LeftShoulder` @Value: 0x100.
 ---| `ac.GamepadButton.RightShoulder` @Value: 0x200.
+---| `ac.GamepadButton.L2` @Only for DualShock and Nintendo (ZL) gamepads.
+---| `ac.GamepadButton.R2` @Only for DualShock and Nintendo (ZR) gamepads.
 ---| `ac.GamepadButton.A` @Value: 0x1000.
 ---| `ac.GamepadButton.B` @Value: 0x2000.
 ---| `ac.GamepadButton.X` @Value: 0x4000.
 ---| `ac.GamepadButton.Y` @Value: 0x8000.
----| `ac.GamepadButton.PlayStation` @Only for DualSense gamepads.
----| `ac.GamepadButton.Microphone` @Only for DualSense gamepads.
----| `ac.GamepadButton.Pad` @Only for DualSense gamepads.
+---| `ac.GamepadButton.PlayStation` @Only for DualShock, DualSense and Nintendo (Home button) gamepads.
+---| `ac.GamepadButton.Microphone` @Only for DualSense and Nintendo (SL button) gamepads.
+---| `ac.GamepadButton.Pad` @Only for DualShock, DualSense and Nintendo (Capture button) gamepads.
+---| `ac.GamepadButton.Extra` @Only for Nintendo (SR button) gamepads.
 ac.GamepadButton = {
   DPadUp = 0x1, ---Value: 0x1.
   DPadDown = 0x2, ---Value: 0x2.
@@ -1466,13 +1469,16 @@ ac.GamepadButton = {
   RightThumb = 0x80, ---Value: 0x80.
   LeftShoulder = 0x100, ---Value: 0x100.
   RightShoulder = 0x200, ---Value: 0x200.
+  L2 = 0x400, ---Only for DualShock and Nintendo (ZL) gamepads.
+  R2 = 0x800, ---Only for DualShock and Nintendo (ZR) gamepads.
   A = 0x1000, ---Value: 0x1000.
   B = 0x2000, ---Value: 0x2000.
   X = 0x4000, ---Value: 0x4000.
   Y = 0x8000, ---Value: 0x8000.
-  PlayStation = 0x10000, ---Only for DualSense gamepads.
-  Microphone = 0x20000, ---Only for DualSense gamepads.
-  Pad = 0x40000, ---Only for DualSense gamepads.
+  PlayStation = 0x10000, ---Only for DualShock, DualSense and Nintendo (Home button) gamepads.
+  Microphone = 0x20000, ---Only for DualSense and Nintendo (SL button) gamepads.
+  Pad = 0x40000, ---Only for DualShock, DualSense and Nintendo (Capture button) gamepads.
+  Extra = 0x80000, ---Only for Nintendo (SR button) gamepads.
 }
 
 ---@alias ac.GamepadAxis
@@ -1495,10 +1501,26 @@ ac.GamepadAxis = {
 ---| `ac.GamepadType.None` @No gamepad in that slot.
 ---| `ac.GamepadType.XBox` @Regular XBox gamepad.
 ---| `ac.GamepadType.DualSense` @DualSense gamepad.
+---| `ac.GamepadType.DualShock` @DualShock gamepad (can also be one of Nintendo gamepads; use `ac.getDualShock(…).type` to check).
 ac.GamepadType = {
   None = 0, ---No gamepad in that slot.
   XBox = 1, ---Regular XBox gamepad.
   DualSense = 2, ---DualSense gamepad.
+  DualShock = 3, ---DualShock gamepad (can also be one of Nintendo gamepads; use `ac.getDualShock(…).type` to check).
+}
+
+---@alias ac.GamepadDualShockType
+---| `ac.GamepadDualShockType.JoyConLeft` @Left Joy-Con.
+---| `ac.GamepadDualShockType.JoyConRight` @Right Joy-Con.
+---| `ac.GamepadDualShockType.SwitchPro` @Switch Pro Controller.
+---| `ac.GamepadDualShockType.DualShock` @DualShock 4.
+---| `ac.GamepadDualShockType.DualSense` @DualSense (can appear here if controller is configured to launch in DualShock mode in CM controls settings).
+ac.GamepadDualShockType = {
+  JoyConLeft = 1, ---Left Joy-Con.
+  JoyConRight = 2, ---Right Joy-Con.
+  SwitchPro = 3, ---Switch Pro Controller.
+  DualShock = 4, ---DualShock 4.
+  DualSense = 5, ---DualSense (can appear here if controller is configured to launch in DualShock mode in CM controls settings).
 }
 
 ---@alias ac.INIFormat
@@ -1804,18 +1826,6 @@ function ac.debug(key, value) end
 ---@param value boolean? @Default value: `true`.
 function ac.setLogSilent(value) end
 
----Prints message to a CSP log and to Lua App Debug log. To speed things up and only use Lua Debug app, call `ac.setLogSilent()`.
----@param value any?
-function ac.log(value) end
-
----Prints message to a CSP log and to Lua App Debug log. To speed things up and only use Lua Debug app, call `ac.setLogSilent()`.
----@param value any?
-function ac.warn(value) end
-
----Prints message to a CSP log and to Lua App Debug log. To speed things up and only use Lua Debug app, call `ac.setLogSilent()`.
----@param value any?
-function ac.error(value) end
-
 ---Simple helper to measure time and analyze performance. Call `ac.perfBegin('someKey')` to start counting time and
 --- `ac.perfEnd('someKey')` to stop. Measured time will be shown in Lua App Debug app in CSP (moving average across all
 --- perfBegin/perfEnd calls). Note: keys on perfBegin() and perfEnd() should match.
@@ -1967,6 +1977,16 @@ function ac.compressTexture(filename, outputFilename) end
 ---Returns precalculated sound speed in m/s taking into account humidity, altitude, pressure, etc.
 ---@return number
 function ac.getSoundSpeedMs() end
+
+---Returns air pressure in kPa.
+---@param p vec3
+---@return number
+function ac.getAirPressure(p) end
+
+---Returns air humidity in 0…1 range. Currently doesn’t use position parameter, but it might change later.
+---@param p vec3
+---@return number
+function ac.getAirHumidity(p) end
 
 ---Returns string with last error thrown by this script, or `nil` if there wasn’t an error. Use it in case you would want to set some nicer error reporting.
 ---@return string?
@@ -2484,8 +2504,14 @@ function ac.checksumSHA256(data) end
 function ac.checksumXXH(data) end
 
 ---A key unique for each individual PC (uses serial numbers of processor and motherboard).
+---Use `ac.uniqueMachineKeyAsync()` instead.
+---@deprecated
 ---@return string
 function ac.uniqueMachineKey() end
+
+---A key unique for each individual PC (uses serial numbers of processor and motherboard). Asyncronous version.
+---@param callback fun(err: string, data: string)
+function ac.uniqueMachineKeyAsync(callback) end
 
 ---Compresses data. First byte of resulting data is compression type, next four are uncompressed data size, rest is compressed data
 ---itself. If data is failed to compress, returns `nil`. Data string can contain zeroes.
@@ -2524,24 +2550,26 @@ function ac.utf8To16(data) end
 ---@return string?
 function ac.utf16To8(data) end
 
----Broadcasts a shared event. With shared events, different Lua scripts can exchange messages and data.
+---Broadcasts a shared event. With shared events, different Lua scripts can exchange messages and data. Make sure to come up with
+---a unique name for your events to avoid collisions with other scripts and Lua apps.
 ---
----Callbacks will be called next time this script is updating.
+---Callbacks will be called next time the script is updating.
 ---
----Note: if your scripts need to exchange data often, consider using `ac.connect()` instead, as it allows to establish a typed connection
+---Note: if your scripts need to exchange data frequently, consider using `ac.connect()` instead, as it allows to establish a typed connection
 ---with much less overhead.
 ---
 ---Data might contain zeroes.
 ---@param key string
----@param data string|any
+---@param data string|number|boolean
 ---@return integer @Returns number of listeners to the event with given key.
 function ac.broadcastSharedEvent(key, data) end
 
----Subscribes to a shared event. With shared events, different Lua scripts can exchange messages and data.
+---Subscribes to a shared event. With shared events, different Lua scripts can exchange messages and data. Make sure to come up with
+---a unique name for your events to avoid collisions with other scripts and Lua apps.
 ---
 ---Callback will be called next time this script is updating.
 ---@param key string
----@param callback fun(data: string|nil, senderName: string, senderType: string) @Callback function. Data might be `nil`.
+---@param callback fun(data: string|number|boolean|nil, senderName: string, senderType: string) @Callback function. Data might be `nil`.
 ---@return ac.Disposable
 function ac.onSharedEvent(key, callback) end
 
@@ -2704,6 +2732,7 @@ function os.execute(cmd, timeoutMs, windowless) end
 
 ---Show a popup message using good old MessageBox. Please do not use it for debugging, instead consider using `ac.log()` and `ac.debug('key', 'value')`
 ---with in-game Lua Debug App.
+---Note: do not rely on this function, most likely it might be removed in the future as obstructing.
 ---@param msg string
 ---@param type integer? @Type of MessageBox according to WinAPI. Default value: 0.
 ---@return integer
@@ -2731,6 +2760,10 @@ function os.openTextFile(filename, line) end
 ---Opens URL in default system browser.
 ---@param url string
 function os.openURL(url) end
+
+---Returns time in seconds from script start (with high precision).
+---@return number
+function os.preciseClock() end
 
 ---Sets a callback which will be called when album cover changes.
 ---@param callback fun(hasCover: boolean)
@@ -2779,7 +2812,8 @@ function ac.getCarState(index) end
 ---@return ac.StateSim
 function ac.getSim() end
 
----Returns reference to a structure with various information about certain session. Very cheap to use.
+---Returns reference to a structure with various information about certain session. Very cheap to use. Note: not all data
+--- might be available online.
 ---@param index integer @0-based index.
 ---@return ac.StateSession?
 function ac.getSession(index) end
@@ -2814,7 +2848,7 @@ function ac.getVR() end
 ---@return ac.StateCarPhysics?
 function ac.getCarPhysics(index) end
 
----Returns extras of PS5 DualSense gamepad, such as accelerometer, gyroscope or battery state.
+---Returns extras of PS5 DualSense gamepad, such as accelerometer, gyroscope or battery state. Accelerometer and gyroscope values might be different from values reported by `ac.getDualShock()` for different controllers in the same orientation.
 ---Note: if you’re writing a car script, first argument will be ignored and instead the effect would be applied to gamepad controlling the car if possible.
 ---@param gamepadIndex integer @0-based index, from 4 to 7 (first four are regular gamepads, second four are Dual Shock controllers).
 ---@return ac.StateDualsense?
@@ -2827,6 +2861,20 @@ function ac.getDualSense(gamepadIndex) end
 ---@param holdFor number? @Time to keep the changes for in seconds. Default value: 0.5.
 ---@return ac.StateDualsenseOutput @Returns `nil` if there is no applicable controller, make sure to check for it.
 function ac.setDualSense(gamepadIndex, priority, holdFor) end
+
+---Returns extras of PS4 DualShock gamepad (or Nintendo gamepads), such as accelerometer, gyroscope or battery state. Accelerometer and gyroscope values might be different from values reported by `ac.getDualSense()` for different controllers in the same orientation.
+---Note: if you’re writing a car script, first argument will be ignored and instead the effect would be applied to gamepad controlling the car if possible.
+---@param gamepadIndex integer @0-based index, from 4 to 7 (first four are regular gamepads, second four are Dual Shock controllers).
+---@return ac.StateDualshock?
+function ac.getDualShock(gamepadIndex) end
+
+---Returns a structure with state of PS4 DualShock (or Nintendo) LEDs, change it to alter its state. Changes remain for some time, keep calling it for continuos adjustments.
+---Note: if you’re writing a car script, first argument will be ignored and instead the effect would be applied to gamepad controlling the car if possible.
+---@param gamepadIndex integer @0-based index, from 4 to 7 (first four are regular gamepads, second four are Dual Shock controllers).
+---@param priority number? @If multiple scripts try to set LEDs at the same time, the call with highest priority will be applied. Default value: 0.
+---@param holdFor number? @Time to keep the changes for in seconds. Default value: 0.5.
+---@return ac.StateDualshockOutput @Returns `nil` if there is no applicable controller, make sure to check for it.
+function ac.setDualShock(gamepadIndex, priority, holdFor) end
 
 ---Loads a ZIP file from a given URL, unpacks first KN5 from it to a cache folder and returns
 ---its filename through a callback. If file is already in cache storage, doesn’t do anything and
@@ -2898,7 +2946,8 @@ function web.encryptKey(key) end
 ---@field slipRatio number
 ---@field ndSlip number
 ---@field load number @Tyre load in N (warning: does not have correct values for remote cars online or in replays, use `.loadK` if you want a rough but stable estimation instead)
----@field loadK number @Rough estimation of tyre load which works stable for remote cars or in replays, goes from 0 (no load) to 1 (full load).
+---@field loadK number
+---@field speedDifference number @Difference in speed between tyre and ground surface in contact point.
 ---@field camber number @Camber angle in degrees.
 ---@field toeIn number @Toe angle in degrees.
 ---@field suspensionDamage number
@@ -2941,7 +2990,7 @@ function web.encryptKey(key) end
 ---@field aabbCenter vec3 @Center of AABB (calculated from LOD D or collider mesh).
 ---@field aabbSize vec3 @Size of AABB in meters (calculated from LOD D or collider mesh).
 ---@field index integer @0-based (0 for first car).
----@field gearCount integer @Physics-only (see `ac.CarState.physicsAvailable`)
+---@field gearCount integer @Excluding neutral and reverse. Physics-only (see `ac.CarState.physicsAvailable`)
 ---@field turboCount integer @Physics-only (see `ac.CarState.physicsAvailable`)
 ---@field tractionType integer @0 for rwd, 1 for fwd, 2 for awd, 3 for new awd, -1 for N/A. Physics-only (see `ac.CarState.physicsAvailable`)
 ---@field enginePosition integer @0 for unspecified, 1 for front, 2 for rear, 3 for mid. Physics-only (see `ac.CarState.physicsAvailable`)
@@ -2960,6 +3009,7 @@ function web.encryptKey(key) end
 ---@field isEngineDiesel boolean @Check is based on car tags.
 ---@field isKunosCar boolean @True if car is standard, from Kunos.
 ---@field prefersImperialUnits boolean @True for cars from UK or USA.
+---@field headlightsAreHeadlights boolean @If set to `false`, headlights do something else (like change display mode).
 ---@field tractionControlModes integer @0 if TC is not present. Physics-only (see `ac.CarState.physicsAvailable`)
 ---@field absModes integer @0 if TC is not present. Physics-only (see `ac.CarState.physicsAvailable`)
 ---@field timestamp number @Time of last physics state record, in milliseconds (counting from the same point as ac.SimState.time)
@@ -2977,6 +3027,8 @@ function web.encryptKey(key) end
 ---@field look vec3 @Vector facing forward (normalized).
 ---@field side vec3 @Vector facing sideways (normalized).
 ---@field driverEyesPosition vec3 @In-car coordinates for driver eyes position (can be changed by user).
+---@field groundNormal vec3 @Normal of ground below car.
+---@field groundDistance number @Distance of ground below car (defines ground plane together with normal).
 ---@field gas number @Throttle, from 0 to 1.
 ---@field brake number @Brake, from 0 to 1.
 ---@field clutch number @Clutch, from 0 to 1 (1 for pedal fully depressed).
@@ -3106,6 +3158,7 @@ function web.encryptKey(key) end
 ---@field mguhChargingBatteries boolean
 ---@field manualPitsSpeedLimiterEnabled boolean @Returns `true` if manual pits speed limiter is currently active. Physics-only (see `ac.CarState.physicsAvailable`)
 ---@field userSpeedLimiterEnabled boolean @Returns `true` if custom physics speed limiter is currently active. Not the same as pit limiter (or manually operated speed limiter). Physics-only (see `ac.CarState.physicsAvailable`)
+---@field autoClutch boolean @Returns `true` if auto-clutch is active. Physics-only (see `ac.CarState.physicsAvailable`)
 ---@field mgukDelivery integer @Starts with 0.
 ---@field mgukDeliveryCount integer
 ---@field mgukRecovery integer @From 0 to 10 (for 100%).
@@ -3137,7 +3190,8 @@ function web.encryptKey(key) end
 ---@field p2pStatus integer
 ---@field p2pActivations integer
 ---@field altitude number @Altitude in meters above sea level.
----@field ambientOcclusion number @Ambient occlusion value computed from prebaked data from track’s VAO patch. 0 for car fully shadowed (in a tunnel), 1 for car outside.
+---@field ambientOcclusion number @Ambient occlusion value computed from prebaked data from track’s VAO patch. 0 for car fully shadowed (in a tunnel), 1 for car outside. Affected by WeatherFX adjustments.
+---@field rawAmbientOcclusion number @Ambient occlusion value computed from prebaked data from track’s VAO patch. 0 for car fully shadowed (in a tunnel), 1 for car outside. Not affected by WeatherFX adjustments.
 ---@field carCamerasCount integer @Number of F6 cameras.
 ---@field currentPenaltyType ac.PenaltyType @Current penalty type (set only for user car).
 ---@field currentPenaltyParameter integer @Parameter of current penalty (role depends on penalty type).
@@ -3163,6 +3217,7 @@ function web.encryptKey(key) end
 ---@field shaftVelocity number
 ---@field shaftInertia number
 ---@field tyreCarcassTemperature number @Only available with custom physics tyres.
+---@field roadTemperature number @Can vary from AC road temperature in shadows if option is enabled.
 
 ---@class ac.StateWingPhysics : ClassBase
 ---@field cd number @Drag coefficient (wing area is already taken into account here).
@@ -3176,6 +3231,7 @@ function web.encryptKey(key) end
 ---@field isAvailable boolean
 ---@field gearRatio number
 ---@field finalRatio number
+---@field airDensity number @Air density affected by slip stream.
 ---@field awd2MaxTorque number
 ---@field awd2CurrentLockTorque number
 ---@field awd2Ramp number
@@ -3205,6 +3261,11 @@ function web.encryptKey(key) end
 ---@field isVRConnected boolean @True if AC runs in either Oculus or OpenVR mode and initialization went successfully.
 ---@field staticReflections boolean @True if reflection cubemap does not update live and uses custom cubemap.kn5 instead of track model
 ---@field directMessagingAvailable boolean @True if it’s an online race and server supports TCP exchange of extra data between clients (allows to send online events more frequently).
+---@field allowTyreBlankets boolean
+---@field allowedTyresOut integer
+---@field mechanicalDamageRate number @In 0…1 range.
+---@field tyreConsumptionRate number @In 0…1 range.
+---@field fuelConsumptionRate number @In 0…1 range.
 ---@field time number @Game time in milliseconds (counting from the start of the simulation).
 ---@field cameraPosition vec3
 ---@field cameraLook vec3 @Points forward (there was some confusion with older API).
@@ -3221,6 +3282,8 @@ function web.encryptKey(key) end
 ---@field dt number @Delta time in seconds, 0 when paused, affected by replay slow motion and fast forwarding.
 ---@field isPaused boolean @If `true`, AC is currently paused.
 ---@field isInMainMenu boolean @If `true`, main menu is currently active.
+---@field isLookingAtSessionResults boolean @If `true`, session results are being shown.
+---@field needsDPad boolean @If `true`, D-pad buttons are not used by their main bindings, but instead used by things like Quick Pits menu.
 ---@field isLive boolean @If `true`, simulation is currently running (not paused and not in replay mode).
 ---@field isFreeCameraOutside boolean @Set to `true` if camera is either free or orbit (F7/F5) and not inside an interior.
 ---@field isReplayActive boolean
@@ -3377,11 +3440,42 @@ function web.encryptKey(key) end
 ---@field playerLEDsFade boolean
 ---@field playerLEDs boolean[] @5 items, starts with 0.
 
+---@class ac.StateDualshockTouch : ClassBase
+---@field delta vec2
+---@field pos vec2
+---@field id integer
+---@field down boolean
+
+---@class ac.StateDualshock : ClassBase
+---@field type ac.GamepadDualShockType
+---@field deviceColor rgbm @Only for Nintendo devices.
+---@field accelerometer vec3
+---@field gyroscope vec3
+---@field battery number @Might not provide accurate values for some devices.
+---@field touches ac.StateDualshockTouch[] @2 items, starts with 0.
+---@field connected boolean
+
+---@class ac.StateDualshockOutput : ClassBase
+---@field lightBar rgbm
+---@field playerNumber integer @Player number.
+
 --[[ common/common.lua ]]
 
 ---Disposable thing is something set which you can then un-set. Just call `ac.Disposable` returned
 ---from a function to cancel out whatever happened there. For example, unsubscribe from an event.
 ---@alias ac.Disposable fun()
+
+---Prints a message to a CSP log and to Lua App Debug log. To speed things up and only use Lua Debug app, call `ac.setLogSilent()`.
+---@param ... string|number|boolean @Values.
+function ac.log(...) end
+
+---Prints a warning message to a CSP log and to Lua App Debug log. To speed things up and only use Lua Debug app, call `ac.setLogSilent()`.
+---@param ... string|number|boolean @Values.
+function ac.warn(...) end
+
+---Prints an error message to a CSP log and to Lua App Debug log. To speed things up and only use Lua Debug app, call `ac.setLogSilent()`.
+---@param ... string|number|boolean @Values.
+function ac.error(...) end
 
 ---For better compatibility, acts like `ac.log()`.
 function print(v) end
@@ -5512,7 +5606,7 @@ function os.saveFileDialog(params, callback) end
 
 ---Run a console process in background with given arguments, return exit code and output in callback. Launched process will be tied
 ---to AC process to shut down with AC (works only on Windows 8 and newer).
----@param params {filename: string, arguments: string[], rawArguments: boolean, workingDirectory: string, timeout: integer, environment: table, stdin: string, separateStderr: boolean, terminateWithScript: boolean}|"{ filename = '', arguments = {} }" "Table with properties:\n- `filename` (`string`): Application filename.\n- `arguments` (`string[]`): Arguments (quotes will be added automatically unless `rawArguments` is set to true).\n- `rawArguments` (`boolean`): Set to `true` to disable any arguments processing and pass them as they are, simply joining them with a space symbol.\n- `workingDirectory` (`string`): Working directory.\n- `timeout` (`integer`): Timeout in milliseconds. If above zero, process will be killed after given time has passed.\n- `environment` (`table`): If set to a table, values from that table will be used as environment variables instead of inheriting ones from AC process.\n- `stdin` (`string`): Optional data to pass to a process in stdin pipe.\n- `separateStderr` (`boolean`): Store stderr data in a separate string.\n- `terminateWithScript` (`boolean`): Terminate process if this Lua script were to terminate (for example, during reload)."
+---@param params {filename: string, arguments: string[], rawArguments: boolean, workingDirectory: string, timeout: integer, environment: table, inheritEnvironment: boolean, stdin: string, separateStderr: boolean, terminateWithScript: boolean}|"{ filename = '', arguments = {} }" "Table with properties:\n- `filename` (`string`): Application filename.\n- `arguments` (`string[]`): Arguments (quotes will be added automatically unless `rawArguments` is set to true).\n- `rawArguments` (`boolean`): Set to `true` to disable any arguments processing and pass them as they are, simply joining them with a space symbol.\n- `workingDirectory` (`string`): Working directory.\n- `timeout` (`integer`): Timeout in milliseconds. If above zero, process will be killed after given time has passed.\n- `environment` (`table`): If set to a table, values from that table will be used as environment variables instead of inheriting ones from AC process.\n- `inheritEnvironment` (`boolean`): Set to `true` to inherit AC environment variables before adding custom ones.\n- `stdin` (`string`): Optional data to pass to a process in stdin pipe.\n- `separateStderr` (`boolean`): Store stderr data in a separate string.\n- `terminateWithScript` (`boolean`): Terminate process if this Lua script were to terminate (for example, during reload)."
 ---@param callback nil|fun(err: string, data: os.ConsoleProcessResult)
 function os.runConsoleProcess(params, callback) end
 
@@ -6287,6 +6381,12 @@ function refnumber:set(newValue) end
 ---Return table with gamepad indices for keys and 0-based indices of associated cars for values.
 ---@return table<integer, integer>
 function ac.getDualSenseControllers() end
+
+--[[ common/ac_dualshock.lua ]]
+
+---Return table with gamepad indices for keys and 0-based indices of associated cars for values.
+---@return table<integer, integer>
+function ac.getDualShockControllers() end
 
 --[[ common/ac_web.lua ]]
 
@@ -7621,6 +7721,11 @@ ui.Icons = {
 ---| `ui.ButtonFlags.PressedOnDragDropHold` @Press when held into while we are drag and dropping another item (used by e.g. tree nodes, collapsing headers).
 ---| `ui.ButtonFlags.NoNavFocus` @Don’t override navigation focus when activated.
 ---| `ui.ButtonFlags.NoHoveredOnNav` @Don’t report as hovered when navigated on.
+---| `ui.ButtonFlags.Error` @For modern buttons.
+---| `ui.ButtonFlags.Confirm` @For modern buttons.
+---| `ui.ButtonFlags.Cancel` @For modern buttons.
+---| `ui.ButtonFlags.VerticalLayout` @For modern buttons.
+---| `ui.ButtonFlags.TextAsIcon` @For modern buttons.
 ---| `ui.ButtonFlags.Active` @Button is correctly active (checked).
 ---| `ui.ButtonFlags.Activable` @If not set, _Active would make background brighter.
 ui.ButtonFlags = {
@@ -7638,6 +7743,11 @@ ui.ButtonFlags = {
   PressedOnDragDropHold = 0x1000, ---Press when held into while we are drag and dropping another item (used by e.g. tree nodes, collapsing headers).
   NoNavFocus = 0x2000, ---Don’t override navigation focus when activated.
   NoHoveredOnNav = 0x4000, ---Don’t report as hovered when navigated on.
+  Error = 0x8000, ---For modern buttons.
+  Confirm = 0x10000, ---For modern buttons.
+  Cancel = 0x20000, ---For modern buttons.
+  VerticalLayout = 0x40000, ---For modern buttons.
+  TextAsIcon = 0x80000, ---For modern buttons.
   Active = 0x100000, ---Button is correctly active (checked).
   Activable = 0x200000, ---If not set, _Active would make background brighter.
 }
@@ -7667,6 +7777,7 @@ ui.ButtonFlags = {
 ---| `ui.WindowFlags.NoNav` @Combination of flags: NoNavInputs | NoNavFocus (use `bit.bor(ui.WindowFlags.NoNav, …)` to combine it with other flags safely).
 ---| `ui.WindowFlags.NoDecoration` @Combination of flags: NoTitleBar | NoResize | NoScrollbar | NoCollapse (use `bit.bor(ui.WindowFlags.NoDecoration, …)` to combine it with other flags safely).
 ---| `ui.WindowFlags.NoInputs` @Combination of flags: NoMouseInputs | NoNavInputs | NoNavFocus (use `bit.bor(ui.WindowFlags.NoInputs, …)` to combine it with other flags safely).
+---| `ui.WindowFlags.ThinScrollbar` @Thin scrollbar.
 ui.WindowFlags = {
   None = 0x0, ---No special options.
   NoTitleBar = 0x1, ---Disable title-bar.
@@ -7692,6 +7803,7 @@ ui.WindowFlags = {
   NoNav = 0xc0000, ---Combination of flags: NoNavInputs | NoNavFocus (use `bit.bor(ui.WindowFlags.NoNav, …)` to combine it with other flags safely).
   NoDecoration = 0x2b, ---Combination of flags: NoTitleBar | NoResize | NoScrollbar | NoCollapse (use `bit.bor(ui.WindowFlags.NoDecoration, …)` to combine it with other flags safely).
   NoInputs = 0xc0200, ---Combination of flags: NoMouseInputs | NoNavInputs | NoNavFocus (use `bit.bor(ui.WindowFlags.NoInputs, …)` to combine it with other flags safely).
+  ThinScrollbar = 0x80000000, ---Thin scrollbar.
 }
 
 ---@alias ui.ComboFlags
@@ -7950,6 +8062,18 @@ ac.IncludeType = {
   Track = 2, ---Value: 2.
 }
 
+---@alias ac.TurningLights
+---| `ac.TurningLights.None` @Value: 0.
+---| `ac.TurningLights.Left` @Value: 1.
+---| `ac.TurningLights.Right` @Value: 2.
+---| `ac.TurningLights.Hazards` @Value: 3.
+ac.TurningLights = {
+  None = 0, ---Value: 0.
+  Left = 1, ---Value: 1.
+  Right = 2, ---Value: 2.
+  Hazards = 3, ---Value: 3.
+}
+
 --[[ csp.lua ]]
 
 ---Loads FMOD soundbank. After soundbank is loaded, new audio events can be created which would refer to
@@ -8122,12 +8246,18 @@ function ui.beginTransparentWindow(windowID, pos, size, noPadding) end
 
 function ui.endTransparentWindow() end
 
----@param text string
+---Adds hyperlink effect to the previous item, returns `true` if it’s clicked.
+---@param hyperlinkColor rgbm? @Default value: `rgbm(0, 0.5, 1, 1)`.
 ---@return boolean
-function ui.textHyperlink(text) end
+function ui.itemHyperlink(hyperlinkColor) end
 
 ---@param text string
 function ui.text(text) end
+
+---@param text string
+---@param hyperlinkColor rgbm? @Default value: `rgbm(0, 0.5, 1, 1)`.
+---@return boolean
+function ui.textHyperlink(text, hyperlinkColor) end
 
 ---@param text string
 ---@param alignment vec2
@@ -8238,6 +8368,14 @@ function ui.offsetCursorY(v) end
 ---@param offsetFromStart number? @Default value: 0.
 ---@param spacing number? @Default value: -1.
 function ui.sameLine(offsetFromStart, spacing) end
+
+---Set maximum cursor value used for estimating amount of content. Use very carefully.
+---@param v number
+function ui.setMaxCursorX(v) end
+
+---Set maximum cursor value used for estimating amount of content. Use very carefully.
+---@param v number
+function ui.setMaxCursorY(v) end
 
 ---@param spacing number? @If non-negative, value is used for space between lines instead of regular item spacing from current style. Default value: -1.
 function ui.newLine(spacing) end
@@ -8926,6 +9064,13 @@ function ui.measureDWriteText(text, fontSize, wrapWidth) end
 ---@param color rgbm? @Default value: `rgbm.colors.white`.
 function ui.dwriteText(text, fontSize, color) end
 
+---Draws some hyperlink using TTF font with DirectWrite library. Make sure to set a font first using `ui.pushDWriteFont()`.
+---@param text string
+---@param fontSize number? @Default value: 14.
+---@param hyperlinkColor rgbm? @Default value: `rgbm(0, 0.5, 1, 1)`.
+---@return boolean
+function ui.dwriteTextHyperlink(text, fontSize, hyperlinkColor) end
+
 ---Draws wrapped text using TTF font with DirectWrite library. Make sure to set a font first using `ui.pushDWriteFont()`.
 ---@param text string
 ---@param fontSize number? @Default value: 14.
@@ -9010,6 +9155,16 @@ function ui.copyable(label) end
 ---@return boolean
 function ui.button(label, size, flags) end
 
+---Button with Modern UI style to use in modal dialogs.
+---@param label string
+---@param size vec2
+---@param flags ui.ButtonFlags? @Default value: `ImGuiButtonFlags_None`.
+---@param icon string|nil @Default value: `nil`.
+---@param iconSize number? @Default value: 16.
+---@param iconBg string|nil @Default value: `nil`.
+---@return boolean
+function ui.modernButton(label, size, flags, icon, iconSize, iconBg) end
+
 ---Button without frame padding to easily embed within text.
 ---@param label string
 ---@return boolean
@@ -9024,6 +9179,13 @@ function ui.invisibleButton(label, size) end
 ---Add a dummy item of given size. unlike `ui.invisibleButton()`, dummy won’t take the mouse click or be navigable into.
 ---@param size vec2
 function ui.dummy(size) end
+
+---Returns `true` during scrolling.
+---@param appearOnHover boolean? @Default value: `false`.
+---@return boolean
+function ui.thinScrollbarBegin(appearOnHover) end
+
+function ui.thinScrollbarEnd() end
 
 ---Square button with an arrow shape.
 ---@param strID string
@@ -9226,18 +9388,18 @@ function ui.image(filename, size, color, borderColor, uv1, uv2, keepAspectRatio)
 
 ---Adds a button with an image on it. If image is missing or loading (if it’s remote or asyncronous loading is enabled),
 ---button would still appear, but without an image.
----@overload fun(filename: string, size: vec2, color: rgbm, framePadding: number, keepAspectRatio: boolean)
+---@overload fun(filename: string, size: vec2, bgColor: rgbm, framePadding: number, keepAspectRatio: boolean)
 ---@overload fun(filename: string, size: vec2, framePadding: number, keepAspectRatio: boolean)
----@param filename string @Path to the image, absolute or relative to script folder or AC root. URLs are also accepted.
+---@param filename string @Path to the image, absolute or relative to script folder or AC root. URLs are also accepted. Use `##…` postfix for unique ID if you have multiple buttons with the same filename (or, even better, use `ui.pushID()/ui.popID()`.
 ---@param size vec2 @Size of resulting image in pixels.
----@param color rgbm? @Tint of the image, with white it would be drawn as it is. Default value: `rgbm.colors.white`.
 ---@param bgColor rgbm|nil @Optional background color for the image (transparent if not set). Default value: `nil`.
+---@param color rgbm? @Tint of the image, with white it would be drawn as it is. Default value: `rgbm.colors.white`.
 ---@param uv1 vec2? @Texture coordinates for upper left corner. Default value: `vec2(0, 0)`.
 ---@param uv2 vec2? @Texture coordinates for bottom right corner. Default value: `vec2(1, 1)`.
 ---@param framePadding number? @If -1, uses frame padding from style. If 0, there is no padding. If above zero, it’s used as actual padding value. Default value: -1.
 ---@param keepAspectRatio boolean? @Set to `true` to stretch image to fit given size, making sure it would not get distorted. Default value: `false`.
 ---@return boolean
-function ui.imageButton(filename, size, color, bgColor, uv1, uv2, framePadding, keepAspectRatio) end
+function ui.imageButton(filename, size, bgColor, color, uv1, uv2, framePadding, keepAspectRatio) end
 
 ---Returns `true`, if an image is ready to be drawn. If image was not used before, starts its loading.
 ---
@@ -9438,6 +9600,11 @@ function ui.frameCount() end
 ---@param callback fun(okPressed: boolean)
 function ui.modalPopup(title, msg, okText, cancelText, okIconID, cancelIconID, callback) end
 
+---Open modal dialog with custom UI. Return `true` from callback when it’s time to close the dialog.
+---@param title string
+---@param callback fun(): boolean
+function ui.modalDialog(title, callback) end
+
 ---Open modal popup message with text input, OK and Cancel buttons, return user choice via callback.
 ---@overload fun(title: string, msg: string, defaultValue: string, callback: function)
 ---@param title string
@@ -9460,6 +9627,27 @@ function ui.projectPoint(pos, considerUiScale) end
 ---@param filename string
 ---@return boolean @Returns `true` if file was unloaded successfully.
 function ui.unloadImage(filename) end
+
+---Returns `true` if a certain car has collided with a certain track physics object before.
+---State resets once object is reset (with new session or by calling `ac.resetTrackPhysicsObject()`).
+---@param carIndex integer
+---@param name string @Name of a physics object (`'AC_POBJECT_…'`).
+---@param firstCollisionOnly boolean? @Return `true` only if it was the first car that hit the object. Default value: `true`.
+---@return boolean
+function ac.hasTrackPhysicsObjectCollidedWithCar(carIndex, name, firstCollisionOnly) end
+
+---Returns index of a car track physics object has collided with first, or `-1` if it hasn’t collided with anything.
+---State resets once object is reset (with new session or by calling `ac.resetTrackPhysicsObject()`).
+---@param name string @Name of a physics object (`'AC_POBJECT_…'`).
+---@return integer
+function ac.getCarIndexTrackPhysicsObjectCollidedWith(name) end
+
+---Returns name of the last physics track object car collided with. State resets once object is reset
+---(with new session or by calling `physics.resetTrackPhysicsObject()`). Returns `nil` if there is car hasn’t
+---hit everything yet or if the object it has hit was reset.
+---@param carIndex integer
+---@return string?
+function ac.getTrackPhysicsObjectNameHitByCar(carIndex) end
 
 ---Teleports car to certain spawn point, invalidates current lap.
 ---@param carIndex integer
@@ -9492,6 +9680,12 @@ function physics.setAILevel(carIndex, level) end
 ---@param aggression number @AI aggression from 0 to 1.
 function physics.setAIAggression(carIndex, aggression) end
 
+---Changes AI brake hint value. Use `ac.INIConfig.carData(carIndex, 'ai.ini'):get('PEDALS', 'BRAKE_HINT', 1)` to
+---load original value first and go from there (don’t re-read it each frame though, it’ll get expensive).
+---@param carIndex integer @0-based car index.
+---@param brakeHint number @New value.
+function physics.setAIBrakeHint(carIndex, brakeHint) end
+
 ---Limits AI throttle pedal.
 ---@param carIndex integer @0-based car index.
 ---@param limit number @0 for limit gas pedal to 0, 1 to remove limitation.
@@ -9501,6 +9695,11 @@ function physics.setAIThrottleLimit(carIndex, limit) end
 ---@param carIndex integer @0-based car index.
 ---@param limit number @Speed in km/h.
 function physics.setAITopSpeed(carIndex, limit) end
+
+---Sets steering multiplier allowing to get cars to drive more straight in some cases.
+---@param carIndex integer @0-based car index.
+---@param mult number
+function physics.setAISteerMultiplier(carIndex, mult) end
 
 ---Sets horizontal offset along spline, can be used to get cars to drive further to the left or to the right. Actual offset
 ---will be limited by track width as well.
@@ -9553,7 +9752,8 @@ function physics.setCarNoInput(active) end
 
 ---Activates or deactivates autopilot for user car. Invalidates lap.
 ---@param active boolean? @Default value: `true`.
-function physics.setCarAutopilot(active) end
+---@param chooseTyres boolean? @Set to `true` to let AI select appropriate tyres. Default value: `false`.
+function physics.setCarAutopilot(active, chooseTyres) end
 
 ---Returns state of car controls user input. Works even if user car controls were deactivated or AI is controlling user car.
 ---@return physics.CarControls
@@ -9565,6 +9765,15 @@ function physics.getCarInputControls() end
 ---@param wheels ac.Wheel @Wheels to affect.
 ---@param decrease number @0 for tyres to act as usual, 1 for tyres to lose all grip.
 function physics.setGripDecrease(carIndex, wheels, decrease) end
+
+---Changes air density for a certain car.
+---@param carIndex integer @0-based car index.
+---@param value number @New value to multiply air density with.
+function physics.setAirDensityMultiplier(carIndex, value) end
+
+---Resets a position of a track physics object.
+---@param name string @Name of a physics object (`'AC_POBJECT_…'`).
+function physics.resetTrackPhysicsObject(name) end
 
 ---Blows up some tyres of a certain car. Invalidates current lap.
 ---@param carIndex integer @0-based car index.
@@ -9822,7 +10031,8 @@ function ac.getVAOMode() end
 ---@param value number @Value from 0 to 1.
 function ac.setAudioVolume(audioChannelKey, value) end
 
----Sets index of current wiper speed. To get current speed or number of available speeds, check `ac.StateCar`.
+---Use `ac.setWiperMode()` instead.
+---@deprecated
 ---@param carIndex integer
 ---@param wiperSpeed integer @Wiper speed index from 0 (disabled) to `ac.StateCar.wiperModes` (excluding).
 function ac.setWiperSpeed(carIndex, wiperSpeed) end
@@ -9983,8 +10193,15 @@ function ac.switchToNeutralGear() end
 ---@param active boolean|`true`|`false`
 function ac.setHeadlights(active) end
 
+---Sets index of current wiper speed. To get current speed or number of available speeds, check `ac.StateCar`.
+---@param wiperMode integer @Wiper mode index from 0 (disabled) to `ac.StateCar.wiperModes` (excluding).
+function ac.setWiperMode(wiperMode) end
+
 ---@param active boolean|`true`|`false`
 function ac.setHighBeams(active) end
+
+---@param mode ac.TurningLights
+function ac.setTurningLights(mode) end
 
 ---@param index integer
 ---@param value boolean|`true`|`false`
@@ -10130,6 +10347,37 @@ function ac.setMouseLeftButtonDown(isDown) end
 ---Can be used for simulating mouse wheel.
 ---@param scroll number
 function ac.setMouseWheel(scroll) end
+
+---Load a separate Lua script and run it in background. Script simply runs once and then the returned value (or an error message if any)
+---will be passed to the callback. Loaded script has access only to basic `ac` API, nothing specific like accessing scene or audio, thus
+---keeping things safe. Also, there’ll be a new function `os.sleep()` allowing for a script to wait a certain amount of time (in seconds).
+---When called, it will also trigger callbacks set by functions like `setTimeout()`, `setInterval()` or `ac.onSharedEvent()`.
+---
+---You can use this background script do compute something heavy and return, like run a script to sum numbers from 0 to a quadrillon
+---or load a bit of important data from a huge file. Alternatively, you can create a script which will keep running with something like
+---`while true do … os.sleep(1) end`, awaking once a second to see if there are any new jobs that need doing. Note: to exchange data with
+---other scripts (including your main script or other background scripts), you can also use shared events (`ac.broadcastSharedEvent()`,
+---`ac.onSharedEvent()`), shared structures (`ac.connect()`) or even memory-mapped files.
+---
+---Creating a new background worker and initializing a VM for it takes about 10 ms (in different thread, for your main script there won’t
+---be any delay at all), so plan accordingly (if you have a ton of jobs taking about 2 ms each, it might be a better option to have a
+---single worker take care of them all, but if you have a few jobs each taking a second of time, feel free to create a separate worker
+---for each).
+---
+---Workers won’t be automatically reloaded when their scripts change, but when your main script reloads they’ll be shut and reloaded as
+---well. Please note: workers won’t be terminated until the next `os.sleep()` call. If you have a worker doing intense computations, it
+---might be a good idea to add `os.sleep(0)` somewhere in its loop from time to time to let other threads do their thing, let callbacks
+---through and allow for the whole thing to reload.
+---
+---Worker threads are created with low priority to ensure they won’t reduce AC performance.
+---
+---Documentation for worker scripts is available in `ac_background` directory. You might need to plug it to your VS Code configuration
+---manually (just add a new line with it in “.vscode/settings.json”.
+---@overload fun(name: string, callback: function)
+---@param name string @File name (without extension) relative to script directory.
+---@param data string|number|boolean @Data to pass to the script (will be available as `__input` value). Use `stringify()` if you need to pass something complex.
+---@param callback fun(err: string, data: string|number|boolean)
+function ac.startBackgroundWorker(name, data, callback) end
 --[[ ac_apps.lua ]]
 
 ---Draw virtual mirror.
@@ -10328,7 +10576,7 @@ function _ac_LightSource:dispose() end
 ---Note: if shader would fail to compile, a C++ exception will be triggered, terminating script completely (to prevent AC
 ---from crashing, C++ exceptions halt Lua script that triggered them until script gets a full reload).
 ---@return boolean @Returns `false` if shader is not yet ready and no drawing occured (happens only if `async` is set to `true`).
----@param params {blendMode: render.BlendMode, depthMode: render.DepthMode, depth: number, async: boolean, textures: table, values: table, shader: string}|"{\n  blendMode = render.BlendMode.AlphaBlend,\n  depthMode = render.DepthMode.ReadOnlyLessEqual,\n  textures = {\n    \n  },\n  values = {\n    \n  },\n  shader = [[float4 main(PS_IN pin) {\n    return float4(pin.Tex.x, pin.Tex.y, 0, 1);\n  }]]\n}" "Table with properties:\n- `blendMode` (`render.BlendMode`): Blend mode. Default value: `render.BlendMode.AlphaBlend`.\n- `depthMode` (`render.DepthMode`): Depth mode. Default value: `render.DepthMode.ReadOnlyLessEqual`.\n- `depth` (`number`): Optional depth in meters, to use hardware-accelerated depth clipping.\n- `async` (`boolean`): If set to `true`, drawing won’t occur until shader would be compiled in a different thread.\n- `textures` (`table`): Table with textures to pass to a shader. For textures, anything passable in `ui.image()` can be used (filename, remote URL, media element, extra canvas, etc.). If you don’t have a texture and need to reset bound one, use `false` for a texture value (instead of `nil`)\n- `values` (`table`): Table with values to pass to a shader. Values can be numbers, booleans, vectors, colors or 4×4 matrix. Values will be aligned automatically.\n- `shader` (`string`): Shader code (format is HLSL, regular DirectX shader); actual code will be added into a template in “assettocorsa/extension/internal/shader-tpl/ui.fx”."
+---@param params {blendMode: render.BlendMode, depthMode: render.DepthMode, depth: number, async: boolean, cacheKey: number, defines: table, textures: table, values: table, shader: string}|"{\n  blendMode = render.BlendMode.AlphaBlend,\n  depthMode = render.DepthMode.ReadOnlyLessEqual,\n  textures = {\n    \n  },\n  values = {\n    \n  },\n  shader = [[float4 main(PS_IN pin) {\n    return float4(pin.Tex.x, pin.Tex.y, 0, 1);\n  }]]\n}" "Table with properties:\n- `blendMode` (`render.BlendMode`): Blend mode. Default value: `render.BlendMode.AlphaBlend`.\n- `depthMode` (`render.DepthMode`): Depth mode. Default value: `render.DepthMode.ReadOnlyLessEqual`.\n- `depth` (`number`): Optional depth in meters, to use hardware-accelerated depth clipping.\n- `async` (`boolean`): If set to `true`, drawing won’t occur until shader would be compiled in a different thread.\n- `cacheKey` (`number`): Optional cache key for compiled shader (caching will depend on shader source code, but not on included files, so make sure to change the key if included files have changed).\n- `defines` (`table`): Defines to pass to the shader, either boolean, numerical or string values (don’t forget to wrap complex expressions in brackets). False values won’t appear in code and true will be replaced with 1 so you could use `#ifdef` and `#ifndef` with them.\n- `textures` (`table`): Table with textures to pass to a shader. For textures, anything passable in `ui.image()` can be used (filename, remote URL, media element, extra canvas, etc.). If you don’t have a texture and need to reset bound one, use `false` for a texture value (instead of `nil`)\n- `values` (`table`): Table with values to pass to a shader. Values can be numbers, booleans, vectors, colors or 4×4 matrix. Values will be aligned automatically.\n- `shader` (`string`): Shader code (format is HLSL, regular DirectX shader); actual code will be added into a template in “assettocorsa/extension/internal/shader-tpl/fullscreen.fx”."
 function render.fullscreenPass(params) end
 
 ---Draws a 3D quad with a custom shader. Shader is compiled at first run, which might take a few milliseconds.
@@ -10378,7 +10626,7 @@ function render.fullscreenPass(params) end
 ---Note: if shader would fail to compile, a C++ exception will be triggered, terminating script completely (to prevent AC
 ---from crashing, C++ exceptions halt Lua script that triggered them until script gets a full reload).
 ---@return boolean @Returns `false` if shader is not yet ready and no drawing occured (happens only if `async` is set to `true`).
----@param params {p1: vec3, p2: vec3, p3: vec3, p4: vec3, blendMode: render.BlendMode, async: boolean, textures: table, values: table, shader: string}|"{\n  p1 = vec3(0, 0, 0),\n  p2 = vec3(0, 1, 0),\n  p3 = vec3(1, 1, 0),\n  p4 = vec3(1, 0, 0),\n  blendMode = render.BlendMode.AlphaBlend,\n  textures = {\n    \n  },\n  values = {\n    \n  },\n  shader = [[float4 main(PS_IN pin) {\n    return float4(pin.Tex.x, pin.Tex.y, 0, 1);\n  }]]\n}" "Table with properties:\n- `blendMode` (`render.BlendMode`): Blend mode. Default value: `render.BlendMode.AlphaBlend`.\n- `async` (`boolean`): If set to `true`, drawing won’t occur until shader would be compiled in a different thread.\n- `textures` (`table`): Table with textures to pass to a shader. For textures, anything passable in `ui.image()` can be used (filename, remote URL, media element, extra canvas, etc.). If you don’t have a texture and need to reset bound one, use `false` for a texture value (instead of `nil`)\n- `values` (`table`): Table with values to pass to a shader. Values can be numbers, booleans, vectors, colors or 4×4 matrix. Values will be aligned automatically.\n- `shader` (`string`): Shader code (format is HLSL, regular DirectX shader); actual code will be added into a template in “assettocorsa/extension/internal/shader-tpl/ui.fx”."
+---@param params {p1: vec3, p2: vec3, p3: vec3, p4: vec3, blendMode: render.BlendMode, async: boolean, cacheKey: number, defines: table, textures: table, values: table, shader: string}|"{\n  p1 = vec3(0, 0, 0),\n  p2 = vec3(0, 1, 0),\n  p3 = vec3(1, 1, 0),\n  p4 = vec3(1, 0, 0),\n  blendMode = render.BlendMode.AlphaBlend,\n  textures = {\n    \n  },\n  values = {\n    \n  },\n  shader = [[float4 main(PS_IN pin) {\n    return float4(pin.Tex.x, pin.Tex.y, 0, 1);\n  }]]\n}" "Table with properties:\n- `blendMode` (`render.BlendMode`): Blend mode. Default value: `render.BlendMode.AlphaBlend`.\n- `async` (`boolean`): If set to `true`, drawing won’t occur until shader would be compiled in a different thread.\n- `cacheKey` (`number`): Optional cache key for compiled shader (caching will depend on shader source code, but not on included files, so make sure to change the key if included files have changed).\n- `defines` (`table`): Defines to pass to the shader, either boolean, numerical or string values (don’t forget to wrap complex expressions in brackets). False values won’t appear in code and true will be replaced with 1 so you could use `#ifdef` and `#ifndef` with them.\n- `textures` (`table`): Table with textures to pass to a shader. For textures, anything passable in `ui.image()` can be used (filename, remote URL, media element, extra canvas, etc.). If you don’t have a texture and need to reset bound one, use `false` for a texture value (instead of `nil`)\n- `values` (`table`): Table with values to pass to a shader. Values can be numbers, booleans, vectors, colors or 4×4 matrix. Values will be aligned automatically.\n- `shader` (`string`): Shader code (format is HLSL, regular DirectX shader); actual code will be added into a template in “assettocorsa/extension/internal/shader-tpl/quad.fx”."
 function render.shaderedQuad(params) end
 
 --[[ common/ac_render_enums.lua ]]
@@ -11076,7 +11324,7 @@ function _ui_ExtraCanvas:update(callback) end
 ---You can bind up to 32 textures and pass any number/boolean/vector/color/matrix values to the shader, which makes
 ---it a very effective tool for any custom drawing you might need to make.
 ---@return boolean @Returns `false` if shader is not yet ready and no drawing occured (happens only if `async` is set to `true`).
----@param params {p1: vec2, p2: vec2, uv1: vec2, uv2: vec2, blendMode: render.BlendMode, async: boolean, textures: table, values: table, shader: string}|"{\n  textures = {\n    \n  },\n  values = {\n    \n  },\n  shader = [[float4 main(PS_IN pin) {\n    return float4(pin.Tex.x, pin.Tex.y, 0, 1);\n  }]]\n}" "Table with properties:\n- `p1` (`vec2`): Position of upper left corner relative to whole screen or canvas. Default value: `vec2(0, 0)`.\n- `p2` (`vec2`): Position of bottom right corner relative to whole screen or canvas. Default value: size of canvas.\n- `uv1` (`vec2`): Texture coordinates for upper left corner. Default value: `vec2(0, 0)`.\n- `uv2` (`vec2`): Texture coordinates for bottom right corner. Default value: `vec2(1, 1)`.\n- `blendMode` (`render.BlendMode`): Blend mode. Default value: `render.BlendMode.Opaque`.\n- `async` (`boolean`): If set to `true`, drawing won’t occur until shader would be compiled in a different thread.\n- `textures` (`table`): Table with textures to pass to a shader. For textures, anything passable in `ui.image()` can be used (filename, remote URL, media element, extra canvas, etc.). If you don’t have a texture and need to reset bound one, use `false` for a texture value (instead of `nil`)\n- `values` (`table`): Table with values to pass to a shader. Values can be numbers, booleans, vectors, colors or 4×4 matrix. Values will be aligned automatically.\n- `shader` (`string`): Shader code (format is HLSL, regular DirectX shader); actual code will be added into a template in “assettocorsa/extension/internal/shader-tpl/ui.fx”."
+---@param params {p1: vec2, p2: vec2, uv1: vec2, uv2: vec2, blendMode: render.BlendMode, async: boolean, cacheKey: number, defines: table, textures: table, values: table, shader: string}|"{\n  textures = {\n    \n  },\n  values = {\n    \n  },\n  shader = [[float4 main(PS_IN pin) {\n    return float4(pin.Tex.x, pin.Tex.y, 0, 1);\n  }]]\n}" "Table with properties:\n- `p1` (`vec2`): Position of upper left corner relative to whole screen or canvas. Default value: `vec2(0, 0)`.\n- `p2` (`vec2`): Position of bottom right corner relative to whole screen or canvas. Default value: size of canvas.\n- `uv1` (`vec2`): Texture coordinates for upper left corner. Default value: `vec2(0, 0)`.\n- `uv2` (`vec2`): Texture coordinates for bottom right corner. Default value: `vec2(1, 1)`.\n- `blendMode` (`render.BlendMode`): Blend mode. Default value: `render.BlendMode.Opaque`.\n- `async` (`boolean`): If set to `true`, drawing won’t occur until shader would be compiled in a different thread.\n- `cacheKey` (`number`): Optional cache key for compiled shader (caching will depend on shader source code, but not on included files, so make sure to change the key if included files have changed).\n- `defines` (`table`): Defines to pass to the shader, either boolean, numerical or string values (don’t forget to wrap complex expressions in brackets). False values won’t appear in code and true will be replaced with 1 so you could use `#ifdef` and `#ifndef` with them.\n- `textures` (`table`): Table with textures to pass to a shader. For textures, anything passable in `ui.image()` can be used (filename, remote URL, media element, extra canvas, etc.). If you don’t have a texture and need to reset bound one, use `false` for a texture value (instead of `nil`)\n- `values` (`table`): Table with values to pass to a shader. Values can be numbers, booleans, vectors, colors or 4×4 matrix. Values will be aligned automatically.\n- `shader` (`string`): Shader code (format is HLSL, regular DirectX shader); actual code will be added into a template in “assettocorsa/extension/internal/shader-tpl/ui.fx”."
 function _ui_ExtraCanvas:updateWithShader(params) end
 
 ---Updates texture using a shader with a fullscreen pass. Faster than using `:update()` with `ui.renderShader()`:
@@ -11092,7 +11340,7 @@ function _ui_ExtraCanvas:updateWithShader(params) end
 ---rendering scene, and has access to camera state and some rendering pipeline textures by default (see “fullscreen.fx” template).
 ---Use it if you need to prepare an offscreen buffer to apply to the scene.
 ---@return boolean @Returns `false` if shader is not yet ready and no drawing occured (happens only if `async` is set to `true`).
----@param params {p1: vec2, p2: vec2, uv1: vec2, uv2: vec2, blendMode: render.BlendMode, async: boolean, textures: table, values: table, shader: string}|"{\n  textures = {\n    \n  },\n  values = {\n    \n  },\n  shader = [[float4 main(PS_IN pin) {\n    return float4(pin.Tex.x, pin.Tex.y, 0, 1);\n  }]]\n}" "Table with properties:\n- `p1` (`vec2`): Position of upper left corner relative to whole screen or canvas. Default value: `vec2(0, 0)`.\n- `p2` (`vec2`): Position of bottom right corner relative to whole screen or canvas. Default value: size of canvas.\n- `uv1` (`vec2`): Texture coordinates for upper left corner. Default value: `vec2(0, 0)`.\n- `uv2` (`vec2`): Texture coordinates for bottom right corner. Default value: `vec2(1, 1)`.\n- `blendMode` (`render.BlendMode`): Blend mode. Default value: `render.BlendMode.Opaque`.\n- `async` (`boolean`): If set to `true`, drawing won’t occur until shader would be compiled in a different thread.\n- `textures` (`table`): Table with textures to pass to a shader. For textures, anything passable in `ui.image()` can be used (filename, remote URL, media element, extra canvas, etc.). If you don’t have a texture and need to reset bound one, use `false` for a texture value (instead of `nil`)\n- `values` (`table`): Table with values to pass to a shader. Values can be numbers, booleans, vectors, colors or 4×4 matrix. Values will be aligned automatically.\n- `shader` (`string`): Shader code (format is HLSL, regular DirectX shader); actual code will be added into a template in “assettocorsa/extension/internal/shader-tpl/ui.fx”."
+---@param params {p1: vec2, p2: vec2, uv1: vec2, uv2: vec2, blendMode: render.BlendMode, async: boolean, cacheKey: number, defines: table, textures: table, values: table, shader: string}|"{\n  textures = {\n    \n  },\n  values = {\n    \n  },\n  shader = [[float4 main(PS_IN pin) {\n    return float4(pin.Tex.x, pin.Tex.y, 0, 1);\n  }]]\n}" "Table with properties:\n- `p1` (`vec2`): Position of upper left corner relative to whole screen or canvas. Default value: `vec2(0, 0)`.\n- `p2` (`vec2`): Position of bottom right corner relative to whole screen or canvas. Default value: size of canvas.\n- `uv1` (`vec2`): Texture coordinates for upper left corner. Default value: `vec2(0, 0)`.\n- `uv2` (`vec2`): Texture coordinates for bottom right corner. Default value: `vec2(1, 1)`.\n- `blendMode` (`render.BlendMode`): Blend mode. Default value: `render.BlendMode.Opaque`.\n- `async` (`boolean`): If set to `true`, drawing won’t occur until shader would be compiled in a different thread.\n- `cacheKey` (`number`): Optional cache key for compiled shader (caching will depend on shader source code, but not on included files, so make sure to change the key if included files have changed).\n- `defines` (`table`): Defines to pass to the shader, either boolean, numerical or string values (don’t forget to wrap complex expressions in brackets). False values won’t appear in code and true will be replaced with 1 so you could use `#ifdef` and `#ifndef` with them.\n- `textures` (`table`): Table with textures to pass to a shader. For textures, anything passable in `ui.image()` can be used (filename, remote URL, media element, extra canvas, etc.). If you don’t have a texture and need to reset bound one, use `false` for a texture value (instead of `nil`)\n- `values` (`table`): Table with values to pass to a shader. Values can be numbers, booleans, vectors, colors or 4×4 matrix. Values will be aligned automatically.\n- `shader` (`string`): Shader code (format is HLSL, regular DirectX shader); actual code will be added into a template in “assettocorsa/extension/internal/shader-tpl/ui.fx”."
 function _ui_ExtraCanvas:updateSceneWithShader(params) end
 
 ---Clears canvas.
@@ -11253,7 +11501,7 @@ function ui.renderTexture(params) end
 ---Note: if shader would fail to compile, a C++ exception will be triggered, terminating script completely (to prevent AC
 ---from crashing, C++ exceptions halt Lua script that triggered them until script gets a full reload).
 ---@return boolean @Returns `false` if shader is not yet ready and no drawing occured (happens only if `async` is set to `true`).
----@param params {p1: vec2, p2: vec2, uv1: vec2, uv2: vec2, blendMode: render.BlendMode, async: boolean, textures: table, values: table, shader: string}|"{\n  p1 = vec2(0, 0),\n  p2 = vec2(1, 1),\n  blendMode = render.BlendMode.BlendAccurate,\n  textures = {\n    \n  },\n  values = {\n    \n  },\n  shader = [[float4 main(PS_IN pin) {\n    return float4(pin.Tex.x, pin.Tex.y, 0, 1);\n  }]]\n}" "Table with properties:\n- `p1` (`vec2`): Position of upper left corner relative to whole screen or canvas.\n- `p2` (`vec2`): Position of bottom right corner relative to whole screen or canvas.\n- `uv1` (`vec2`): Texture coordinates for upper left corner. Default value: `vec2(0, 0)`.\n- `uv2` (`vec2`): Texture coordinates for bottom right corner. Default value: `vec2(1, 1)`.\n- `blendMode` (`render.BlendMode`): Blend mode. Default value: `render.BlendMode.BlendAccurate`.\n- `async` (`boolean`): If set to `true`, drawing won’t occur until shader would be compiled in a different thread.\n- `textures` (`table`): Table with textures to pass to a shader. For textures, anything passable in `ui.image()` can be used (filename, remote URL, media element, extra canvas, etc.). If you don’t have a texture and need to reset bound one, use `false` for a texture value (instead of `nil`)\n- `values` (`table`): Table with values to pass to a shader. Values can be numbers, booleans, vectors, colors or 4×4 matrix. Values will be aligned automatically.\n- `shader` (`string`): Shader code (format is HLSL, regular DirectX shader); actual code will be added into a template in “assettocorsa/extension/internal/shader-tpl/ui.fx”."
+---@param params {p1: vec2, p2: vec2, uv1: vec2, uv2: vec2, blendMode: render.BlendMode, async: boolean, cacheKey: number, defines: table, textures: table, values: table, shader: string}|"{\n  p1 = vec2(0, 0),\n  p2 = vec2(1, 1),\n  blendMode = render.BlendMode.BlendAccurate,\n  textures = {\n    \n  },\n  values = {\n    \n  },\n  shader = [[float4 main(PS_IN pin) {\n    return float4(pin.Tex.x, pin.Tex.y, 0, 1);\n  }]]\n}" "Table with properties:\n- `p1` (`vec2`): Position of upper left corner relative to whole screen or canvas.\n- `p2` (`vec2`): Position of bottom right corner relative to whole screen or canvas.\n- `uv1` (`vec2`): Texture coordinates for upper left corner. Default value: `vec2(0, 0)`.\n- `uv2` (`vec2`): Texture coordinates for bottom right corner. Default value: `vec2(1, 1)`.\n- `blendMode` (`render.BlendMode`): Blend mode. Default value: `render.BlendMode.BlendAccurate`.\n- `async` (`boolean`): If set to `true`, drawing won’t occur until shader would be compiled in a different thread.\n- `cacheKey` (`number`): Optional cache key for compiled shader (caching will depend on shader source code, but not on included files, so make sure to change the key if included files have changed).\n- `defines` (`table`): Defines to pass to the shader, either boolean, numerical or string values (don’t forget to wrap complex expressions in brackets). False values won’t appear in code and true will be replaced with 1 so you could use `#ifdef` and `#ifndef` with them.\n- `textures` (`table`): Table with textures to pass to a shader. For textures, anything passable in `ui.image()` can be used (filename, remote URL, media element, extra canvas, etc.). If you don’t have a texture and need to reset bound one, use `false` for a texture value (instead of `nil`)\n- `values` (`table`): Table with values to pass to a shader. Values can be numbers, booleans, vectors, colors or 4×4 matrix. Values will be aligned automatically.\n- `shader` (`string`): Shader code (format is HLSL, regular DirectX shader); actual code will be added into a template in “assettocorsa/extension/internal/shader-tpl/ui.fx”."
 function ui.renderShader(params) end
 
 ---Begins new group offset horizontally to the right, pushes item width to fill available space. Call `ui.endSubgroup()` when done.
@@ -11263,12 +11511,12 @@ function ui.beginSubgroup(offsetX) end
 ---Ends group began with `ui.beginSubgroup()`.
 function ui.endSubgroup() end
 
----GIF player can be used to display animated GIFs.
+---GIF player can be used to display animated GIFs. Also supports regular and animated WEBP images.
 ---@param source string @URL, filename or binary data.
 ---@return ui.GIFPlayer
 function ui.GIFPlayer(source) end
 
----GIF player can be used to display animated GIFs.
+---GIF player can be used to display animated GIFs. Also supports regular and animated WEBP images.
 ---@class ui.GIFPlayer
 ---@field keepRunning boolean @By default GIFs stop playing if they are not actively used in rendering. If you need them to keep running in background, set this property to `true`.
 local _ui_GIFPlayer = nil
@@ -11897,7 +12145,7 @@ function _ac_SceneReference:projectTexture(params) end
 ---Note: if shader would fail to compile, a C++ exception will be triggered, terminating script completely (to prevent AC 
 ---from crashing, C++ exceptions halt Lua script that triggered them until script gets a full reload).
 ---@return boolean @Returns `false` if shader is not yet ready and no drawing occured (happens only if `async` is set to `true`).
----@param params {pos: vec3, look: vec3, up: vec3, size: vec2, withDepth: boolean, expanded: boolean, uvOffset: vec2, blendMode: render.BlendMode, async: boolean, textures: table, values: table, shader: string}|"{\n  pos = vec3(),\n  look = vec3(),\n  up = vec3(0, 1, 0),\n  size = vec2(),\n  withDepth = true,\n  expanded = true,\n  blendMode = render.BlendMode.BlendAccurate,\n  textures = {\n    \n  },\n  values = {\n    \n  },\n  shader = [[float4 main(PS_IN pin) {\n    return float4(pin.Tex.x, pin.Tex.y, 0, 1);\n  }]]\n}" "Table with properties:\n- `pos` (`vec3`): Position from which texture will be projected, in world space.\n- `look` (`vec3`): Direction with which texture will be projected, in world space.\n- `up` (`vec3`): Optional vector directed up, to specify texture rotation.\n- `size` (`vec2`): Size, horizontal and vertical. Default value: `vec2(1, 1)`.\n- `withDepth` (`boolean`): If depth is used, nearest to projection position triagles will have higher priority (in case of overlapping UV), slightly slower, but produces better results (especially with `expanded` set to `true`).\n- `expanded` (`boolean`): Draws each mesh four additional times with small offsets to fill partically covered pixels. More expensive (but less expensive comparing to fixing issue with those half covered pixels with additional draw calls via Lua).\n- `uvOffset` (`vec2`): Optional UV offset. By default CSP estimates an UV offset such that most triagles would be shown. If mapping is way off though, it might need tweaking (or even repeated calls with different offsets).\n- `blendMode` (`render.BlendMode`): Blend mode. Default value: `render.BlendMode.BlendAccurate`.\n- `async` (`boolean`): If set to `true`, drawing won’t occur until shader would be compiled in a different thread.\n- `textures` (`table`): Table with textures to pass to a shader. For textures, anything passable in `ui.image()` can be used (filename, remote URL, media element, extra canvas, etc.). If you don’t have a texture and need to reset bound one, use `false` for a texture value (instead of `nil`)\n- `values` (`table`): Table with values to pass to a shader. Values can be numbers, booleans, vectors, colors or 4×4 matrix. Values will be aligned automatically.\n- `shader` (`string`): Shader code (format is HLSL, regular DirectX shader); actual code will be added into a template in “assettocorsa/extension/internal/shader-tpl/project.fx” (look into it to see what fields are available)."
+---@param params {pos: vec3, look: vec3, up: vec3, size: vec2, withDepth: boolean, expanded: boolean, uvOffset: vec2, blendMode: render.BlendMode, async: boolean, cacheKey: number, defines: table, textures: table, values: table, shader: string}|"{\n  pos = vec3(),\n  look = vec3(),\n  up = vec3(0, 1, 0),\n  size = vec2(),\n  withDepth = true,\n  expanded = true,\n  blendMode = render.BlendMode.BlendAccurate,\n  textures = {\n    \n  },\n  values = {\n    \n  },\n  shader = [[float4 main(PS_IN pin) {\n    return float4(pin.Tex.x, pin.Tex.y, 0, 1);\n  }]]\n}" "Table with properties:\n- `pos` (`vec3`): Position from which texture will be projected, in world space.\n- `look` (`vec3`): Direction with which texture will be projected, in world space.\n- `up` (`vec3`): Optional vector directed up, to specify texture rotation.\n- `size` (`vec2`): Size, horizontal and vertical. Default value: `vec2(1, 1)`.\n- `withDepth` (`boolean`): If depth is used, nearest to projection position triagles will have higher priority (in case of overlapping UV), slightly slower, but produces better results (especially with `expanded` set to `true`).\n- `expanded` (`boolean`): Draws each mesh four additional times with small offsets to fill partically covered pixels. More expensive (but less expensive comparing to fixing issue with those half covered pixels with additional draw calls via Lua).\n- `uvOffset` (`vec2`): Optional UV offset. By default CSP estimates an UV offset such that most triagles would be shown. If mapping is way off though, it might need tweaking (or even repeated calls with different offsets).\n- `blendMode` (`render.BlendMode`): Blend mode. Default value: `render.BlendMode.BlendAccurate`.\n- `async` (`boolean`): If set to `true`, drawing won’t occur until shader would be compiled in a different thread.\n- `cacheKey` (`number`): Optional cache key for compiled shader (caching will depend on shader source code, but not on included files, so make sure to change the key if included files have changed).\n- `defines` (`table`): Defines to pass to the shader, either boolean, numerical or string values (don’t forget to wrap complex expressions in brackets). False values won’t appear in code and true will be replaced with 1 so you could use `#ifdef` and `#ifndef` with them.\n- `textures` (`table`): Table with textures to pass to a shader. For textures, anything passable in `ui.image()` can be used (filename, remote URL, media element, extra canvas, etc.). If you don’t have a texture and need to reset bound one, use `false` for a texture value (instead of `nil`)\n- `values` (`table`): Table with values to pass to a shader. Values can be numbers, booleans, vectors, colors or 4×4 matrix. Values will be aligned automatically.\n- `shader` (`string`): Shader code (format is HLSL, regular DirectX shader); actual code will be added into a template in “assettocorsa/extension/internal/shader-tpl/project.fx” (look into it to see what fields are available)."
 function _ac_SceneReference:projectShader(params) end
 
 ---@return ac.SceneReference
