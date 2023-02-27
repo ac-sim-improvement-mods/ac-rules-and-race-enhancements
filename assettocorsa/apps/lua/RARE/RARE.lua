@@ -84,11 +84,6 @@ function script.windowMain(dt)
         ui.transparentWindow('notifications',vec2(RARECONFIG.data.NOTIFICATIONS.X_POS,RARECONFIG.data.NOTIFICATIONS.Y_POS),vec2(1200,500),function ()
             notificationHandler(dt)
         end)
-
-
-        ui.transparentWindow('1',vec2(700,700),vec2(1000,1000),function ()
-            drawF1Leaderboard()
-        end)
     end
 end
 
