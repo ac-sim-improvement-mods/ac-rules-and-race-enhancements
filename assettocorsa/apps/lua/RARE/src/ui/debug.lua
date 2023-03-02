@@ -19,7 +19,7 @@ function debugMenu(sim,rc,error)
     ui.nextColumn()
     inLineBulletText(SCRIPT_SHORT_NAME.." Version", SCRIPT_VERSION,space)
     inLineBulletText(SCRIPT_SHORT_NAME.." Version Code", SCRIPT_VERSION_CODE,space)
-    inLineBulletText(SCRIPT_SHORT_NAME.." Release Date", SCRIPT_BUILD_DATE,space)
+    inLineBulletText(SCRIPT_SHORT_NAME.." Version Release Date", SCRIPT_BUILD_DATE,space)
     ui.newLine()
     ui.nextColumn()
 

@@ -4,6 +4,12 @@ require 'src/driver'
 --- Initialize RARE and returns initialized state
 --- @return boolean
 function initialize(sim)
+    if FIRST_LAUNCH then
+        log("First initialization")
+    else
+        log("Reinitializing")
+    end
+
     log(SCRIPT_NAME.." version: "..SCRIPT_VERSION)
     log(SCRIPT_NAME.." version: "..SCRIPT_VERSION_CODE)
     log("CSP version: "..ac.getPatchVersionCode())
@@ -100,7 +106,6 @@ function initialize(sim)
             physics.setCarFuel(driver.index, fuelload)
 
             if FIRST_LAUNCH then
-                log("First initialization")
                 driver.aiLevel = driver.car.aiLevel
                 driver.aiThrottleLimitBase = math.lerp(0.5,1,1-((1-driver.aiLevel)/0.3))
                 driver.aiAggression = driver.car.aiAggression
