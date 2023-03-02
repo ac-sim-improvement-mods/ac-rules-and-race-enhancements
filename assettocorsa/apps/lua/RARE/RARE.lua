@@ -9,13 +9,13 @@ CSP_MIN_VERSION = "1.79"
 require 'src/ac_ext'
 require 'src/utils'
 require 'src/init'
-require 'src/ui/debug_menu'
-require 'src/ui/settings_menu'
+require 'src/ui/debug.menu'
+require 'src/ui/settings.menu'
 require 'src/ui/notifications'
 require 'src/ui/leaderboard'
 local sim = ac.getSim()
 local audio = nil
-local rc = require 'src/race_control'
+local rc = require 'src/race.control'
 local racecontrol = nil
 
 FIRST_LAUNCH = true

@@ -291,4 +291,10 @@ function ai.alternateAttack(driver)
     physics.setAIThrottleLimit(driver.index, driver.aiThrottleLimit)
 end
 
+
+function ai.controller(aiRules,driver)
+    if aiRules.AI_FORCE_PIT_TYRES == 1 then ai.pitNewTires(driver) end
+    if aiRules.AI_ALTERNATE_LEVEL == 1 then ai.alternateAttack(driver)  end
+end
+
 return ai
