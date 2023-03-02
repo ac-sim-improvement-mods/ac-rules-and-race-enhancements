@@ -1,7 +1,7 @@
 SCRIPT_NAME = "Rules and Race Enhancements"
 SCRIPT_SHORT_NAME = "RARE"
-SCRIPT_VERSION = "1.0.6.4"
-SCRIPT_VERSION_CODE = 10648
+SCRIPT_VERSION = "1.0.6.5"
+SCRIPT_VERSION_CODE = 10650
 SCRIPT_BUILD_DATE = "2022-11-28"
 CSP_MIN_VERSION_CODE = 2144
 CSP_MIN_VERSION = "1.79"
@@ -9,13 +9,13 @@ CSP_MIN_VERSION = "1.79"
 require 'src/ac_ext'
 require 'src/utils'
 require 'src/init'
-require 'src/ui/debug.menu'
-require 'src/ui/settings.menu'
+require 'src/ui/debug'
+require 'src/ui/settings'
 require 'src/ui/notifications'
 require 'src/ui/leaderboard'
 local sim = ac.getSim()
 local audio = nil
-local rc = require 'src/race.control'
+local rc = require 'src/rc'
 local racecontrol = nil
 
 FIRST_LAUNCH = true
