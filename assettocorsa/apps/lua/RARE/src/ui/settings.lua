@@ -1,4 +1,4 @@
-local popup = require 'src/ui/notifications'
+local notifications = require 'src/ui/notifications'
 
 SPLINE_OFFSET = 0
 
@@ -298,7 +298,7 @@ function settingsMenu(sim)
             end
 
             if ui.button("TEST BANNER", vec2(ui.windowWidth()-77,25), buttonFlags) then
-                popup.notification("RACE CONTROL BANNER",10)
+                notifications.popup("RACE CONTROL BANNER",10)
             end
 
             ui.newLine(1)
