@@ -4,6 +4,16 @@ function log(message)
     ac.log("[RARE] "..message)
 end
 
+function randomizer(index,range)
+    math.random()
+    for i=0, math.random(index) do
+        math.randomseed(os.time()*(i+1))
+        math.random()
+    end
+
+    return math.random(-range,range)
+end
+
 --- Lines up bullet text label with text
 --- @param label string
 --- @param text string

@@ -11,6 +11,8 @@ function debugMenu(sim,rc,error)
         return
     end
 
+    ui.columns(1,true,"col1")
+
     ui.treeNode("[INFO]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
         inLineBulletText("CSP Version", ac.getPatchVersion(),space)
         inLineBulletText("CSP Version Code", ac.getPatchVersionCode(),space)
@@ -20,54 +22,9 @@ function debugMenu(sim,rc,error)
         inLineBulletText("Current Date", os.date("%Y-%m-%d"),space)
     end)
 
-    ui.treeNode("["..sessionTypeString(sim).." SESSION]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
-        inLineBulletText(SCRIPT_SHORT_NAME.." Enabled", upperBool(ac.isWindowOpen("main")),space)
-        inLineBulletText("Race Started", upperBool(sim.isSessionStarted),space)
-        inLineBulletText("Physics Allowed", upperBool(physics.allowed()),space)
-        inLineBulletText("Physics Late", sim.physicsLate,space)
-        inLineBulletText("Track", ac.getTrackName(),space)
-        inLineBulletText("Time", string.format("%02d:%02d:%02d", sim.timeHours, sim.timeMinutes, sim.timeSeconds),space)
-        if not sim.isOnlineRace then
-            inLineBulletText("Leader Lap", (rc.leaderCompletedLaps+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
-        end
-    end)
 
-    if RARECONFIG.data.RULES.VSC_RULES == 1 then
-        ui.treeNode("[VSC]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
-            inLineBulletText("VSC Called", upperBool(VSC_CALLED),space)
-            inLineBulletText("VSC Deployed", upperBool(VSC_DEPLOYED),space)
-            inLineBulletText("VSC Lap TIme", ac.lapTimeToString(VSC_LAP_TIME),space)
-        end)
-    end
+    ui.columns(2,true,"col2")
 
-    ui.treeNode("[CAR INFO]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
-        inLineBulletText("Index", driver.car.index,space)
-        inLineBulletText("Brand", ac.getCarBrand(driver.car.index) ,space)
-        inLineBulletText("ID", ac.getCarID(driver.car.index),space)
-        inLineBulletText("Skin",  ac.getCarSkinID(driver.car.index),space)
-        inLineBulletText("Extended Physics", upperBool(driver.car.extendedPhysics),space)
-        inLineBulletText("Physics Available", upperBool(driver.car.physicsAvailable),space)
-        inLineBulletText("DRS Present", upperBool(driver.car.drsPresent),space)
-        inLineBulletText("Kunos Car", upperBool(driver.car.isKunosCar),space)
-    end)
-
-    ui.treeNode("[DRIVER]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
-        inLineBulletText("Driver ["..driver.index.."]", driver.name,space)
-        inLineBulletText("Team", ac.getDriverTeam(driver.car.index),space)
-        inLineBulletText("Number", ac.getDriverNumber(driver.car.index),space)
-        inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
-        inLineBulletText("Track Position", driver.trackPosition.."/"..rc.carsOnTrackCount,space)
-        if not sim.isOnlineRace then
-            inLineBulletText("Lap", (driver.car.lapCount+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
-        end
-        if sim.raceSessionType == ac.SessionType.Qualify then
-            inLineBulletText("Out Lap", upperBool(driver.outLap),space)
-            inLineBulletText("Flying Lap", upperBool(driver.flyingLap),space)
-            inLineBulletText("In Lap", upperBool(driver.inLap),space)
-        end
-        inLineBulletText("Last Lap Time", ac.lapTimeToString(driver.car.previousLapTimeMs),space)
-        inLineBulletText("Best Lap Time", ac.lapTimeToString(driver.car.bestLapTimeMs),space)
-    end)
 
     ui.treeNode("[PIT STOPS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
         inLineBulletText("In Pit Lane", upperBool(driver.car.isInPitlane),space)
@@ -175,6 +132,69 @@ function debugMenu(sim,rc,error)
         inLineBulletText("Gear Box Damage", driver.car.gearboxDamage,space)
     end)
 
+    ui.treeNode("[SCRIPT CONTROLLER INPUTS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+        inLineBulletText("[0] Total Brake Balance", math.round(ac.getCarPhysics(driver.index).scriptControllerInputs[0],5),space)
+        inLineBulletText("[1] Brake Migration %", ac.getCarPhysics(driver.index).scriptControllerInputs[1],space)
+        inLineBulletText("[2] Exit Diff", ac.getCarPhysics(driver.index).scriptControllerInputs[2],space)
+        inLineBulletText("[3] Entry Diff", ac.getCarPhysics(driver.index).scriptControllerInputs[3],space)
+        inLineBulletText("[4] Mid Diff", ac.getCarPhysics(driver.index).scriptControllerInputs[4],space)
+        inLineBulletText("[5] Hispd Diff", ac.getCarPhysics(driver.index).scriptControllerInputs[5],space)
+        inLineBulletText("[6] Diff Mode", ac.getCarPhysics(driver.index).scriptControllerInputs[6],space)
+        inLineBulletText("[7]", ac.getCarPhysics(driver.index).scriptControllerInputs[7],space)
+    end)
+
+    ui.nextColumn()
+
+    ui.treeNode("["..sessionTypeString(sim).." SESSION]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+        inLineBulletText(SCRIPT_SHORT_NAME.." Enabled", upperBool(ac.isWindowOpen("main")),space)
+        inLineBulletText("Race Started", upperBool(sim.isSessionStarted),space)
+        inLineBulletText("Physics Allowed", upperBool(physics.allowed()),space)
+        inLineBulletText("Physics Late", sim.physicsLate,space)
+        inLineBulletText("Track", ac.getTrackName(),space)
+        inLineBulletText("Time", string.format("%02d:%02d:%02d", sim.timeHours, sim.timeMinutes, sim.timeSeconds),space)
+        if not sim.isOnlineRace then
+            inLineBulletText("Leader Lap", (rc.leaderCompletedLaps+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
+        end
+    end)
+
+
+    if RARECONFIG.data.RULES.VSC_RULES == 1 then
+        ui.treeNode("[VSC]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+            inLineBulletText("VSC Called", upperBool(VSC_CALLED),space)
+            inLineBulletText("VSC Deployed", upperBool(VSC_DEPLOYED),space)
+            inLineBulletText("VSC Lap TIme", ac.lapTimeToString(VSC_LAP_TIME),space)
+        end)
+    end
+
+    ui.treeNode("[CAR INFO]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+        inLineBulletText("Index", driver.car.index,space)
+        inLineBulletText("Brand", ac.getCarBrand(driver.car.index) ,space)
+        inLineBulletText("ID", ac.getCarID(driver.car.index),space)
+        inLineBulletText("Skin",  ac.getCarSkinID(driver.car.index),space)
+        inLineBulletText("Extended Physics", upperBool(driver.car.extendedPhysics),space)
+        inLineBulletText("Physics Available", upperBool(driver.car.physicsAvailable),space)
+        inLineBulletText("DRS Present", upperBool(driver.car.drsPresent),space)
+        inLineBulletText("Kunos Car", upperBool(driver.car.isKunosCar),space)
+    end)
+
+    ui.treeNode("[DRIVER]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+        inLineBulletText("Driver ["..driver.index.."]", driver.name,space)
+        inLineBulletText("Team", ac.getDriverTeam(driver.car.index),space)
+        inLineBulletText("Number", ac.getDriverNumber(driver.car.index),space)
+        inLineBulletText("Race Position", driver.car.racePosition.."/"..sim.carsCount,space)
+        inLineBulletText("Track Position", driver.trackPosition.."/"..rc.carsOnTrackCount,space)
+        if not sim.isOnlineRace then
+            inLineBulletText("Lap", (driver.car.lapCount+1).."/"..ac.getSession(sim.currentSessionIndex).laps,space)
+        end
+        if sim.raceSessionType == ac.SessionType.Qualify then
+            inLineBulletText("Out Lap", upperBool(driver.outLap),space)
+            inLineBulletText("Flying Lap", upperBool(driver.flyingLap),space)
+            inLineBulletText("In Lap", upperBool(driver.inLap),space)
+        end
+        inLineBulletText("Last Lap Time", ac.lapTimeToString(driver.car.previousLapTimeMs),space)
+        inLineBulletText("Best Lap Time", ac.lapTimeToString(driver.car.bestLapTimeMs),space)
+    end)
+
     ui.treeNode("[WEATHER]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
         local totalWetness = ((sim.rainWetness/5) + (sim.rainWater*10))/2
         inLineBulletText("Weather Type", weatherTypeString(sim),space)
@@ -186,21 +206,11 @@ function debugMenu(sim,rc,error)
         inLineBulletText("Wet Track", upperBool(rc.wetTrack),space)
     end)
 
+
     ui.treeNode("[INPUTS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
         inLineBulletText("Gas", math.round(driver.car.gas,5),space)
         inLineBulletText("Brake", math.round(driver.car.brake,5),space)
         inLineBulletText("Clutch", math.round(driver.car.clutch,5),space)
         inLineBulletText("Steer",  math.round(driver.car.steer,5),space)
-    end)
-
-    ui.treeNode("[SCRIPT CONTROLLER INPUTS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
-        inLineBulletText("[0] Total Brake Balance", math.round(ac.getCarPhysics(driver.index).scriptControllerInputs[0],5),space)
-        inLineBulletText("[1] Brake Migration %", ac.getCarPhysics(driver.index).scriptControllerInputs[1],space)
-        inLineBulletText("[2] Exit Diff", ac.getCarPhysics(driver.index).scriptControllerInputs[2],space)
-        inLineBulletText("[3] Entry Diff", ac.getCarPhysics(driver.index).scriptControllerInputs[3],space)
-        inLineBulletText("[4] Mid Diff", ac.getCarPhysics(driver.index).scriptControllerInputs[4],space)
-        inLineBulletText("[5] Hispd Diff", ac.getCarPhysics(driver.index).scriptControllerInputs[5],space)
-        inLineBulletText("[6] Diff Mode", ac.getCarPhysics(driver.index).scriptControllerInputs[6],space)
-        inLineBulletText("[7]", ac.getCarPhysics(driver.index).scriptControllerInputs[7],space)
     end)
 end
