@@ -12,7 +12,6 @@ require 'src/init'
 require 'src/ui/debug'
 require 'src/ui/settings'
 require 'src/ui/notifications'
-require 'src/ui/leaderboard'
 local sim = ac.getSim()
 local audio = nil
 local rc = require 'src/rc'
