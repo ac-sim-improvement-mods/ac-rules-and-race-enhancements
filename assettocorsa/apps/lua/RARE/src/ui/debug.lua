@@ -134,7 +134,7 @@ function debugMenu(sim,rc,error)
     ui.nextColumn()
 
     ui.treeNode("["..sessionTypeString(sim).." SESSION]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
-        inLineBulletText(SCRIPT_SHORT_NAME.." Enabled", upperBool(ac.isWindowOpen("main")),space)
+        inLineBulletText(SCRIPT_SHORT_NAME.." Enabled", upperBool(ac.isWindowOpen('rare')),space)
         inLineBulletText("Race Started", upperBool(sim.isSessionStarted),space)
         inLineBulletText("Physics Allowed", upperBool(physics.allowed()),space)
         inLineBulletText("Physics Late", sim.physicsLate,space)
