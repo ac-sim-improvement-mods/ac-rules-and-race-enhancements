@@ -71,9 +71,9 @@ Driver = class('Driver', function(carIndex)
         aiThrottleLimitBase = aiThrottleLimitBase, aiThrottleLimit = aiThrottleLimit,
         pitlaneTime = pitlaneTime, pitlane = pitlane, pitstop = pitstop, pitstopTime = pitstopTime, pitted = pitted, pitstopCount = pitstopCount, tyreLaps = tyreLaps, lapPitted = lapPitted,
         drsBeepFx = drsBeepFx, drsFlapFx = drsFlapFx,
-        drsZoneNextId = drsZoneNextId, drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, drsZoneId = drsZoneId, 
+        drsZoneNextId = drsZoneNextId, drsDeployable = drsDeployable, drsZonePrevId = drsZonePrevId, drsZoneId = drsZoneId,
         drsActivationZone = drsActivationZone, drsAvailable = drsAvailable, drsCheck = drsCheck,
-        aiTyreSingleRandom = aiTyreSingleRandom, aiTyreAvgRandom = aiTyreAvgRandom, aiPitting = aiPitting, aiPitCall = aiPitCall, aiPrePitFuel = aiPrePitFuel, aiLevel = aiLevel, aiAggression = aiAggression, 
+        aiTyreSingleRandom = aiTyreSingleRandom, aiTyreAvgRandom = aiTyreAvgRandom, aiPitting = aiPitting, aiPitCall = aiPitCall, aiPrePitFuel = aiPrePitFuel, aiLevel = aiLevel, aiAggression = aiAggression,
         returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake,
         carAheadDelta = carAheadDelta, carAhead = carAhead, trackPosition = trackPosition,
         lapsCompleted = lapsCompleted, index = index,  name = name, car = car

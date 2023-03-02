@@ -37,7 +37,7 @@ rc.WeekendSessions = {
     Q2 = 4,
     Q3 = 5,
     Race = 6
-} 
+}
 
 ---Returns leaders completed lap count.
 ---@return lapCount number
@@ -180,7 +180,7 @@ local function update(sim,drivers)
     local drsEnabled,drsEnabledLap = isDrsEnabled(config,leaderCompletedLaps)
     local wetTrack = isTrackWet(config,sim)
     local session = nil
-    
+
     if not sim.isOnlineRace then
         session = ac.getSession(sim.currentSessionIndex)
     end

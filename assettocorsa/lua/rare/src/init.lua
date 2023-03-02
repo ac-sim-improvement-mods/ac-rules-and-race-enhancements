@@ -17,7 +17,7 @@ function initialize(sim)
     local configFile = "settings.ini"
     try(function ()
         RARECONFIG = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/RARE/"..configFile, {
-            RULES = { 
+            RULES = {
                 DRS_RULES = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
                 DRS_ACTIVATION_LAP = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 3,
                 DRS_GAP_DELTA = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1000,
@@ -38,7 +38,7 @@ function initialize(sim)
                 AI_RELATIVE_SCALING = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
                 AI_RELATIVE_LEVEL = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 100
             },
-            AUDIO = { 
+            AUDIO = {
                 MASTER = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 100,
                 DRS_BEEP = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 50,
                 DRS_FLAP = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 50
@@ -46,7 +46,7 @@ function initialize(sim)
             NOTIFICATIONS = {
                 X_POS = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or (sim.windowWidth / 2 - 360),
                 Y_POS = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 50,
-                SCALE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,   
+                SCALE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
                 DURATION = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 5
             },
             MISC = {
@@ -85,13 +85,13 @@ function initialize(sim)
         DRIVERS[i] = Driver(i)
 
         local driver = DRIVERS[i]
-        
+
         if driver.car.isAIControlled then
             local fuelcons = ac.INIConfig.carData(driver.index, 'fuel_cons.ini'):get('FUEL_EVAL', 'KM_PER_LITER', 0.0)
             local fuelload = 0
             local fuelPerLap =  (sim.trackLengthM / 1000) / (fuelcons - (fuelcons * 0.1))
 
-            if sim.raceSessionType == ac.SessionType.Race then 
+            if sim.raceSessionType == ac.SessionType.Race then
                 fuelload = ((ac.getSession(sim.currentSessionIndex).laps + 2) * fuelPerLap)
             elseif sim.raceSessionType == ac.SessionType.Qualify then
                 fuelload = 3.5 * fuelPerLap

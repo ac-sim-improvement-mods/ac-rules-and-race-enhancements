@@ -26,7 +26,7 @@ ai.QualifyLap = {
     OutLap = 0,
     FlyingLap = 1,
     InLap = 2
-} 
+}
 
 --- Returns whether one of a driver's tyre life is below
 --- the limit or not
@@ -61,7 +61,7 @@ local function strategyCall(driver,forced)
     local trigger = true
     local lapsTotal = ac.getSession(ac.getSim().currentSessionIndex).laps
     local lapsRemaining = lapsTotal - driver.lapsCompleted
-    
+
     if driver.car.splinePosition > 0.8 then
         trigger = false
     else
@@ -69,7 +69,7 @@ local function strategyCall(driver,forced)
             if not carAhead.aiPitCall and driver.carAheadDelta < 1 then
                 trigger = false
             end
-    
+
             if lapsRemaining <= 5 then
                 trigger = false
             end
@@ -114,7 +114,7 @@ function ai.pitNewTires(driver)
                 strategyCall(driver, false)
             end
         end
-    else            
+    else
         if driver.car.isInPit then
             pitstop(driver)
         else
@@ -188,20 +188,20 @@ function ai.qualifying(driver)
                 driver.inLap = true
             end
         elseif driver.outLap then
-            if driver.car.splinePosition <= 0.8 then 
+            if driver.car.splinePosition <= 0.8 then
                 if not driver.aiMoveAside and not driver.aiSpeedUp then
                     physics.setAITopSpeed(driver.index, 250)
                     physics.setAILevel(driver.index,0.8)
                     physics.setAIAggression(driver.index, 1)
                     physics.allowCarDRS(driver.index,true)
-    
+
                     if driver.carAheadDelta < 5 then
                         physics.setAITopSpeed(driver.index, 200)
                     end
                 elseif driver.aiSpeedUp then
                     moveOffRacingLine(driver)
                 end
-            else 
+            else
                 physics.setAITopSpeed(driver.index, 1e9)
                 physics.setAILevel(driver.index,1)
                 physics.setAIAggression(driver.index, 1)
@@ -209,9 +209,9 @@ function ai.qualifying(driver)
                 driver.outLap = false
                 driver.flyingLap = true
                 driver.inLapCount = driver.car.lapCount + 2
-            end 
+            end
         elseif driver.inLap then
-            if not driver.aiMoveAside and not driver.aiSpeedUp then 
+            if not driver.aiMoveAside and not driver.aiSpeedUp then
                 physics.setAITopSpeed(driver.index, 200)
                 physics.setAILevel(driver.index,0.65)
                 physics.setAIAggression(driver.index, 0)
@@ -232,7 +232,7 @@ function ai.alternateAttack(driver)
     local upcomingTurn = ac.getTrackUpcomingTurn(driver.index)
     local upcomingTurnDistance = upcomingTurn.x
     local upcomingTurnAngle = upcomingTurn.y
-    
+
     -- if upcomingTurnDistance >= 250 then
     --     maxAggression = maxAggression + (maxAggression*0.25)
     -- else

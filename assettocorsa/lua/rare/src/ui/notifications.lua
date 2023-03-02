@@ -94,14 +94,14 @@ local function drawNotification()
 
     drawRaceControl(NOTIFICATION_TEXT)
   end
-  
+
 local fadingTimer = ui.FadingElement(drawNotification,false)
-  
+
 function popup.notification(text,timer)
       if not timer then
           timer = RARECONFIG.data.NOTIFICATIONS.DURATION
       end
-  
+
       NOTIFICATION_TIMER = timer
       NOTIFICATION_TEXT = text
 end

@@ -37,7 +37,7 @@ end
 ---@param sim ac.StateSim
 ---@return string
 function weatherTypeString(sim)
-    local weatherTypes = {  
+    local weatherTypes = {
         "Light Thunderstorm", ---Value: 0.
         "Thunderstorm", ---Value: 1.
         "Heavy Thunderstorm", ---Value: 2.

@@ -90,7 +90,7 @@ function debugMenu(sim,rc,error)
     end
 
     ui.treeNode("[TYRES]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
-        local avg_tyre_wear = ((driver.car.wheels[0].tyreWear + 
+        local avg_tyre_wear = ((driver.car.wheels[0].tyreWear +
         driver.car.wheels[1].tyreWear +
         driver.car.wheels[2].tyreWear +
         driver.car.wheels[3].tyreWear) / 4)

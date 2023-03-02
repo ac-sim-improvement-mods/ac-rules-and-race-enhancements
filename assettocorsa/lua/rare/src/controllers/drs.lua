@@ -40,13 +40,13 @@ DrsZones = class('DRS_Points', function()
 
         index = index + 1
     end
-    
+
     local count = index
-    
+
     return {detectionZones = detectionZones, startZones = startZones, endZones = endZones, count = count}
 end, class.NoInitialize)
 
---- Checks if driver is before the detection line, not in the pits, 
+--- Checks if driver is before the detection line, not in the pits,
 --- not in a drs zone, and within 1 second of the car ahead on track
 ---@param driver Driver
 local function setDrsAvailable(driver,drsEnabled)
@@ -56,7 +56,7 @@ local function setDrsAvailable(driver,drsEnabled)
 
         if crossedDetectionLine(driver) == false then
             driver.drsCheck = inDrsRange
-            if driver.drsAvailable and inDrsZone and driver.car.drsActive then 
+            if driver.drsAvailable and inDrsZone and driver.car.drsActive then
                 driver.drsDeployable = true
                 driver.drsAvailable = true
             elseif driver.drsAvailable and not inDrsZone and driver.drsDeployable then
@@ -72,7 +72,7 @@ local function setDrsAvailable(driver,drsEnabled)
     end
 end
 
---- Converts session type number to the corresponding session type string 
+--- Converts session type number to the corresponding session type string
 ---@param driver Driver
 local function setDriverDrsZones(driver)
     local detectionZones = DRS_ZONES.detectionZones
@@ -115,7 +115,7 @@ local function setDriverDRS(sim,driver,allowed)
     if driver.car.isAIControlled then
         if not allowed then
             physics.setCarDRS(driver.index, false)
-        elseif allowed and 
+        elseif allowed and
             driver.car.speedKmh > 100 and getEndLineDistanceM(driver) > 175 and not driver.aiPitCall then
             physics.setCarDRS(driver.index, true)
         end
@@ -185,8 +185,8 @@ function getEndLineDistanceM(driver)
     local endLineDistanceM = getZoneLineDistanceM(DRS_ZONES.endZones,driver,driver.drsZoneId)
     local startLineDistanceM = getZoneLineDistanceM(DRS_ZONES.startZones,driver,driver.drsZoneNextId)
 
-    return startLineDistanceM < endLineDistanceM and 
-        getZoneLineDistanceM(DRS_ZONES.endZones,driver,driver.drsZoneNextId) or 
+    return startLineDistanceM < endLineDistanceM and
+        getZoneLineDistanceM(DRS_ZONES.endZones,driver,driver.drsZoneNextId) or
         getZoneLineDistanceM(DRS_ZONES.endZones,driver,driver.drsZoneId)
 end
 
