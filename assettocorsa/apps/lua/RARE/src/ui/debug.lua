@@ -11,20 +11,19 @@ function debugMenu(sim,rc,error)
         return
     end
 
-    ui.columns(1,true,"col1")
+    ui.columns(2,true,"infocol")
 
-    ui.treeNode("[INFO]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
-        inLineBulletText("CSP Version", ac.getPatchVersion(),space)
-        inLineBulletText("CSP Version Code", ac.getPatchVersionCode(),space)
-        inLineBulletText(SCRIPT_SHORT_NAME.." Version", SCRIPT_VERSION,space)
-        inLineBulletText(SCRIPT_SHORT_NAME.." Version Code", SCRIPT_VERSION_CODE,space)
-        inLineBulletText(SCRIPT_SHORT_NAME.." Release Date", SCRIPT_BUILD_DATE,space)
-        inLineBulletText("Current Date", os.date("%Y-%m-%d"),space)
-    end)
+    inLineBulletText("CSP Version", ac.getPatchVersion(),space)
+    inLineBulletText("CSP Version Code", ac.getPatchVersionCode(),space)
+    inLineBulletText("Current Date", os.date("%Y-%m-%d"),space)
+    ui.nextColumn()
+    inLineBulletText(SCRIPT_SHORT_NAME.." Version", SCRIPT_VERSION,space)
+    inLineBulletText(SCRIPT_SHORT_NAME.." Version Code", SCRIPT_VERSION_CODE,space)
+    inLineBulletText(SCRIPT_SHORT_NAME.." Release Date", SCRIPT_BUILD_DATE,space)
+    ui.newLine()
+    ui.nextColumn()
 
-
-    ui.columns(2,true,"col2")
-
+    ui.columns(2,true,"debugcol2")
 
     ui.treeNode("[PIT STOPS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
         inLineBulletText("In Pit Lane", upperBool(driver.car.isInPitlane),space)
@@ -132,17 +131,6 @@ function debugMenu(sim,rc,error)
         inLineBulletText("Gear Box Damage", driver.car.gearboxDamage,space)
     end)
 
-    ui.treeNode("[SCRIPT CONTROLLER INPUTS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
-        inLineBulletText("[0] Total Brake Balance", math.round(ac.getCarPhysics(driver.index).scriptControllerInputs[0],5),space)
-        inLineBulletText("[1] Brake Migration %", ac.getCarPhysics(driver.index).scriptControllerInputs[1],space)
-        inLineBulletText("[2] Exit Diff", ac.getCarPhysics(driver.index).scriptControllerInputs[2],space)
-        inLineBulletText("[3] Entry Diff", ac.getCarPhysics(driver.index).scriptControllerInputs[3],space)
-        inLineBulletText("[4] Mid Diff", ac.getCarPhysics(driver.index).scriptControllerInputs[4],space)
-        inLineBulletText("[5] Hispd Diff", ac.getCarPhysics(driver.index).scriptControllerInputs[5],space)
-        inLineBulletText("[6] Diff Mode", ac.getCarPhysics(driver.index).scriptControllerInputs[6],space)
-        inLineBulletText("[7]", ac.getCarPhysics(driver.index).scriptControllerInputs[7],space)
-    end)
-
     ui.nextColumn()
 
     ui.treeNode("["..sessionTypeString(sim).." SESSION]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
@@ -212,5 +200,16 @@ function debugMenu(sim,rc,error)
         inLineBulletText("Brake", math.round(driver.car.brake,5),space)
         inLineBulletText("Clutch", math.round(driver.car.clutch,5),space)
         inLineBulletText("Steer",  math.round(driver.car.steer,5),space)
+    end)
+
+    ui.treeNode("[SCRIPT CONTROLLER INPUTS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function ()
+        inLineBulletText("[0] Total Brake Balance", math.round(ac.getCarPhysics(driver.index).scriptControllerInputs[0],5),space)
+        inLineBulletText("[1] Brake Migration %", ac.getCarPhysics(driver.index).scriptControllerInputs[1],space)
+        inLineBulletText("[2] Exit Diff", ac.getCarPhysics(driver.index).scriptControllerInputs[2],space)
+        inLineBulletText("[3] Entry Diff", ac.getCarPhysics(driver.index).scriptControllerInputs[3],space)
+        inLineBulletText("[4] Mid Diff", ac.getCarPhysics(driver.index).scriptControllerInputs[4],space)
+        inLineBulletText("[5] Hispd Diff", ac.getCarPhysics(driver.index).scriptControllerInputs[5],space)
+        inLineBulletText("[6] Diff Mode", ac.getCarPhysics(driver.index).scriptControllerInputs[6],space)
+        inLineBulletText("[7]", ac.getCarPhysics(driver.index).scriptControllerInputs[7],space)
     end)
 end
