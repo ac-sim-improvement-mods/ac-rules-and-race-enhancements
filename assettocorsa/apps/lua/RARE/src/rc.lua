@@ -3,7 +3,7 @@ local connect = require 'rare/connection'
 local drs = require 'src/controllers/drs'
 local vsc = require 'src/controllers/vsc'
 local ai = require 'src/controllers/ai'
-local popup = require 'src/ui/notifications'
+local notifications = require 'src/ui/notifications'
 
 local rc = {}
 
@@ -134,15 +134,15 @@ local function raceSession(lastUpdate,racecontrol,config,driver)
     -- notifications handler
     if lastUpdate then
         if not lastUpdate.drsEnabled and racecontrol.drsEnabled then
-            popup.notification("DRS ENABLED")
+            notifications.popup("DRS ENABLED")
         end
 
         if not lastUpdate.wetTrack and racecontrol.wetTrack then
-            popup.notification("DRS DISABLED - WET TRACK")
+            notifications.popup("DRS DISABLED - WET TRACK")
         end
 
         if lastUpdate.wetTrack and not racecontrol.wetTrack then
-            popup.notification("DRS ENABLED IN 2 LAPS")
+            notifications.popup("DRS ENABLED IN 2 LAPS")
         end
     end
 

@@ -1,4 +1,4 @@
-local popup = {}
+local notifications = {}
 
 NOTIFICATION_TIMER = 0
 NOTIFICATION_TEXT = ''
@@ -97,7 +97,7 @@ local function drawNotification()
 
 local fadingTimer = ui.FadingElement(drawNotification,false)
 
-function popup.notification(text,timer)
+function notifications.popup(text,timer)
       if not timer then
           timer = RARECONFIG.data.NOTIFICATIONS.DURATION
       end
@@ -113,4 +113,4 @@ function notificationHandler(dt)
     fadingTimer(timer > 0 and timer < 60)
 end
 
-return popup
+return notifications
