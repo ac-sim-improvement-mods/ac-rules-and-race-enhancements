@@ -1,21 +1,21 @@
 SCRIPT_NAME = "Rules and Race Enhancements"
 SCRIPT_SHORT_NAME = "RARE"
-SCRIPT_VERSION = "1.0.6.3"
-SCRIPT_VERSION_CODE = 10630
+SCRIPT_VERSION = "1.0.6.2"
+SCRIPT_VERSION_CODE = 10624
 SCRIPT_BUILD_DATE = "2022-11-28"
 CSP_MIN_VERSION_CODE = 2144
 CSP_MIN_VERSION = "1.79"
 
-require 'rare/src/ac_ext'
-require 'rare/src/utils'
-require 'rare/src/init'
-require 'rare/src/ui/debug_menu'
-require 'rare/src/ui/settings_menu'
-require 'rare/src/ui/notifications'
-require 'rare/src/ui/leaderboard'
+require 'src/ac_ext'
+require 'src/utils'
+require 'src/init'
+require 'src/ui/debug_menu'
+require 'src/ui/settings_menu'
+require 'src/ui/notifications'
+require 'src/ui/leaderboard'
 local sim = ac.getSim()
 local audio = nil
-local rc = require 'rare/src/race_control'
+local rc = require 'src/race_control'
 local racecontrol = nil
 
 FIRST_LAUNCH = true
@@ -49,10 +49,10 @@ function script.update(dt)
     sim = ac.getSim()
     restartCheck(sim)
 
-    -- if sim.isOnlineRace then
-    --     ac.unloadApp()
-    --     return
-    -- end
+    if sim.isOnlineRace then
+        ac.unloadApp()
+        return
+    end
 
     if sim.isInMainMenu then
         ac.setWindowOpen('settings_setup', true)
@@ -72,7 +72,7 @@ function script.update(dt)
     else
         if sim.isInMainMenu or sim.isSessionStarted then
             INITIALIZED = initialize(sim)
-            audio = require 'rare/src/audio'
+            audio = require 'src/audio'
         end
     end
 end

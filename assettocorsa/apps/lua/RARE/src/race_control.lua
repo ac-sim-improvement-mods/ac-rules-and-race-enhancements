@@ -1,9 +1,9 @@
 ---@diagnostic disable: return-type-mismatch
 local connect = require 'rare/connection'
-local drs = require 'rare/src/controllers/drs'
-local vsc = require 'rare/src/controllers/vsc'
-local ai = require 'rare/src/controllers/ai'
-local popup = require 'rare/src/ui/notifications'
+local drs = require 'src/controllers/drs'
+local vsc = require 'src/controllers/vsc'
+local ai = require 'src/controllers/ai'
+local popup = require 'src/ui/notifications'
 
 local rc = {}
 
