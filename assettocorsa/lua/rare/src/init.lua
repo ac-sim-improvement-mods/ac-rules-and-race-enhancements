@@ -1,5 +1,5 @@
 local connect = require 'rare/connection'
-require 'src/driver'
+require 'rare/src/driver'
 
 --- Initialize RARE and returns initialized state
 --- @return boolean

@@ -270,21 +270,21 @@ function ai.alternateAttack(driver)
             driver.aiThrottleLimit = AI_THROTTLE_LIMIT
         end
     end
-    if upcomingTurnDistance < 100 and  upcomingTurnDistance < 0 and upcomingTurnAngle > 30 then
+    if upcomingTurnDistance < 200 and  upcomingTurnDistance < 0 and upcomingTurnAngle > 30 then
         if delta < 1 then
-            physics.setAILevel(driver.index, math.clamp(driver.aiLevel,0,0.9)+0.1)
+            physics.setAIBrakeHint(driver.index, 0.8)
         else
             if not override then
-                physics.setAILevel(driver.index, driver.aiLevel)
+                physics.setAIBrakeHint(driver.index, 0.7)
             else
-                physics.setAILevel(driver.index, AI_LEVEL)
+                physics.setAIBrakeHint(driver.index, AI_LEVEL)
             end
         end
     else
         if delta < 1 then
-            physics.setAILevel(driver.index, 1)
+            physics.setAIBrakeHint(driver.index, 0.8)
         else
-            physics.setAILevel(driver.index, 0.9)
+            physics.setAIBrakeHint(driver.index, 0.7)
         end
     end
 

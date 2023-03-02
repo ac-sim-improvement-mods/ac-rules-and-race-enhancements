@@ -1,4 +1,4 @@
-local popup = require 'src/ui/notifications'
+local popup = require 'rare/src/ui/notifications'
 
 SPLINE_OFFSET = 0
 
