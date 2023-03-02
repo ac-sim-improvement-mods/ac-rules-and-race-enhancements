@@ -133,32 +133,6 @@ ac.DrivableCamera = {
   Dash = 4, ---Value: 4.
 }
 
----@alias ac.LightsDebugMode
----| `ac.LightsDebugMode.Off` @No special options.
----| `ac.LightsDebugMode.Outline` @Value: 0x1.
----| `ac.LightsDebugMode.BoundingBox` @Value: 0x2.
----| `ac.LightsDebugMode.BoundingSphere` @Value: 0x4.
----| `ac.LightsDebugMode.Text` @Value: 0x8.
-ac.LightsDebugMode = {
-  Off = 0x0, ---No special options.
-  Outline = 0x1, ---Value: 0x1.
-  BoundingBox = 0x2, ---Value: 0x2.
-  BoundingSphere = 0x4, ---Value: 0x4.
-  Text = 0x8, ---Value: 0x8.
-}
-
----@alias ac.VAODebugMode
----| `ac.VAODebugMode.Active` @Value: 1.
----| `ac.VAODebugMode.Inactive` @Value: 3.
----| `ac.VAODebugMode.VAOOnly` @Value: 4.
----| `ac.VAODebugMode.ShowNormals` @Value: 5.
-ac.VAODebugMode = {
-  Active = 1, ---Value: 1.
-  Inactive = 3, ---Value: 3.
-  VAOOnly = 4, ---Value: 4.
-  ShowNormals = 5, ---Value: 5.
-}
-
 ---@alias ac.Wheel
 ---| `ac.Wheel.FrontLeft` @Value: 1.
 ---| `ac.Wheel.FrontRight` @Value: 2.
@@ -1635,7 +1609,7 @@ function ClassPool.isInstanceOf(obj) end
 ---@return boolean @True if you’ve passed ClassBase here.
 function ClassPool:isSubclassOf(classDefinition) end
 
----Creates a new class with pooling. Pretty much the same as calling `class(class.Pool, ...)` (all classes with `class.Pool` are 
+---Creates a new class with pooling. Pretty much the same as calling `class(class.Pool, ...)` (all classes with `class.Pool` are
 ---inheriting from `ClassPool` anyway).
 ---@return ClassDefinition @New class definition
 function ClassPool:subclass(...) end
@@ -1662,7 +1636,7 @@ local _classBase = {}
 ---@overload fun(): boolean
 function _classBase:isInstanceOf(classDefinition) end
 
----Class method. Checks if class itself is a child class of a different class (or a child of a child, etc). 
+---Class method. Checks if class itself is a child class of a different class (or a child of a child, etc).
 ---Can be used as `YourClass:isInstanceOf(YourOtherClass)`.
 ---@param classDefinition ClassDefinition @Class created by `class()` function.
 ---@return boolean @True if this class is a child of another class (or a child of a child, etc).
@@ -1752,7 +1726,7 @@ function _classPool:recycled() end
 ---   recycled and now represents something else entirely), so please be careful.
 ---
 ---   Note 1: Method `class.recycle()` can be used with nils or non-recycle, no need to have extra checks before calling it.
---- 
+---
 ---   Note 2: Instances of child classes won’t end up in parent class pool. For such arrangements, consider adding pooling
 ---           flag to all of child classes where appropriate.
 ---
@@ -1761,9 +1735,9 @@ function _classPool:recycled() end
 ---
 ---5. To check type, `YourClass.isInstanceOf(item)` can also be used. Notice that it’s a static method, no “:” here.
 ---
----All classes are considered children classes of `ClassBase`, that one is mostly for EmmyLua to pick up methods like 
+---All classes are considered children classes of `ClassBase`, that one is mostly for EmmyLua to pick up methods like
 ---`YourClass.isInstanceOf(object)`. If you’re creating your own class and want to use such methods, just add `: ClassBase`
----to its EmmyLua annotation. And objects with pooling are children of `ClassPool` which is a child of `ClassBase`. Note: 
+---to its EmmyLua annotation. And objects with pooling are children of `ClassPool` which is a child of `ClassBase`. Note:
 ---to speed things up, those classes aren’t fully real, but you can access them and their methods and even call things like
 ---`ClassBase:include()`. Please read documentation for those functions before using them though, just to check.
 ---@param name string @Class name.
@@ -2604,6 +2578,10 @@ function ac.getGapBetweenCars(carMainIndex, carComparingToIndex) end
 ---@return io.FileAttributes
 function io.getAttributes(filename) end
 
+---Gets full filename of the main AC executable (“…/acs.exe” for most cases).
+---@return string?
+function io.getMainExecutable() end
+
 ---Reads file content into a string, if such file exists, otherwise returns fallback data or `nil`. Asyncronous version.
 ---@param filename string
 ---@param callback fun(err: string, data: string)
@@ -3093,6 +3071,8 @@ function web.encryptKey(key) end
 ---@field isDriftBonusOn boolean @Drift bonus flag (calculated in any racing mode).
 ---@field isDriftValid boolean @Is drift valid (calculated in any racing mode).
 ---@field isRaceFinished boolean @Car has finished the race.
+---@field isDriverVisible boolean @Driver can be hidden by apps or Lua scripts too.
+---@field isDriverDoorOpen boolean
 ---@field hazardLights boolean
 ---@field turningLeftLights boolean
 ---@field turningRightLights boolean
@@ -3168,6 +3148,8 @@ function web.encryptKey(key) end
 ---@field currentEngineBrakeSetting integer
 ---@field fuelPerLap number @Uses original AC fuel estimation. Zero until value is available. Physics-only (see `ac.CarState.physicsAvailable`)
 ---@field differentialPreload number @Physics-only (see `ac.CarState.physicsAvailable`)
+---@field differentialCoast number @Physics-only (see `ac.CarState.physicsAvailable`)
+---@field differentialPower number @Physics-only (see `ac.CarState.physicsAvailable`)
 ---@field awdFrontShare number @Physics-only (see `ac.CarState.physicsAvailable`)
 ---@field awdCenterLock number @Physics-only (see `ac.CarState.physicsAvailable`)
 ---@field drivetrainTorque number @Physics-only (see `ac.CarState.physicsAvailable`)
@@ -3596,8 +3578,8 @@ function vec2.intersect(p1, p2, p3, p4) end
 ---…
 ---someVec:set(vec1):add(vec2):normalize():scale(10)
 ---```
----@param x number? 
----@param y number? 
+---@param x number?
+---@param y number?
 ---@return vec2
 function vec2(x, y) end
 
@@ -3794,9 +3776,9 @@ function vec3.tmp() end
 ---…
 ---someVec:set(vec1):add(vec2):normalize():scale(10)
 ---```
----@param x number? 
----@param y number? 
----@param z number? 
+---@param x number?
+---@param y number?
+---@param z number?
 ---@return vec3
 function vec3(x, y, z) end
 
@@ -4023,10 +4005,10 @@ function vec4.tmp() end
 ---…
 ---someVec:set(vec1):add(vec2):normalize():scale(10)
 ---```
----@param x number? 
----@param y number? 
----@param z number? 
----@param w number? 
+---@param x number?
+---@param y number?
+---@param z number?
+---@param w number?
 ---@return vec4
 function vec4(x, y, z, w) end
 
@@ -4255,9 +4237,9 @@ rgb.colors = {
 }
 
 ---Three-channel color. All operators are overloaded. White is usually `rgb=1,1,1`.
----@param r number? 
----@param g number? 
----@param b number? 
+---@param r number?
+---@param g number?
+---@param b number?
 ---@return rgb
 function rgb(r, g, b) end
 
@@ -4414,9 +4396,9 @@ function hsv.ishsv(p) end
 function hsv.tmp() end
 
 ---HSV color (hue, saturation, value). Equality operator is overloaded.
----@param h number? 
----@param s number? 
----@param v number? 
+---@param h number?
+---@param s number?
+---@param v number?
 ---@return hsv
 function hsv(h, s, v) end
 
@@ -4513,16 +4495,16 @@ rgbm.colors = {
   aqua = rgbm(0, 1, 1, 1),
 }
 
----Four-channel color. Fourth value, `mult`, can be used for alpha, for brightness, anything like that. All operators are also 
+---Four-channel color. Fourth value, `mult`, can be used for alpha, for brightness, anything like that. All operators are also
 ---overloaded. White is usually `rgb=1,1,1`.
----@param r number? 
----@param g number? 
----@param b number? 
----@param mult number? 
+---@param r number?
+---@param g number?
+---@param b number?
+---@param mult number?
 ---@return rgbm
 function rgbm(r, g, b, mult) end
 
----Four-channel color. Fourth value, `mult`, can be used for alpha, for brightness, anything like that. All operators are also 
+---Four-channel color. Fourth value, `mult`, can be used for alpha, for brightness, anything like that. All operators are also
 ---overloaded. White is usually `rgb=1,1,1`.
 ---@class rgbm
 ---@field r number
@@ -4688,10 +4670,10 @@ function quat.between(u, v) end
 function quat.tmp() end
 
 ---Quaternion. All operators are overloaded.
----@param x number? 
----@param y number? 
----@param z number? 
----@param w number? 
+---@param x number?
+---@param y number?
+---@param z number?
+---@param w number?
 ---@return quat
 function quat(x, y, z, w) end
 
@@ -4802,7 +4784,7 @@ function smoothing.setDT(dt) end
 ---something else.
 ---
 ---It doesn’t even use lag parameter, but instead some strange “smooth” thing…
----@param initialValue number|vec2|vec3|vec4 
+---@param initialValue number|vec2|vec3|vec4
 ---@param smoothingIntensity number? "Default value: 100."
 ---@return smoothing
 function smoothing(initialValue, smoothingIntensity) end
@@ -4834,9 +4816,9 @@ function smoothing:updateIfNew(newValue) end
 ---@return mat3x3
 function mat3x3.identity() end
 
----@param row1 vec3 
----@param row2 vec3 
----@param row3 vec3 
+---@param row1 vec3
+---@param row2 vec3
+---@param row3 vec3
 ---@return mat3x3
 function mat3x3(row1, row2, row3) end
 
@@ -4873,10 +4855,10 @@ function mat4x4.rotation(angle, axis) end
 ---@return mat4x4
 function mat4x4.scaling(scale) end
 
----@param row1 vec4 
----@param row2 vec4 
----@param row3 vec4 
----@param row4 vec4 
+---@param row1 vec4
+---@param row2 vec4
+---@param row3 vec4
+---@param row4 vec4
 ---@return mat4x4
 function mat4x4(row1, row2, row3, row4) end
 
@@ -5648,8 +5630,8 @@ function clearInterval(cancellationID) end
 
 ---A wrapper for data parsed from an INI files, supports different INI formats. Parsing is done on
 ---CSP side, rest is on CSP side. Use `:get()` and `:set()` methods to operate values.
----@param format ac.INIFormat 
----@param sections table 
+---@param format ac.INIFormat
+---@param sections table
 ---@return ac.INIConfig
 function ac.INIConfig(format, sections) end
 
@@ -8062,6 +8044,40 @@ ac.IncludeType = {
   Track = 2, ---Value: 2.
 }
 
+---@alias ac.PhysicsDebugLines
+---| `ac.PhysicsDebugLines.None` @Value: 0.
+---| `ac.PhysicsDebugLines.Tyres` @Value: 1.
+ac.PhysicsDebugLines = {
+  None = 0, ---Value: 0.
+  Tyres = 1, ---Value: 1.
+}
+
+---@alias ac.LightsDebugMode
+---| `ac.LightsDebugMode.None` @No special options.
+---| `ac.LightsDebugMode.Outline` @Value: 0x1.
+---| `ac.LightsDebugMode.BoundingBox` @Value: 0x2.
+---| `ac.LightsDebugMode.BoundingSphere` @Value: 0x4.
+---| `ac.LightsDebugMode.Text` @Value: 0x8.
+ac.LightsDebugMode = {
+  None = 0x0, ---No special options.
+  Outline = 0x1, ---Value: 0x1.
+  BoundingBox = 0x2, ---Value: 0x2.
+  BoundingSphere = 0x4, ---Value: 0x4.
+  Text = 0x8, ---Value: 0x8.
+}
+
+---@alias ac.VAODebugMode
+---| `ac.VAODebugMode.Active` @Value: 1.
+---| `ac.VAODebugMode.Inactive` @Value: 3.
+---| `ac.VAODebugMode.VAOOnly` @Value: 4.
+---| `ac.VAODebugMode.ShowNormals` @Value: 5.
+ac.VAODebugMode = {
+  Active = 1, ---Value: 1.
+  Inactive = 3, ---Value: 3.
+  VAOOnly = 4, ---Value: 4.
+  ShowNormals = 5, ---Value: 5.
+}
+
 ---@alias ac.TurningLights
 ---| `ac.TurningLights.None` @Value: 0.
 ---| `ac.TurningLights.Left` @Value: 1.
@@ -9712,6 +9728,26 @@ function physics.setAISplineOffset(carIndex, offset) end
 ---@param value number @Set to 1 for normal grip.
 function physics.setExtraAIGrip(carIndex, value) end
 
+---Controls if AI goes to pits or not.
+---@param carIndex integer @0-based car index.
+---@param value boolean? @Default value: `true`.
+function physics.setAIPitStopRequest(carIndex, value) end
+
+---Sets currently selected tyres, resetting damage as well.
+---@param carIndex integer @0-based car index.
+---@param index integer @0-based tyres index.
+function physics.setAITyres(carIndex, index) end
+
+---Sets MGUK delivery mode. Note: for controling user car consider using `ac.setMGUKDelivery()` instead, it’ll work better with HUD and everything.
+---@param carIndex integer @0-based car index.
+---@param level integer @0-based index.
+function physics.setMGUKDelivery(carIndex, level) end
+
+---Sets MGUK recovery mode. Note: for controling user car consider using `ac.setMGUKDelivery()` instead, it’ll work better with HUD and everything.
+---@param carIndex integer @0-based car index.
+---@param level integer @Value from 0 to 10.
+function physics.setMGUKRecovery(carIndex, level) end
+
 ---Activates or deactivates gentle stopping.
 ---@param carIndex integer @0-based car index.
 ---@param stop boolean? @Default value: `true`.
@@ -9793,6 +9829,12 @@ function physics.setTyresBlankets(carIndex, wheels, blanketActive) end
 ---@param wheels ac.Wheel @Wheels to affect.
 ---@param temperature number @New tyres temperature in °C.
 function physics.setTyresTemperature(carIndex, wheels, temperature) end
+
+---Sets driven distance used for wear computation.
+---@param carIndex integer @0-based car index.
+---@param wheels ac.Wheel @Wheels to affect.
+---@param virtualKm number @Driven distance.
+function physics.setTyresVirtualKM(carIndex, wheels, virtualKm) end
 
 ---Sets damage levels of a given car, invalidates lap.
 ---@param carIndex integer @0-based car index.
@@ -9994,6 +10036,12 @@ function ac.pauseFilesWatching(pause) end
 ---@param mode ac.LightsDebugMode
 ---@param distance number? @Default value: 100.
 function ac.debugLights(filter, count, mode, distance) end
+
+---Enables and disables physics debugging outlines. Pass `1` as `carsMask` to show lines for the first car only, `0` to show lines for all cars
+---or set specific bits to 1 for certain cars.
+---@param mask ac.PhysicsDebugLines
+---@param carsMask integer? @Default value: 1.
+function ac.setPhysicsDebugLines(mask, carsMask) end
 
 ---@param appName string
 ---@return boolean
@@ -11599,7 +11647,7 @@ function _ac_SceneReference:setMaterialTexture(texture, value) end
 function _ac_SceneReference:ensureUniqueMaterials() end
 
 ---Stores current transformation to be restored when `ac.SceneReference` is disposed (for example, when script reloads). Might be a good
----idea to use it first on any nodes you’re going to move, so all of them would get back when script is reloaded (assuming their original 
+---idea to use it first on any nodes you’re going to move, so all of them would get back when script is reloaded (assuming their original
 ---transformation is important, like it is with needles, for example).
 ---@return ac.SceneReference @Returns self for easy chaining.
 function _ac_SceneReference:storeCurrentTransformation() end
@@ -12025,7 +12073,7 @@ function _ac_SceneReference:at(index, outSceneRef) end
 
 ---Returns number of nodes and meshes matching between this and another scene reference. Could be used to quickly find out if a certain element is in a set.
 ---@param s ac.SceneReference
----@param other nil|ac.SceneReference|ac.SceneReference[] @Can be a single scene reference or a table with several of them. 
+---@param other nil|ac.SceneReference|ac.SceneReference[] @Can be a single scene reference or a table with several of them.
 ---@return integer
 function _ac_SceneReference:countMatches(other) end
 
@@ -12037,13 +12085,13 @@ function _ac_SceneReference:makeUnionWith(other) end
 
 ---Creates a new scene reference containing only the elements found in both of original sets.
 ---@param s ac.SceneReference
----@param other nil|ac.SceneReference|ac.SceneReference[] @Can be a single scene reference or a table with several of them. 
+---@param other nil|ac.SceneReference|ac.SceneReference[] @Can be a single scene reference or a table with several of them.
 ---@return ac.SceneReference
 function _ac_SceneReference:makeIntersectionWith(other) end
 
 ---Creates a new scene reference containing only the elements found in first set, but not in second set.
 ---@param s ac.SceneReference
----@param other nil|ac.SceneReference|ac.SceneReference[] @Can be a single scene reference or a table with several of them. 
+---@param other nil|ac.SceneReference|ac.SceneReference[] @Can be a single scene reference or a table with several of them.
 ---@return ac.SceneReference
 function _ac_SceneReference:makeSubtractionWith(other) end
 
@@ -12078,7 +12126,7 @@ function _ac_SceneReference:applyShaderReplacements(data, includeType) end
 ---Projects texture onto a mesh or few meshes, draws result. Use in when updating a dynamic texture, display or an extra canvas.
 ---Position, and directions are set in world space.
 ---
----Note: this is not a regular IMGUI drawing call, so most functions, such as shading offsets, transformations or clipping, would 
+---Note: this is not a regular IMGUI drawing call, so most functions, such as shading offsets, transformations or clipping, would
 ---not work here.
 ---
 ---Tip 1: if you want to draw a new skin for a car and apply AO to it, one way might be to draw it in a canvas and then draw
@@ -12104,7 +12152,7 @@ function _ac_SceneReference:projectTexture(params) end
 ---while drawing will be skipped until shader is ready.
 ---
 ---You can bind up to 32 textures and pass any number/boolean/vector/color/matrix values to the shader, which makes
----it a very effective tool for any custom drawing you might need to make.      
+---it a very effective tool for any custom drawing you might need to make.
 ---
 ---Example:
 ---```
@@ -12126,7 +12174,7 @@ function _ac_SceneReference:projectTexture(params) end
 ---    gFlag = math.random() > 0.5
 ---  },
 ---  shader = [[
----    float4 main(PS_IN pin) { 
+---    float4 main(PS_IN pin) {
 ---      if (dot(abs(pin.Tex * 2 - 1), 1) > 0.5) return 0;
 ---      float4 in1 = txInput1.Sample(samAnisotropic, pin.Tex);
 ---      float4 in2 = txInput2.Sample(samAnisotropic, pin.Tex + gValueVec);
@@ -12142,7 +12190,7 @@ function _ac_SceneReference:projectTexture(params) end
 ---end up having thousands of no more used shaders). If you don’t have a working texture at the time of first creating
 ---that table, use `false` for missing texture value.
 ---
----Note: if shader would fail to compile, a C++ exception will be triggered, terminating script completely (to prevent AC 
+---Note: if shader would fail to compile, a C++ exception will be triggered, terminating script completely (to prevent AC
 ---from crashing, C++ exceptions halt Lua script that triggered them until script gets a full reload).
 ---@return boolean @Returns `false` if shader is not yet ready and no drawing occured (happens only if `async` is set to `true`).
 ---@param params {pos: vec3, look: vec3, up: vec3, size: vec2, withDepth: boolean, expanded: boolean, uvOffset: vec2, blendMode: render.BlendMode, async: boolean, cacheKey: number, defines: table, textures: table, values: table, shader: string}|"{\n  pos = vec3(),\n  look = vec3(),\n  up = vec3(0, 1, 0),\n  size = vec2(),\n  withDepth = true,\n  expanded = true,\n  blendMode = render.BlendMode.BlendAccurate,\n  textures = {\n    \n  },\n  values = {\n    \n  },\n  shader = [[float4 main(PS_IN pin) {\n    return float4(pin.Tex.x, pin.Tex.y, 0, 1);\n  }]]\n}" "Table with properties:\n- `pos` (`vec3`): Position from which texture will be projected, in world space.\n- `look` (`vec3`): Direction with which texture will be projected, in world space.\n- `up` (`vec3`): Optional vector directed up, to specify texture rotation.\n- `size` (`vec2`): Size, horizontal and vertical. Default value: `vec2(1, 1)`.\n- `withDepth` (`boolean`): If depth is used, nearest to projection position triagles will have higher priority (in case of overlapping UV), slightly slower, but produces better results (especially with `expanded` set to `true`).\n- `expanded` (`boolean`): Draws each mesh four additional times with small offsets to fill partically covered pixels. More expensive (but less expensive comparing to fixing issue with those half covered pixels with additional draw calls via Lua).\n- `uvOffset` (`vec2`): Optional UV offset. By default CSP estimates an UV offset such that most triagles would be shown. If mapping is way off though, it might need tweaking (or even repeated calls with different offsets).\n- `blendMode` (`render.BlendMode`): Blend mode. Default value: `render.BlendMode.BlendAccurate`.\n- `async` (`boolean`): If set to `true`, drawing won’t occur until shader would be compiled in a different thread.\n- `cacheKey` (`number`): Optional cache key for compiled shader (caching will depend on shader source code, but not on included files, so make sure to change the key if included files have changed).\n- `defines` (`table`): Defines to pass to the shader, either boolean, numerical or string values (don’t forget to wrap complex expressions in brackets). False values won’t appear in code and true will be replaced with 1 so you could use `#ifdef` and `#ifndef` with them.\n- `textures` (`table`): Table with textures to pass to a shader. For textures, anything passable in `ui.image()` can be used (filename, remote URL, media element, extra canvas, etc.). If you don’t have a texture and need to reset bound one, use `false` for a texture value (instead of `nil`)\n- `values` (`table`): Table with values to pass to a shader. Values can be numbers, booleans, vectors, colors or 4×4 matrix. Values will be aligned automatically.\n- `shader` (`string`): Shader code (format is HLSL, regular DirectX shader); actual code will be added into a template in “assettocorsa/extension/internal/shader-tpl/project.fx” (look into it to see what fields are available)."
@@ -12205,7 +12253,7 @@ function ac.findSkinnedMeshes(s) end
 ---@return ac.SceneReference
 function ac.findByClass(objectClass, s) end
 
----This thing allows to draw 3D objects in UI functions (or use them as textures in `ac.SceneReference:setMaterialTexture()`, 
+---This thing allows to draw 3D objects in UI functions (or use them as textures in `ac.SceneReference:setMaterialTexture()`,
 ---for example). Prepare a scene reference (might be a bunch of nodes or meshes), create a new `ac.GeometryShot` with that reference,
 ---call `ac.GeometryShot:update()` with camera parameters and then use resulting shot instead of a texture name.
 ---
@@ -12222,7 +12270,7 @@ function ac.findByClass(objectClass, s) end
 ---@return ac.GeometryShot
 function ac.GeometryShot(sceneReference, resolution, mips, withDepth, antialiasingMode) end
 
----This thing allows to draw 3D objects in UI functions (or use them as textures in `ac.SceneReference:setMaterialTexture()`, 
+---This thing allows to draw 3D objects in UI functions (or use them as textures in `ac.SceneReference:setMaterialTexture()`,
 ---for example). Prepare a scene reference (might be a bunch of nodes or meshes), create a new `ac.GeometryShot` with that reference,
 ---call `ac.GeometryShot:update()` with camera parameters and then use resulting shot instead of a texture name.
 ---
@@ -12272,7 +12320,7 @@ function _ac_GeometryShot:setTransparentPass(value) end
 ---Enables original lighting (stops from switching to neutral lighting active by default). With original lighting,
 ---methods like `shot:setAmbientColor()` and `shot:setReflectionColor()` would no longer have an effect.
 ---
----Note: this is not working well currently with post-processing active, drawing HDR colors into LDR texture. 
+---Note: this is not working well currently with post-processing active, drawing HDR colors into LDR texture.
 ---Better support for such things is coming a bit later.
 ---@param value boolean? @Set to `true` to enable original lighting. Default value: `true`.
 ---@return ac.GeometryShot @Returns itself for chaining several methods together.
@@ -12280,7 +12328,7 @@ function _ac_GeometryShot:setOriginalLighting(value) end
 
 ---Enables sky in the shot. By default, sky is not drawn.
 ---
----Note: this is not working well currently with post-processing active, drawing HDR colors into LDR texture. 
+---Note: this is not working well currently with post-processing active, drawing HDR colors into LDR texture.
 ---Better support for such things is coming a bit later.
 ---@param value boolean? @Set to `true` to enable sky. Default value: `true`.
 ---@return ac.GeometryShot @Returns itself for chaining several methods together.
@@ -12288,7 +12336,7 @@ function _ac_GeometryShot:setSky(value) end
 
 ---Enables particles in the shot. By default, particles are not drawn.
 ---
----Note: this is not working well currently with post-processing active, drawing HDR colors into LDR texture. 
+---Note: this is not working well currently with post-processing active, drawing HDR colors into LDR texture.
 ---Better support for such things is coming a bit later.
 ---@param value boolean? @Set to `true` to enable particles. Default value: `true`.
 ---@return ac.GeometryShot @Returns itself for chaining several methods together.
@@ -12745,6 +12793,11 @@ local _ac_SeatParams = nil
 ---@param repeatPeriod number?
 ---@return ac.ControlButton
 function ac.ControlButton(id, key, modifiers, repeatPeriod) end
+
+---Returns VRAM stats if available (older versions of Windows won’t provide access to this API). All sizes are in megabytes. Note: values
+---provided are for a GPU in general, not for the Assetto Corsa itself.
+---@return nil|{budget: number, usage: number, availableForReservation: number, reserved: number}
+function ac.getVRAMConsumption() end
 
 ---For internal use.
 ---@class ac.ControlButton
