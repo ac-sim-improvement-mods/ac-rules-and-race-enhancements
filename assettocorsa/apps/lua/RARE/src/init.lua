@@ -109,6 +109,14 @@ function initialize(sim)
                 driver.aiLevel = driver.car.aiLevel
                 driver.aiThrottleLimitBase = math.lerp(0.5,1,1-((1-driver.aiLevel)/0.3))
                 driver.aiAggression = driver.car.aiAggression
+                math.random()
+                for i=0, math.random(0,20) do
+                    math.randomseed(os.time()*(i+1))
+                    math.random()
+                end
+                local tyrevalue = math.random(2,4)
+                physics.setAITyres(driver.index,tyrevalue)
+                log(tyrevalue)
                 driverIni:setAndSave('AI_'..driver.index, 'AI_LEVEL', driver.car.aiLevel)
                 driverIni:setAndSave('AI_'..driver.index, 'AI_THROTTLE_LIMIT', driver.aiThrottleLimitBase)
                 driverIni:setAndSave('AI_'..driver.index, 'AI_AGGRESSION', driver.car.aiAggression)
