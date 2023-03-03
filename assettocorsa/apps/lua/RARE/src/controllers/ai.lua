@@ -47,78 +47,49 @@ end
 
 --- Force AI driver to drive to the pits
 --- @param driver Driver
-local function triggerPitStop(driver)
-    driver.aiPrePitFuel = driver.car.fuel
-    physics.setCarFuel(driver.index, 0.1)
-    driver.aiPitCall = true
+local function triggerPitStopRequest(driver,trigger)
+    physics.setAIPitStopRequest(driver.index, trigger)
+    driver.aiPitting = trigger
 end
 
 --- Determine if going to the pits is advantageous or not
 --- @param driver Driver
 --- @param forced boolean
-local function strategyCall(driver,forced)
+local function pitStrategyCall(driver,forced)
     local carAhead = DRIVERS[driver.carAhead]
     local trigger = true
     local lapsTotal = ac.getSession(ac.getSim().currentSessionIndex).laps
     local lapsRemaining = lapsTotal - driver.lapsCompleted
 
-    if driver.car.splinePosition > 0.8 then
-        trigger = false
-    else
-        if not forced then
-            if not carAhead.aiPitCall and driver.carAheadDelta < 1 then
-                trigger = false
-            end
-
-            if lapsRemaining <= 5 then
-                trigger = false
-            end
+    if not forced then
+        if (not carAhead.aiPitCall and driver.carAheadDelta < 1) or
+        lapsRemaining <= 5 or
+        driver.car.splinePosition > 0.8 then
+            trigger = false
         end
     end
 
-    if trigger then triggerPitStop(driver) end
+    triggerPitStopRequest(driver, trigger)
 end
-
---- Handles driver state when pitstop gets triggered.
---- Resets fuel to pre pit call state
----@param driver Driver
-local function catchTriggeredPitStop(driver)
-    driver.aiPitCall = false
-    driver.aiPitting = true
-    physics.setCarFuel(driver.index, driver.aiPrePitFuel)
-end
-
 --- Occurs when a driver is in the pit
 ---@param driver Driver
 local function pitstop(driver)
-    if RARECONFIG.data.RULES.RACE_REFUELING == 0 then physics.setCarFuel(driver.index, driver.aiPrePitFuel) end
     driver.aiPitting = false
     driver.tyreLaps = 0
 end
 
---- Sets drivers pre pit fuel value
-local function setPrePitFuel(driver)
-    driver.aiPrePitFuel = driver.car.fuel
-end
-
 --- Determines when an AI driver should pit for new tyres
 --- @param driver Driver
-function ai.pitNewTires(driver)
+function ai.pitNewTyres(driver)
     if not driver.car.isInPitlane and not driver.aiPitting then
-        if driver.aiPitCall then
-            catchTriggeredPitStop(driver)
-        else
-            if singleTyreWearBelowLimit(driver) then
-                strategyCall(driver,true)
-            elseif avgTyreWearBelowLimit(driver) then
-                strategyCall(driver, false)
-            end
+        if singleTyreWearBelowLimit(driver) then
+            pitStrategyCall(driver,true)
+        elseif avgTyreWearBelowLimit(driver) then
+            pitStrategyCall(driver, false)
         end
     else
         if driver.car.isInPit then
             pitstop(driver)
-        else
-            setPrePitFuel(driver)
         end
     end
 end
@@ -293,7 +264,7 @@ end
 
 
 function ai.controller(aiRules,driver)
-    if aiRules.AI_FORCE_PIT_TYRES == 1 then ai.pitNewTires(driver) end
+    if aiRules.AI_FORCE_PIT_TYRES == 1 then ai.pitNewTyres(driver) end
     if aiRules.AI_ALTERNATE_LEVEL == 1 then ai.alternateAttack(driver)  end
 end
 
