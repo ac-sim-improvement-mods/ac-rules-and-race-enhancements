@@ -1,16 +1,14 @@
 --- Returns time delta (s) between the driver and driver ahead on track
 ---@param driver Driver
 ---@return number
-function getDelta(sim,carIndex,car2Index)
----@diagnostic disable-next-line: return-type-mismatch
+function getDelta(sim, carIndex, car2Index)
+    ---@diagnostic disable-next-line: return-type-mismatch
     local car = ac.getCar(carIndex)
     local car2 = ac.getCar(car2Index)
     local carPos = car.splinePosition
     local car2Pos = car2.splinePosition
 
-    if carPos > car2Pos then
-        car2Pos = car2Pos + 1
-    end
+    if carPos > car2Pos then car2Pos = car2Pos + 1 end
 
     return (car2Pos - carPos) / (car.speedKmh / 3.6) * sim.trackLengthM
 end
@@ -20,14 +18,8 @@ end
 ---@return string
 function sessionTypeString(sim)
     local sessionTypes = {
-        "UNDEFINED",
-        "PRACTICE",
-        "QUALIFY",
-        "RACE",
-        "HOTLAP",
-        "TIME ATTACK",
-        "DRIFT",
-        "DRAG"
+        "UNDEFINED", "PRACTICE", "QUALIFY", "RACE", "HOTLAP", "TIME ATTACK",
+        "DRIFT", "DRAG"
     }
 
     return sessionTypes[sim.raceSessionType + 1]
@@ -70,7 +62,7 @@ function weatherTypeString(sim)
         "Cold", ---Value: 29.
         "Hot", ---Value: 30.
         "Windy", ---Value: 31.
-        "Hail", ---Value: 32.
+        "Hail" ---Value: 32.
     }
 
     return weatherTypes[sim.weatherType + 1]
