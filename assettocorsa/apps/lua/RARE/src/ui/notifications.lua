@@ -5,48 +5,36 @@ NOTIFICATION_TEXT = ''
 
 --- Override function to add clarity and default values for drawing text
 local function drawText(textdraw)
-    if not textdraw.margin then
-        textdraw.margin = vec2(350, 350)
-    end
-    if not textdraw.color then
-        textdraw.color = rgbm(0.95, 0.95, 0.95, 1)
-    end
-    if not textdraw.fontSize then
-        textdraw.fontSize = 70
-    end
+    if not textdraw.margin then textdraw.margin = vec2(350, 350) end
+    if not textdraw.color then textdraw.color = rgbm(0.95, 0.95, 0.95, 1) end
+    if not textdraw.fontSize then textdraw.fontSize = 70 end
 
     ui.setCursorX(textdraw.xPos)
     ui.setCursorY(textdraw.yPos)
-    ui.dwriteTextAligned(textdraw.string, textdraw.fontSize, textdraw.xAlign, textdraw.yAlign, textdraw.margin, false, textdraw.color)
+    ui.dwriteTextAligned(textdraw.string, textdraw.fontSize, textdraw.xAlign,
+                         textdraw.yAlign, textdraw.margin, false, textdraw.color)
 end
 
 local function drawRaceControl(text)
     ui.beginScale()
     ui.pushDWriteFont("Formula1 Display;Weight=Bold")
-    --ui.pushDWriteFont("Formula1 Display Bold Bold:fonts/f1.ttf")
+    -- ui.pushDWriteFont("Formula1 Display Bold Bold:fonts/f1.ttf")
 
     local leftAlign = 147
     local yAlign = -145
     local fontSize = 32
     local bannerHeight = 95
-    local bannerWidth = ui.measureDWriteText(text,fontSize * 0.8125).x + 40
-
+    local bannerWidth = ui.measureDWriteText(text, fontSize * 0.8125).x + 40
 
     -- Race Control dark blue rect
-    ui.drawRectFilled(
-        vec2(0,0),
-        vec2(360,bannerHeight),
-        rgbm(0.07, 0.12, 0.23, 1)
-    )
+    ui.drawRectFilled(vec2(0, 0), vec2(360, bannerHeight),
+                      rgbm(0.07, 0.12, 0.23, 1))
 
     -- Information white rect
-    ui.drawRectFilled(
-        vec2(360,0),
-        vec2(360+bannerWidth,bannerHeight),
-        rgbm(1,1,1,1)
-    )
+    ui.drawRectFilled(vec2(360, 0), vec2(360 + bannerWidth, bannerHeight),
+                      rgbm(1, 1, 1, 1))
 
-    drawText{
+    drawText {
         string = "RACE",
         fontSize = fontSize,
         xPos = leftAlign,
@@ -56,7 +44,7 @@ local function drawRaceControl(text)
         color = rgbm(1, 1, 1, 1)
     }
 
-    drawText{
+    drawText {
         string = "CONTROL",
         fontSize = fontSize,
         xPos = leftAlign,
@@ -66,10 +54,10 @@ local function drawRaceControl(text)
         color = rgbm(1, 1, 1, 1)
     }
 
-    drawText{
+    drawText {
         string = text,
         fontSize = fontSize * 0.8125,
-        xPos = 110 + bannerWidth/2,
+        xPos = 110 + bannerWidth / 2,
         yPos = yAlign + 21,
         xAlign = ui.Alignment.Center,
         yAlign = ui.Alignment.Center,
@@ -83,27 +71,23 @@ local function drawRaceControl(text)
     local size_x = pos_x + 146
     local size_y = pos_y + 100
 
-    ui.drawImage("assets/icons/fia_logo.png", vec2(pos_x,pos_y), vec2(size_x,size_y), rgbm(1,1,1,1), true)
+    ui.drawImage("assets/icons/fia_logo.png", vec2(pos_x, pos_y),
+                 vec2(size_x, size_y), rgbm(1, 1, 1, 1), true)
     ui.endScale(0.60)
 
     ui.popDWriteFont()
     ui.endScale(RARECONFIG.data.NOTIFICATIONS.SCALE)
 end
 
-local function drawNotification()
+local function drawNotification() drawRaceControl(NOTIFICATION_TEXT) end
 
-    drawRaceControl(NOTIFICATION_TEXT)
-  end
+local fadingTimer = ui.FadingElement(drawNotification, false)
 
-local fadingTimer = ui.FadingElement(drawNotification,false)
+function notifications.popup(text, timer)
+    if not timer then timer = RARECONFIG.data.NOTIFICATIONS.DURATION end
 
-function notifications.popup(text,timer)
-      if not timer then
-          timer = RARECONFIG.data.NOTIFICATIONS.DURATION
-      end
-
-      NOTIFICATION_TIMER = timer
-      NOTIFICATION_TEXT = text
+    NOTIFICATION_TIMER = timer
+    NOTIFICATION_TEXT = text
 end
 
 function notificationHandler(dt)

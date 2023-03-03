@@ -1,7 +1,7 @@
 SCRIPT_NAME = "Rules and Race Enhancements"
 SCRIPT_SHORT_NAME = "RARE"
-SCRIPT_VERSION = "1.0.6.7"
-SCRIPT_VERSION_CODE = 10670
+SCRIPT_VERSION = "1.0.7.3"
+SCRIPT_VERSION_CODE = 10735
 SCRIPT_BUILD_DATE = "2022-11-28"
 CSP_MIN_VERSION_CODE = 2144
 CSP_MIN_VERSION = "1.79"
@@ -65,7 +65,7 @@ function script.update(dt)
         if not sim.isInMainMenu and not sim.isSessionStarted then
             RESTARTED = false
         else
-            racecontrol = rc.getRaceControl(dt,sim)
+            racecontrol = rc.getRaceControl(dt, sim)
             audio.driver(sim)
         end
     else
@@ -80,24 +80,24 @@ function script.windowMain(dt)
     -- JUST TO KEEP THE SCRIPT ALIVE
 
     if INITIALIZED then
-        ui.transparentWindow('notifications',vec2(RARECONFIG.data.NOTIFICATIONS.X_POS,RARECONFIG.data.NOTIFICATIONS.Y_POS),vec2(1200,500),function ()
-            notificationHandler(dt)
-        end)
+        ui.transparentWindow('notifications', vec2(
+                                 RARECONFIG.data.NOTIFICATIONS.X_POS,
+                                 RARECONFIG.data.NOTIFICATIONS.Y_POS),
+                             vec2(1200, 500),
+                             function() notificationHandler(dt) end)
     end
 end
 
 function script.windowDebug(dt)
-    local windowName = SCRIPT_SHORT_NAME.." Debug"
-    local scriptVersion = SCRIPT_VERSION.." ("..SCRIPT_VERSION_CODE..")"
-    local windowTitle = windowName.." | "..scriptVersion
+    local windowName = SCRIPT_SHORT_NAME .. " Debug"
+    local scriptVersion = SCRIPT_VERSION .. " (" .. SCRIPT_VERSION_CODE .. ")"
+    local windowTitle = windowName .. " | " .. scriptVersion
     local error = errorCheck()
     ac.setWindowTitle("debug", windowTitle)
 
     if INITIALIZED and not sim.isInMainMenu and racecontrol ~= nil then
-        debugMenu(sim,racecontrol,error)
+        debugMenu(sim, racecontrol, error)
     end
 end
 
-function script.windowSettings()
-   settingsMenu(sim)
-end
+function script.windowSettings() settingsMenu(sim) end
