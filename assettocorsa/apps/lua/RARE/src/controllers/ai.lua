@@ -45,11 +45,26 @@ local function singleTyreWearBelowLimit(driver)
     end
 end
 
+local function availableTyreCompound(driver)
+    local compoundsAvailable = {2, 3, 4}
+    local nextCompound = driver.car.compoundIndex
+
+    if not driver.tyreCompoundChange then
+        table.removeItem(compoundsAvailable, driver.car.compoundIndex)
+        nextCompound = compoundsAvailable[math.random(1, 2)]
+    else
+        nextCompound = compoundsAvailable[math.random(1, 3)]
+    end
+
+    return nextCompound
+end
+
 --- Force AI driver to drive to the pits
 --- @param driver Driver
 local function triggerPitStopRequest(driver, trigger)
     physics.setAIPitStopRequest(driver.index, trigger)
     driver.aiPitting = trigger
+    if trigger then driver.tyreCompoundNext = availableTyreCompound(driver) end
 end
 
 --- Determine if going to the pits is advantageous or not
@@ -73,8 +88,13 @@ end
 --- Occurs when a driver is in the pit
 ---@param driver Driver
 local function pitstop(driver)
+    if driver.aiPitting then
+        driver.tyreLaps = 0
+        driver.tyreCompoundChange = true
+        physics.setAITyres(driver.index, driver.tyreCompoundNext)
+    end
+
     driver.aiPitting = false
-    driver.tyreLaps = 0
 end
 
 --- Determines when an AI driver should pit for new tyres
