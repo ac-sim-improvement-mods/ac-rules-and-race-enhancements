@@ -17,6 +17,8 @@ Driver = class('Driver', function(carIndex)
     local aiSplineOffset = 0
     local aiMoveAside = false
     local aiSpeedUp = false
+    local aiMgukDelivery = 0
+    local aiMgukRecovery = 0
 
     local outLap = false
     local flyingLap = false
@@ -66,7 +68,8 @@ Driver = class('Driver', function(carIndex)
         aiTyreSingleRandom = aiTyreSingleRandom, aiTyreAvgRandom = aiTyreAvgRandom, aiPitting = aiPitting, aiPitCall = aiPitCall, aiPrePitFuel = aiPrePitFuel, aiLevel = aiLevel, aiAggression = aiAggression,
         returnPostionTimer = returnPostionTimer, returnRacePosition = returnRacePosition, timePenalty = timePenalty, illegalOvertake = illegalOvertake,
         carAheadDelta = carAheadDelta, carAhead = carAhead, trackPosition = trackPosition,
-        lapsCompleted = lapsCompleted, index = index,  name = name, car = car
+        lapsCompleted = lapsCompleted, index = index,  name = name, car = car,
+        aiMgukDelivery = aiMgukDelivery, aiMgukRecovery = aiMgukRecovery
     }
 end, class.NoInitialize)
 

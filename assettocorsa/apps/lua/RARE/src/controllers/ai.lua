@@ -262,10 +262,111 @@ function ai.alternateAttack(driver)
     physics.setAIThrottleLimit(driver.index, driver.aiThrottleLimit)
 end
 
+local function mgukBuild(driver)
+    if driver.aiMgukDelivery ~= 1 then
+        driver.aiMgukDelivery = 1
+        physics.setMGUKDelivery(driver.index, driver.aiMgukDelivery)
+    end
+
+    if driver.aiMgukRecovery ~= 10 then
+        driver.aiMgukRecovery = 10
+        physics.setMGUKRecovery(driver.index, driver.aiMgukRecovery)
+    end
+end
+
+local function mgukLow(driver)
+    if driver.aiMgukDelivery ~= 2 then
+        driver.aiMgukDelivery = 2
+        physics.setMGUKDelivery(driver.index, driver.aiMgukDelivery)
+    end
+
+    --driver.car.kersCurrentKJ
+    if driver.car.kersCharge > 0.8 then
+        if driver.aiMgukRecovery ~= 0 then
+            driver.aiMgukRecovery = 0
+            physics.setMGUKRecovery(driver.index, driver.aiMgukRecovery)
+        end
+    elseif driver.car.kersCharge > 0.15 then
+        if driver.aiMgukRecovery ~= 7 then
+            driver.aiMgukRecovery = 7
+            physics.setMGUKRecovery(driver.index, driver.aiMgukRecovery)
+        end
+    else
+        mgukBuild(driver)
+    end
+end
+
+local function mgukBalanced(driver)
+    if driver.aiMgukDelivery ~= 3 then
+        driver.aiMgukDelivery = 3
+        physics.setMGUKDelivery(driver.index, driver.aiMgukDelivery)
+    end
+
+    --driver.car.kersCurrentKJ
+    if driver.car.kersCharge > 0.8 then
+        if driver.aiMgukRecovery ~= 0 then
+            driver.aiMgukRecovery = 0
+            physics.setMGUKRecovery(driver.index, driver.aiMgukRecovery)
+        end
+    elseif driver.car.kersCharge > 0.25 then
+        if driver.aiMgukRecovery ~= 7 then
+            driver.aiMgukRecovery = 7
+            physics.setMGUKRecovery(driver.index, driver.aiMgukRecovery)
+        end
+    else
+        mgukLow(driver)
+    end
+end
+
+local function mgukHigh(driver)
+    if driver.aiMgukDelivery ~= 4 then
+        driver.aiMgukDelivery = 4
+        physics.setMGUKDelivery(driver.index, driver.aiMgukDelivery)
+    end
+
+    --driver.car.kersCurrentKJ
+    if driver.car.kersCharge > 0.8 then
+        if driver.aiMgukRecovery ~= 0 then
+            driver.aiMgukRecovery = 0
+            physics.setMGUKRecovery(driver.index, driver.aiMgukRecovery)
+        end
+    elseif driver.car.kersCharge > 0.45 then
+        if driver.aiMgukRecovery ~= 7 then
+            driver.aiMgukRecovery = 7
+            physics.setMGUKRecovery(driver.index, driver.aiMgukRecovery)
+        end
+    else
+        mgukBalanced(driver)
+    end
+end
+
+local function mgukAttack(driver)
+    if driver.aiMgukDelivery ~= 5 then
+        driver.aiMgukDelivery = 5
+        physics.setMGUKDelivery(driver.index, driver.aiMgukDelivery)
+    end
+
+    if driver.aiMgukRecovery ~= 0 then
+        driver.aiMgukRecovery = 0
+        physics.setMGUKRecovery(driver.index, driver.aiMgukRecovery)
+    end
+end
+
+
+function ai.mgukController(driver)
+    if driver.carAheadDelta < 0.5 and driver.car.kersCharge > 0.25 then
+        mgukAttack(driver)
+    elseif driver.carAheadDelta < 1.5 then
+        mgukHigh(driver)
+    else
+        mgukBalanced(driver)
+    end
+end
 
 function ai.controller(aiRules,driver)
     if aiRules.AI_FORCE_PIT_TYRES == 1 then ai.pitNewTyres(driver) end
     if aiRules.AI_ALTERNATE_LEVEL == 1 then ai.alternateAttack(driver)  end
+    ai.mgukController(driver)
 end
 
 return ai

@@ -83,8 +83,14 @@ function debugMenu(sim,rc,error)
             inLineBulletText("ERS Spent", string.format("%2.1f", driver.car.kersCurrentKJ).."/"..math.round(driver.car.kersMaxKJ,0).." KJ",space)
             inLineBulletText("ERS Input", math.round(driver.car.kersInput*100,2).." %",space)
             inLineBulletText("ERS Load", math.round(driver.car.kersLoad*100,2).." %",space)
-            inLineBulletText("MGU-K Delivery", string.upper(ac.getMGUKDeliveryName(driver.index)),space)
-            inLineBulletText("MGU-K Recovery", math.round(driver.car.mgukRecovery*10).."%",space)
+
+            if driver.car.isAIControlled then
+                inLineBulletText("MGU-K Delivery", driver.aiMgukDelivery,space)
+                inLineBulletText("MGU-K Recovery", tostring(driver.aiMgukRecovery*10).."%",space)
+            else
+                inLineBulletText("MGU-K Delivery", string.upper(ac.getMGUKDeliveryName(driver.index)),space)
+                inLineBulletText("MGU-K Recovery", math.round(driver.car.mgukRecovery*10).."%",space)
+            end
             inLineBulletText("MGU-H Mode", string.upper(mguhMode),space)
         end)
     end
