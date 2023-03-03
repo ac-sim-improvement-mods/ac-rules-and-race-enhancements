@@ -1,11 +1,10 @@
-
 local VSC_CALLED = false
 local VSC_DEPLOYED = false
 local VSC_LAP_TIME = 180000
 local VSC_START_TIMER = 1000
 local VSC_END_TIMER = 3000
 
-local function enableVSC(sim,best_lap_times)
+local function enableVSC(sim, best_lap_times)
     if VSC_CALLED and not VSC_DEPLOYED then
         VSC_LAP_TIME = math.average(best_lap_times) / 0.31
         if VSC_LAP_TIME == 0 or VSC_LAP_TIME == nil then
@@ -34,9 +33,11 @@ local function enableVSC(sim,best_lap_times)
 
         if VSC_END_TIMER > 0 then
 
-            if VSC_END_TIMER == 1000 and sim.raceFlagType == not ac.FlagType.Caution then
+            if VSC_END_TIMER == 1000 and sim.raceFlagType ==
+                not ac.FlagType.Caution then
                 ac.log("Virtual Safety Car is ending soon!")
-                ui.toast(ui.Icons.Warning, "[RARE] Virtual Safety Car is ending soon!")
+                ui.toast(ui.Icons.Warning,
+                         "[RARE] Virtual Safety Car is ending soon!")
             end
             VSC_END_TIMER = VSC_END_TIMER - 1
         else
@@ -52,17 +53,18 @@ local function enableVSC(sim,best_lap_times)
     end
 end
 
-local function controlVSC(sim,driver)
+local function controlVSC(sim, driver)
     local vsc_lap_time = VSC_LAP_TIME
-    setDriverDRS(driver,false)
+    setDriverDRS(driver, false)
 
     if driver.car.estimatedLapTimeMs < vsc_lap_time then
-        ac.log(driver.index.." estimated: "..driver.car.estimatedLapTimeMs)
+        ac.log(driver.index .. " estimated: " .. driver.car.estimatedLapTimeMs)
 
         if driver.car.isAIControlled then
             physics.setAIThrottleLimit(driver.index, 0.3)
         else
-            ui.toast(ui.Icons.Warning, "[RARE] Exceeding the pace of the Virtual Safety Car!")
+            ui.toast(ui.Icons.Warning,
+                     "[RARE] Exceeding the pace of the Virtual Safety Car!")
         end
     end
 end

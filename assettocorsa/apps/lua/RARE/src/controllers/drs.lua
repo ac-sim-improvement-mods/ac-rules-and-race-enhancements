@@ -19,37 +19,51 @@ DrsZones = class('DRS_Points', function()
 
         -- Extract DRS detection points from drs_zones.ini
         detectionData = try(function()
-            return ini.sections['ZONE_'..index]['DETECTION'][1]
-        end, function () log("[WARN] Failed to load a detection line for DRS Zone "..index) end)
+            return ini.sections['ZONE_' .. index]['DETECTION'][1]
+        end, function()
+            log("[WARN] Failed to load a detection line for DRS Zone " .. index)
+        end)
         startData = try(function()
-            return ini.sections['ZONE_'..index]['START'][1]
-        end, function () log("[WARN] Failed to load a start line for DRS Zone "..index) end)
+            return ini.sections['ZONE_' .. index]['START'][1]
+        end, function()
+            log("[WARN] Failed to load a start line for DRS Zone " .. index)
+        end)
         endData = try(function()
-            return ini.sections['ZONE_'..index]['END'][1]
-        end, function () log("[WARN] Failed to load a end line for DRS Zone "..index) end)
+            return ini.sections['ZONE_' .. index]['END'][1]
+        end, function()
+            log("[WARN] Failed to load a end line for DRS Zone " .. index)
+        end)
 
         -- If data is nil, break the while loop
-        if detectionData == nil or startData == nil or endData == nil then break end
+        if detectionData == nil or startData == nil or endData == nil then
+            break
+        end
 
         -- Add data to appropriate arrays
         detectionZones[index] = tonumber(detectionData)
         startZones[index] = tonumber(startData)
         endZones[index] = tonumber(endData)
 
-        log("[Loaded] DRS Zone "..index.." ["..detectionData..","..startData..","..endData.."]")
+        log("[Loaded] DRS Zone " .. index .. " [" .. detectionData .. "," ..
+                startData .. "," .. endData .. "]")
 
         index = index + 1
     end
 
     local count = index
 
-    return {detectionZones = detectionZones, startZones = startZones, endZones = endZones, count = count}
+    return {
+        detectionZones = detectionZones,
+        startZones = startZones,
+        endZones = endZones,
+        count = count
+    }
 end, class.NoInitialize)
 
 --- Checks if driver is before the detection line, not in the pits,
 --- not in a drs zone, and within 1 second of the car ahead on track
 ---@param driver Driver
-local function setDrsAvailable(driver,drsEnabled)
+local function setDrsAvailable(driver, drsEnabled)
     if not driver.car.isInPitlane and drsEnabled then
         local inDrsZone = driver.car.drsAvailable
         local inDrsRange = inDrsRange(driver)
@@ -59,7 +73,8 @@ local function setDrsAvailable(driver,drsEnabled)
             if driver.drsAvailable and inDrsZone and driver.car.drsActive then
                 driver.drsDeployable = true
                 driver.drsAvailable = true
-            elseif driver.drsAvailable and not inDrsZone and driver.drsDeployable then
+            elseif driver.drsAvailable and not inDrsZone and
+                driver.drsDeployable then
                 driver.drsDeployable = false
                 driver.drsAvailable = false
             end
@@ -82,9 +97,11 @@ local function setDriverDrsZones(driver)
     local drsZonePrev = 0
 
     --- Get next detection line
-    for i=0, #detectionZones do
+    for i = 0, #detectionZones do
         local detectionDistance = detectionZones[i] - driver.car.splinePosition
-        if detectionDistance <= 0 then detectionDistance = detectionDistance + 1 end
+        if detectionDistance <= 0 then
+            detectionDistance = detectionDistance + 1
+        end
 
         if i == 0 then
             closestDetection = detectionDistance
@@ -107,16 +124,16 @@ end
 
 --- Locks the specified driver's DRS
 ---@param driver Driver
-local function setDriverDRS(sim,driver,allowed)
+local function setDriverDRS(sim, driver, allowed)
     if not sim.isOnlineRace then
-        physics.allowCarDRS(driver.index,not allowed)
+        physics.allowCarDRS(driver.index, not allowed)
     end
 
     if driver.car.isAIControlled then
         if not allowed then
             physics.setCarDRS(driver.index, false)
-        elseif allowed and
-            driver.car.speedKmh > 100 and getEndLineDistanceM(driver) > 175 and not driver.aiPitCall then
+        elseif allowed and driver.car.speedKmh > 100 and
+            getEndLineDistanceM(driver) > 175 and not driver.aiPitCall then
             physics.setCarDRS(driver.index, true)
         end
     elseif not allowed then
@@ -129,7 +146,7 @@ end
 ---@return boolean
 function inDrsRange(driver1)
     local delta = driver1.carAheadDelta
-    local deltaLimit = RARECONFIG.data.RULES.DRS_GAP_DELTA/1000
+    local deltaLimit = RARECONFIG.data.RULES.DRS_GAP_DELTA / 1000
     return (delta <= deltaLimit and delta > 0.0) and true or false
 end
 
@@ -148,18 +165,19 @@ function inDeployZone(driver)
     end
 
     -- If driver is between the end zone of the previous DRS zone, and the detection line of the upcoming DRS zone
-    return (track_pos >= detection_line and track_pos < start_line) and true or false
+    return (track_pos >= detection_line and track_pos < start_line) and true or
+               false
 end
 
 --- Returns the main driver's distance to the detection line in meters
 ---@param driver Driver
 ---@return number
-function getZoneLineDistanceM(zones,driver,drsZoneId)
+function getZoneLineDistanceM(zones, driver, drsZoneId)
     local sim = ac.getSim()
     local zoneLine = zones[drsZoneId]
     local distance = zoneLine - driver.car.splinePosition
     if distance <= 0 then distance = distance + 1 end
-    return math.round(math.clamp(distance*sim.trackLengthM,0,10000), 5)
+    return math.round(math.clamp(distance * sim.trackLengthM, 0, 10000), 5)
 end
 
 --- Returns the main driver's distance to the detection line in meters
@@ -167,7 +185,7 @@ end
 ---@return number
 function getDetectionLineDistanceM(driver)
     local drsZoneId = driver.drsZoneNextId
-    return getZoneLineDistanceM(DRS_ZONES.detectionZones,driver,drsZoneId)
+    return getZoneLineDistanceM(DRS_ZONES.detectionZones, driver, drsZoneId)
 end
 
 --- Returns the main driver's distance to the detection line in meters
@@ -175,19 +193,22 @@ end
 ---@return number
 function getStartLineDistanceM(driver)
     local drsZoneId = driver.drsZoneNextId
-    return getZoneLineDistanceM(DRS_ZONES.startZones,driver,drsZoneId)
+    return getZoneLineDistanceM(DRS_ZONES.startZones, driver, drsZoneId)
 end
 
 --- Returns the main driver's distance to the detection line in meters
 ---@param driver Driver
 ---@return number
 function getEndLineDistanceM(driver)
-    local endLineDistanceM = getZoneLineDistanceM(DRS_ZONES.endZones,driver,driver.drsZoneId)
-    local startLineDistanceM = getZoneLineDistanceM(DRS_ZONES.startZones,driver,driver.drsZoneNextId)
+    local endLineDistanceM = getZoneLineDistanceM(DRS_ZONES.endZones, driver,
+                                                  driver.drsZoneId)
+    local startLineDistanceM = getZoneLineDistanceM(DRS_ZONES.startZones,
+                                                    driver, driver.drsZoneNextId)
 
     return startLineDistanceM < endLineDistanceM and
-        getZoneLineDistanceM(DRS_ZONES.endZones,driver,driver.drsZoneNextId) or
-        getZoneLineDistanceM(DRS_ZONES.endZones,driver,driver.drsZoneId)
+               getZoneLineDistanceM(DRS_ZONES.endZones, driver,
+                                    driver.drsZoneNextId) or
+               getZoneLineDistanceM(DRS_ZONES.endZones, driver, driver.drsZoneId)
 end
 
 --- Returns whether driver is between a detection line and a start line
@@ -219,10 +240,10 @@ end
 --- Control driver's DRS deployment
 --- @param driver Driver
 --- @param drsEnabled boolean
-function drs.controller(sim,driver,drsEnabled)
+function drs.controller(sim, driver, drsEnabled)
     setDriverDrsZones(driver)
-    setDrsAvailable(driver,drsEnabled)
-    setDriverDRS(sim,driver,drsEnabled and driver.drsAvailable or false)
+    setDrsAvailable(driver, drsEnabled)
+    setDriverDRS(sim, driver, drsEnabled and driver.drsAvailable or false)
 end
 
 return drs
