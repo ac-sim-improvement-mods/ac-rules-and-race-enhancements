@@ -380,7 +380,7 @@ end
 function ai.controller(aiRules, driver)
     if aiRules.AI_FORCE_PIT_TYRES == 1 then ai.pitNewTyres(driver) end
     if aiRules.AI_ALTERNATE_LEVEL == 1 then ai.alternateAttack(driver) end
-    ai.mgukController(driver)
+    if aiRules.AI_MGUK_CONTROL == 1 then ai.mgukController(driver) end
 end
 
 return ai

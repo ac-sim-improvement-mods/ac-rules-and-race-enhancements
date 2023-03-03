@@ -63,7 +63,9 @@ function initialize(sim)
                 AI_RELATIVE_SCALING = (ac.INIConfig.OptionalNumber == nil) and
                     ac.INIConfig.OptionalNumber or 0,
                 AI_RELATIVE_LEVEL = (ac.INIConfig.OptionalNumber == nil) and
-                    ac.INIConfig.OptionalNumber or 100
+                    ac.INIConfig.OptionalNumber or 100,
+                AI_MGUK_CONTROL = (ac.INIConfig.OptionalNumber == nil) and
+                    ac.INIConfig.OptionalNumber or 1
             },
             AUDIO = {
                 MASTER = (ac.INIConfig.OptionalNumber == nil) and
