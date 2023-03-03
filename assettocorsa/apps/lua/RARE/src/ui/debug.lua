@@ -27,19 +27,6 @@ function debugMenu(sim, rc, error)
 
     ui.columns(2, true, "debugcol2")
 
-    ui.treeNode("[PIT STOPS]",
-                ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed,
-                function()
-        inLineBulletText("In Pit Lane", upperBool(driver.car.isInPitlane), space)
-        inLineBulletText("In Pits", upperBool(driver.car.isInPit), space)
-        inLineBulletText("Pit Stop Count", driver.pitstopCount, space)
-        inLineBulletText("Last Pitted Lap", driver.lapPitted, space)
-        inLineBulletText("Last Pit Time", math.round(driver.pitlaneTime, 2),
-                         space)
-        inLineBulletText("Last Pit Stop Time",
-                         math.round(driver.pitstopTime, 2), space)
-    end)
-
     if driver.car.isAIControlled then
         ui.treeNode("[AI]",
                     ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed,
@@ -65,10 +52,25 @@ function debugMenu(sim, rc, error)
                                  .AI_SINGLE_TYRE_LIFE +
                                  driver.aiTyreSingleRandom .. " %", space,
                              driver)
-            inLineBulletText("Pitting New Tyres", upperBool(driver.aiPitting),
-                             space)
         end)
     end
+
+    ui.treeNode("[PIT STOPS]",
+                ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed,
+                function()
+        if driver.car.isAIControlled then
+            inLineBulletText("Pitting New Tyres", upperBool(driver.aiPitting),
+                             space)
+        end
+        inLineBulletText("In Pit Lane", upperBool(driver.car.isInPitlane), space)
+        inLineBulletText("In Pits", upperBool(driver.car.isInPit), space)
+        inLineBulletText("Pit Stop Count", driver.pitstopCount, space)
+        inLineBulletText("Last Pitted Lap", driver.lapPitted, space)
+        inLineBulletText("Last Pit Time", math.round(driver.pitlaneTime, 2),
+                         space)
+        inLineBulletText("Last Pit Stop Time",
+                         math.round(driver.pitstopTime, 2), space)
+    end)
 
     ui.treeNode("[TYRES]",
                 ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed,
@@ -82,6 +84,10 @@ function debugMenu(sim, rc, error)
                                                                   .compoundIndex),
                          space)
         inLineBulletText("Compound Index", driver.car.compoundIndex, space)
+        inLineBulletText("Compound Change",
+                         upperBool(driver.tyreCompoundChange), space)
+        inLineBulletText("Next Compound Index", driver.tyreCompoundNext, space)
+        inLineBulletText("Start Compound Index", driver.tyreCompoundStart, space)
         inLineBulletText("Tyre Laps", driver.tyreLaps, space)
         inLineBulletText("Tyre Life Average",
                          math.round(100 - (avg_tyre_wear * 100), 5), space)
