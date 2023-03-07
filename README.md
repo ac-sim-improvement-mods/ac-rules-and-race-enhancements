@@ -1,6 +1,4 @@
-### Assetto Corsa Rules and Race Enhancements Mod
-# RARE App
-
+### Assetto Corsa Rules and Race Enhancements Mod (RARE)
 A mod for Assetto Corsa that adds a variety of features and enhancements that will improve the users sim racing experience.
 
 ## Installation
