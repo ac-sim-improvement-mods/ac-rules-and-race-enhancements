@@ -1,6 +1,87 @@
 local connect = require 'rare/connection'
 require 'src/driver'
 
+local function setTyreCompoundColors(driver, compounds)
+    local compoundNames = {'C5', 'C4', 'C3', 'C2', 'C1'}
+    local extIni = ac.INIConfig.load(ac.getFolder(ac.FolderID.ContentCars) ..
+                                         "/" .. ac.getCarID(driver.index) ..
+                                         "/extension/ext_config.ini",
+                                     ac.INIFormat.Default)
+
+    for compound = 1, #compounds, 1 do
+        local compoundName = tostring(compoundNames[compounds[compound] + 1])
+        local compoundHardness = 'SOFT'
+
+        if compound == 1 then
+            compoundHardness = 'SOFT'
+        elseif compound == 2 then
+            compoundHardness = 'MEDIUM'
+        elseif compound == 3 then
+            compoundHardness = 'HARD'
+        else
+            compoundHardness = 'UNKNOWN'
+        end
+
+        extIni:setAndSave('TYRES_FX_CUSTOMTEXTURE_' .. compoundName,
+                          'TXDIFFUSE', compoundHardness .. '.dds')
+        extIni:setAndSave('TYRES_FX_CUSTOMTEXTURE_' .. compoundName, 'TXBLUR',
+                          compoundHardness .. '_Blur.dds')
+    end
+end
+
+local function setAIFuelTankMax(sim, driver)
+    local fuelcons = ac.INIConfig.carData(driver.index, 'fuel_cons.ini'):get(
+                         'FUEL_EVAL', 'KM_PER_LITER', 0.0)
+    local fuelload = 0
+    local fuelPerLap = (sim.trackLengthM / 1000) / (fuelcons - (fuelcons * 0.1))
+
+    if sim.raceSessionType == ac.SessionType.Race then
+        fuelload = ((ac.getSession(sim.currentSessionIndex).laps + 2) *
+                       fuelPerLap)
+    elseif sim.raceSessionType == ac.SessionType.Qualify then
+        fuelload = 3.5 * fuelPerLap
+    end
+
+    physics.setCarFuel(driver.index, fuelload)
+end
+
+local function setAITyreCompound(driver, compounds)
+    math.random()
+    for i = 0, math.random(0, 20) do
+        math.randomseed(os.time() * (i + 1))
+        math.random()
+    end
+
+    local tyrevalue = compounds[math.random(1, #compounds)]
+    physics.setAITyres(driver.index, tyrevalue)
+    driver.tyreCompoundStart = tyrevalue
+    ac.refreshCarColor(driver.index)
+end
+
+local function setAIAlternateLevel(driver, driverIni)
+    driver.aiLevel = driver.car.aiLevel
+    driver.aiThrottleLimitBase = math.lerp(0.5, 1,
+                                           1 - ((1 - driver.aiLevel) / 0.3))
+    driver.aiAggression = driver.car.aiAggression
+    driverIni:setAndSave('AI_' .. driver.index, 'AI_LEVEL', driver.car.aiLevel)
+    driverIni:setAndSave('AI_' .. driver.index, 'AI_THROTTLE_LIMIT',
+                         driver.aiThrottleLimitBase)
+    driverIni:setAndSave('AI_' .. driver.index, 'AI_AGGRESSION',
+                         driver.car.aiAggression)
+end
+
+local function getAIAlternateLevel(driver, driverIni)
+    driver.aiLevel = driverIni:get('AI_' .. driver.index, 'AI_LEVEL',
+                                   driver.car.aiLevel)
+    driver.aiThrottleLimitBase = driverIni:get('AI_' .. driver.index,
+                                               'AI_THROTTLE_LIMIT', math.lerp(
+                                                   0.5, 1, 1 -
+                                                       ((1 - driver.car.aiLevel) /
+                                                           0.3)))
+    driver.aiAggression = driverIni:get('AI_' .. driver.index, 'AI_AGGRESSION',
+                                        driver.car.aiAggression)
+end
+
 --- Initialize RARE and returns initialized state
 --- @return boolean
 function initialize(sim)
@@ -116,73 +197,42 @@ function initialize(sim)
                                             "/lua/RARE/data/drivers.ini",
                                         ac.INIFormat.Default)
 
+    local trackID = ac.getTrackID()
+    local trackIni = ac.INIConfig.load(ac.getFolder(ac.FolderID.ACApps) ..
+                                           "/lua/RARE/data/tracks/f1_preset.ini",
+                                       ac.INIFormat.Default)
+
+    local compounds = trackIni:get(trackID, 'COMPOUNDS', "1,2,3,4,5")
+    compounds = string.split(compounds, ',')
+    table.sort(compounds, function(a, b) return a < b end)
+
     for i = 0, ac.getSim().carsCount - 1 do
         DRIVERS[i] = Driver(i)
 
         local driver = DRIVERS[i]
 
+        setTyreCompoundColors(driver, compounds)
+
         if driver.car.isAIControlled then
-            local fuelcons =
-                ac.INIConfig.carData(driver.index, 'fuel_cons.ini'):get(
-                    'FUEL_EVAL', 'KM_PER_LITER', 0.0)
-            local fuelload = 0
-            local fuelPerLap = (sim.trackLengthM / 1000) /
-                                   (fuelcons - (fuelcons * 0.1))
-
-            if sim.raceSessionType == ac.SessionType.Race then
-                fuelload = ((ac.getSession(sim.currentSessionIndex).laps + 2) *
-                               fuelPerLap)
-            elseif sim.raceSessionType == ac.SessionType.Qualify then
-                fuelload = 3.5 * fuelPerLap
-            end
-
-            physics.setCarFuel(driver.index, fuelload)
+            setAIFuelTankMax(sim, driver)
+            setAITyreCompound(driver, compounds)
 
             if FIRST_LAUNCH then
-                driver.aiLevel = driver.car.aiLevel
+                setAIAlternateLevel(driver, driverIni)
+            else
+                getAIAlternateLevel(driver, driverIni)
+            end
+
+            if RARECONFIG.data.AI.AI_RELATIVE_SCALING == 1 then
+                driver.aiLevel = driver.aiLevel *
+                                     RARECONFIG.data.AI.AI_RELATIVE_LEVEL / 100
                 driver.aiThrottleLimitBase =
                     math.lerp(0.5, 1, 1 - ((1 - driver.aiLevel) / 0.3))
-                driver.aiAggression = driver.car.aiAggression
-
-                math.random()
-                for i = 0, math.random(0, 20) do
-                    math.randomseed(os.time() * (i + 1))
-                    math.random()
-                end
-                local tyrevalue = math.random(2, 4)
-                physics.setAITyres(driver.index, tyrevalue)
-                driver.tyreCompoundStart = tyrevalue
-                driverIni:setAndSave('AI_' .. driver.index, 'AI_LEVEL',
-                                     driver.car.aiLevel)
-                driverIni:setAndSave('AI_' .. driver.index, 'AI_THROTTLE_LIMIT',
-                                     driver.aiThrottleLimitBase)
-                driverIni:setAndSave('AI_' .. driver.index, 'AI_AGGRESSION',
-                                     driver.car.aiAggression)
-            else
-                driver.aiLevel = driverIni:get('AI_' .. driver.index,
-                                               'AI_LEVEL', driver.car.aiLevel)
-                driver.aiThrottleLimitBase = driverIni:get(
-                                                 'AI_' .. driver.index,
-                                                 'AI_THROTTLE_LIMIT', math.lerp(
-                                                     0.5, 1, 1 -
-                                                         ((1 -
-                                                             driver.car.aiLevel) /
-                                                             0.3)))
-                driver.aiAggression = driverIni:get('AI_' .. driver.index,
-                                                    'AI_AGGRESSION',
-                                                    driver.car.aiAggression)
             end
-        end
 
-        if RARECONFIG.data.AI.AI_RELATIVE_SCALING == 1 then
-            driver.aiLevel = driver.aiLevel *
-                                 RARECONFIG.data.AI.AI_RELATIVE_LEVEL / 100
-            driver.aiThrottleLimitBase =
-                math.lerp(0.5, 1, 1 - ((1 - driver.aiLevel) / 0.3))
+            physics.setAILevel(driver.index, driver.aiLevel)
+            physics.setAIAggression(driver.index, driver.aiAggression)
         end
-
-        physics.setAILevel(driver.index, driver.aiLevel)
-        physics.setAIAggression(driver.index, driver.aiAggression)
     end
 
     log("[Initialized]")
