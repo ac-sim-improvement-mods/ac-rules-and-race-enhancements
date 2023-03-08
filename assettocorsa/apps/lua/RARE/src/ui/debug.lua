@@ -86,6 +86,10 @@ function debugMenu(sim, rc, error)
         inLineBulletText("Compound Index", driver.car.compoundIndex, space)
         inLineBulletText("Compound Change",
                          upperBool(driver.tyreCompoundChange), space)
+        inLineBulletText("Compounds Available",
+                         "S:" .. driver.tyreCompoundsAvailable[1] .. " M:" ..
+                             driver.tyreCompoundsAvailable[2] .. " H:" ..
+                             driver.tyreCompoundsAvailable[3], space)
         inLineBulletText("Next Compound Index", driver.tyreCompoundNext, space)
         inLineBulletText("Start Compound Index", driver.tyreCompoundStart, space)
         inLineBulletText("Tyre Laps", driver.tyreLaps, space)

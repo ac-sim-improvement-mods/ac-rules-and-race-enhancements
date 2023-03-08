@@ -3,12 +3,9 @@
 function log(message) ac.log("[RARE] " .. message) end
 
 function randomizer(index, range)
+    math.randomseed(os.clock() * index)
     math.random()
-    for i = 0, math.random(index) do
-        math.randomseed(os.time() * (i + 1))
-        math.random()
-    end
-
+    for i = 0, math.random(index) do math.random() end
     return math.random(-range, range)
 end
 

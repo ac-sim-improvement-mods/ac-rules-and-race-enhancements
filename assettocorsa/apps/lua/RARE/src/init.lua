@@ -46,15 +46,14 @@ local function setAIFuelTankMax(sim, driver)
 end
 
 local function setAITyreCompound(driver, compounds)
+    math.randomseed(os.clock() * driver.index)
     math.random()
-    for i = 0, math.random(0, 20) do
-        math.randomseed(os.time() * (i + 1))
-        math.random()
-    end
+    for i = 0, math.random(0, math.random(3)) do math.random() end
 
     local tyrevalue = compounds[math.random(1, #compounds)]
     physics.setAITyres(driver.index, tyrevalue)
     driver.tyreCompoundStart = tyrevalue
+    driver.tyreCompoundsAvailable = compounds
     ac.refreshCarColor(driver.index)
 end
 

@@ -36,6 +36,7 @@ Driver = class('Driver', function(carIndex)
     local tyreCompoundStart = car.compoundIndex
     local tyreCompoundNext = car.compoundIndex
     local tyreCompoundChange = false
+    local tyreCompoundsAvailable = {1, 2, 3, 4, 5}
 
     local trackPosition = -1
     local carAhead = -1
@@ -64,6 +65,7 @@ Driver = class('Driver', function(carIndex)
     log("[Loaded] Driver [" .. index .. "] " .. name)
 
     return {
+        tyreCompoundsAvailable = tyreCompoundsAvailable,
         tyreCompoundStart = tyreCompoundStart,
         tyreCompoundNext = tyreCompoundNext,
         tyreCompoundChange = tyreCompoundChange,

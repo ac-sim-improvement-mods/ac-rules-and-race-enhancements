@@ -46,17 +46,15 @@ local function singleTyreWearBelowLimit(driver)
 end
 
 local function availableTyreCompound(driver)
-    local compoundsAvailable = {2, 3, 4}
-    local nextCompound = driver.car.compoundIndex
+    local compoundsAvailable = driver.tyreCompoundsAvailable
 
     if not driver.tyreCompoundChange then
         table.removeItem(compoundsAvailable, driver.car.compoundIndex)
-        nextCompound = compoundsAvailable[math.random(1, 2)]
-    else
-        nextCompound = compoundsAvailable[math.random(1, 3)]
     end
 
-    return nextCompound
+    math.randomseed(os.clock() * driver.index)
+    math.random()
+    return compoundsAvailable[math.random(1, #compoundsAvailable)]
 end
 
 --- Force AI driver to drive to the pits
@@ -77,8 +75,8 @@ local function pitStrategyCall(driver, forced)
     local lapsRemaining = lapsTotal - driver.lapsCompleted
 
     if not forced then
-        if (not carAhead.aiPitCall and driver.carAheadDelta < 1) or
-            lapsRemaining <= 5 or driver.car.splinePosition > 0.8 then
+        if lapsRemaining <= 7 or
+            (driver.carAheadDelta < 1 and carAhead.aiPitting) then
             trigger = false
         end
     end
@@ -107,6 +105,7 @@ function ai.pitNewTyres(driver)
             pitStrategyCall(driver, false)
         end
     else
+        if driver.car.isInPitlane then
         if driver.car.isInPit then pitstop(driver) end
     end
 end
