@@ -57,8 +57,22 @@ local function setAITyreCompound(driver, compounds)
     ac.refreshCarColor(driver.index)
 end
 
+local function getTrackTyreCompounds()
+    local trackID = ac.getTrackID()
+    local trackIni = ac.INIConfig.load(ac.getFolder(ac.FolderID.ACApps) ..
+                                           "/lua/RARE/data/tracks/f1_preset.ini",
+                                       ac.INIFormat.Default)
+
+    local compounds = string.split(trackIni:get(trackID, 'COMPOUNDS',
+                                                "1,2,3,4,5"), ',')
+    table.sort(compounds, function(a, b) return a < b end)
+    return compounds
+end
+
 local function setAIAlternateLevel(driver, driverIni)
     driver.aiLevel = driver.car.aiLevel
+    driver.aiBrakeHint = ac.INIConfig.carData(driver.index, 'ai.ini'):get(
+                             'PEDALS', 'BRAKE_HINT', 1)
     driver.aiThrottleLimitBase = math.lerp(0.5, 1,
                                            1 - ((1 - driver.aiLevel) / 0.3))
     driver.aiAggression = driver.car.aiAggression
@@ -196,25 +210,17 @@ function initialize(sim)
                                             "/lua/RARE/data/drivers.ini",
                                         ac.INIFormat.Default)
 
-    local trackID = ac.getTrackID()
-    local trackIni = ac.INIConfig.load(ac.getFolder(ac.FolderID.ACApps) ..
-                                           "/lua/RARE/data/tracks/f1_preset.ini",
-                                       ac.INIFormat.Default)
-
-    local compounds = trackIni:get(trackID, 'COMPOUNDS', "1,2,3,4,5")
-    compounds = string.split(compounds, ',')
-    table.sort(compounds, function(a, b) return a < b end)
+    local availableCompounds = getTrackTyreCompounds()
 
     for i = 0, ac.getSim().carsCount - 1 do
         DRIVERS[i] = Driver(i)
-
         local driver = DRIVERS[i]
 
-        setTyreCompoundColors(driver, compounds)
+        setTyreCompoundColors(driver, availableCompounds)
 
         if driver.car.isAIControlled then
             setAIFuelTankMax(sim, driver)
-            setAITyreCompound(driver, compounds)
+            setAITyreCompound(driver, availableCompounds)
 
             if FIRST_LAUNCH then
                 setAIAlternateLevel(driver, driverIni)
@@ -229,7 +235,7 @@ function initialize(sim)
                     math.lerp(0.5, 1, 1 - ((1 - driver.aiLevel) / 0.3))
             end
 
-            physics.setAILevel(driver.index, driver.aiLevel)
+            physics.setAILevel(driver.index, 1)
             physics.setAIAggression(driver.index, driver.aiAggression)
         end
     end

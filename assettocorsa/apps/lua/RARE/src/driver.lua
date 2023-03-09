@@ -19,6 +19,8 @@ Driver = class('Driver', function(carIndex)
     local aiSpeedUp = false
     local aiMgukDelivery = 0
     local aiMgukRecovery = 0
+    local aiBaseBrakeHint = 1
+    local aiBrakeHint = 1
 
     local outLap = false
     local flyingLap = false
@@ -32,11 +34,13 @@ Driver = class('Driver', function(carIndex)
     local pitstop = false
     local pitted = false
     local lapPitted = 0
+    local pittedLaps = {}
     local tyreLaps = 0
     local tyreCompoundStart = car.compoundIndex
     local tyreCompoundNext = car.compoundIndex
     local tyreCompoundChange = false
     local tyreCompoundsAvailable = {1, 2, 3, 4, 5}
+    local tyreStints = {}
 
     local trackPosition = -1
     local carAhead = -1
@@ -65,6 +69,10 @@ Driver = class('Driver', function(carIndex)
     log("[Loaded] Driver [" .. index .. "] " .. name)
 
     return {
+        pittedLaps = pittedLaps,
+        tyreStints = tyreStints,
+        aiBrakeHint = aiBrakeHint,
+        aiBaseBrakeHint = aiBaseBrakeHint,
         tyreCompoundsAvailable = tyreCompoundsAvailable,
         tyreCompoundStart = tyreCompoundStart,
         tyreCompoundNext = tyreCompoundNext,

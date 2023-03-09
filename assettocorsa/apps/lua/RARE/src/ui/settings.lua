@@ -232,9 +232,7 @@ function settingsMenu(sim)
                         if ui.button("FORCE FOCUSED AI TO PIT NOW",
                                      vec2(ui.windowWidth() - 77, 25),
                                      buttonFlags) then
-                            driver.aiPrePitFuel = driver.car.fuel
-                            physics.setCarFuel(driver.index, 0.1)
-                            driver.aiPitCall = true
+                            physics.setAIPitStopRequest(driver.index, true)
                         end
 
                         -- if ui.button("Awaken Car", vec2(ui.windowWidth()-77,25), ui.ButtonFlags.None) then
@@ -254,9 +252,8 @@ function settingsMenu(sim)
                             for i = 0, #DRIVERS do
                                 local driver = DRIVERS[i]
                                 if driver.car.isAIControlled then
-                                    driver.aiPrePitFuel = driver.car.fuel
-                                    physics.setCarFuel(driver.index, 0.1)
-                                    driver.aiPitCall = true
+                                    physics.setAIPitStopRequest(driver.index,
+                                                                true)
                                 end
                             end
                         end
