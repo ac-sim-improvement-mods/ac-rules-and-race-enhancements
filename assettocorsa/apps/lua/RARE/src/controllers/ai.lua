@@ -45,16 +45,21 @@ local function singleTyreWearBelowLimit(driver)
     end
 end
 
-local function availableTyreCompound(driver)
+local function getNextTyreCompound(driver)
     local compoundsAvailable = driver.tyreCompoundsAvailable
-
-    if not driver.tyreCompoundChange then
-        table.removeItem(compoundsAvailable, driver.car.compoundIndex)
-    end
+    local compoundNext = driver.car.compoundIndex
 
     math.randomseed(os.clock() * driver.index)
     math.random()
-    return compoundsAvailable[math.random(1, #compoundsAvailable)]
+
+    if not driver.tyreCompoundChange then
+        table.removeItem(compoundsAvailable, driver.car.compoundIndex)
+        compoundNext = compoundsAvailable[math.random(1, #compoundsAvailable)]
+    else
+        compoundNext = compoundsAvailable[math.random(1, #compoundsAvailable)]
+    end
+
+    return compoundNext
 end
 
 --- Force AI driver to drive to the pits
@@ -62,7 +67,7 @@ end
 local function triggerPitStopRequest(driver, trigger)
     physics.setAIPitStopRequest(driver.index, trigger)
     driver.aiPitting = trigger
-    if trigger then driver.tyreCompoundNext = availableTyreCompound(driver) end
+    if trigger then driver.tyreCompoundNext = getNextTyreCompound(driver) end
 end
 
 --- Determine if going to the pits is advantageous or not
@@ -87,11 +92,25 @@ end
 ---@param driver Driver
 local function pitstop(driver)
     if driver.aiPitting then
+        if not driver.tyreCompoundChange and driver.tyreCompoundNext ~=
+            driver.tyreCompoundStart then
+            driver.tyreCompoundChange = true
+        end
+
+        driver.tyreStints[#driver.tyreStints] = {
+            ac.getTyresName(driver.index, driver.car.compoundIndex),
+            driver.tyreLaps
+        }
+
+        table.insert(driver.tyreStints, {
+            ac.getTyresName(driver.index, driver.tyreCompoundNext), 0
+        })
+
         driver.tyreLaps = 0
-        driver.tyreCompoundChange = true
         physics.setAITyres(driver.index, driver.tyreCompoundNext)
     end
 
+    physics.setCarFuel(driver.index, driver.aiPrePitFuel)
     driver.aiPitting = false
 end
 
@@ -105,7 +124,8 @@ function ai.pitNewTyres(driver)
             pitStrategyCall(driver, false)
         end
     else
-        if driver.car.isInPitlane then
+        if driver.car.isInPitlane and not driver.car.isInPit and
+            driver.aiPitting then driver.aiPrePitFuel = driver.car.fuel end
         if driver.car.isInPit then pitstop(driver) end
     end
 end
@@ -221,78 +241,54 @@ function ai.qualifying(driver)
     end
 end
 
+local function altAIAggression(driver, upcomingTurn)
+    local delta = driver.carAheadDelta
+
+    if upcomingTurn.x > 150 and delta < 0.5 then
+        return 1
+    elseif delta < 1 then
+        return driver.aiAggression
+    else
+        return 0
+    end
+end
+
+local function altAIBrakeHint(driver, upcomingTurn)
+    local delta = driver.carAheadDelta
+    local brakeHint = driver.aiBaseBrakeHint
+
+    if upcomingTurn.x > 150 and delta < 0.15 then
+        return brakeHint + (brakeHint * 0.05)
+    elseif upcomingTurn.x > 150 and delta < 0.4 then
+        return brakeHint + (brakeHint * 0.10)
+    elseif not (upcomingTurn.x > 0) and delta < 0.75 then
+        return brakeHint
+    else
+        return brakeHint - (brakeHint * 0.05)
+    end
+end
+
+local function altAIThrottleLimit(driver, upcomingTurn)
+    if upcomingTurn.x > 50 then
+        return math.applyLag(driver.aiThrottleLimit, 1, 0.99,
+                             ac.getScriptDeltaT())
+    else
+        return math.applyLag(driver.aiThrottleLimit, driver.aiThrottleLimitBase,
+                             0.96, ac.getScriptDeltaT())
+    end
+end
+
 --- Variable aggression function for AI drivers
 --- @param driver Driver
-function ai.alternateAttack(driver)
-    local override = AI_COMP_OVERRIDE
-    local delta = driver.carAheadDelta
-    local speedMod = math.clamp(200 / (driver.car.speedKmh or 200), 1, 2)
-    local maxAggression = driver.aiAggression
+function ai.alternateLevel(driver)
     local upcomingTurn = ac.getTrackUpcomingTurn(driver.index)
-    local upcomingTurnDistance = upcomingTurn.x
-    local upcomingTurnAngle = upcomingTurn.y
 
-    -- if upcomingTurnDistance >= 250 then
-    --     maxAggression = maxAggression + (maxAggression*0.25)
-    -- else
-    --     if upcomingTurnAngle < 90 then
-    --         maxAggression = maxAggression / speedMod
-    --     end
-    -- end
+    local aiAggression = altAIAggression(driver, upcomingTurn)
+    driver.aiBrakeHint = altAIBrakeHint(driver, upcomingTurn)
+    driver.aiThrottleLimit = altAIThrottleLimit(driver, upcomingTurn)
 
-    if upcomingTurnDistance > 200 and delta < 0.5 then
-        physics.setAIAggression(driver.index, 1)
-    elseif delta > 0.5 then
-        physics.setAIAggression(driver.index, 0.25)
-    else
-        physics.setAIAggression(driver.index, 0)
-    end
-
-    local carAhead = ac.getCar(driver.carAhead)
-    local turnType = upcomingTurnAngle < 0 and 1 or -1
-    driver.aiSplineOffset = 0.5 * turnType
-
-    if upcomingTurnDistance > 150 and delta > 0.05 and delta < 0.35 and
-        driver.car.speedKmh > 100 and carAhead.speedKmh > 100 then
-        physics.setAISplineOffset(driver.carAhead, driver.aiSplineOffset)
-        physics.setAISplineOffset(driver.index, driver.aiSplineOffset)
-        physics.setAIAggression(driver.index, 1)
-    else
-        physics.setAISplineOffset(driver.index, 0)
-    end
-
-    if upcomingTurnDistance > 50 then
-        driver.aiThrottleLimit = math.applyLag(driver.aiThrottleLimit, 1, 0.99,
-                                               ac.getScriptDeltaT())
-    else
-        if not override then
-            driver.aiThrottleLimit = math.applyLag(driver.aiThrottleLimit,
-                                                   driver.aiThrottleLimitBase,
-                                                   0.96, ac.getScriptDeltaT())
-        else
-            driver.aiThrottleLimit = AI_THROTTLE_LIMIT
-        end
-    end
-    if upcomingTurnDistance < 100 and upcomingTurnDistance < 0 and
-        upcomingTurnAngle > 30 then
-        if delta < 1 then
-            physics.setAILevel(driver.index,
-                               math.clamp(driver.aiLevel, 0, 0.9) + 0.1)
-        else
-            if not override then
-                physics.setAILevel(driver.index, driver.aiLevel)
-            else
-                physics.setAILevel(driver.index, AI_LEVEL)
-            end
-        end
-    else
-        if delta < 1 then
-            physics.setAILevel(driver.index, 1)
-        else
-            physics.setAILevel(driver.index, 0.9)
-        end
-    end
-
+    physics.setAIAggression(driver.index, aiAggression)
+    physics.setAIBrakeHint(driver.index, driver.aiBrakeHint)
     physics.setAIThrottleLimit(driver.index, driver.aiThrottleLimit)
 end
 
@@ -398,7 +394,7 @@ end
 
 function ai.controller(aiRules, driver)
     if aiRules.AI_FORCE_PIT_TYRES == 1 then ai.pitNewTyres(driver) end
-    if aiRules.AI_ALTERNATE_LEVEL == 1 then ai.alternateAttack(driver) end
+    if aiRules.AI_ALTERNATE_LEVEL == 1 then ai.alternateLevel(driver) end
     if aiRules.AI_MGUK_CONTROL == 1 then ai.mgukController(driver) end
 end
 
