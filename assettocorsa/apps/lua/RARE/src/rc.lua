@@ -110,10 +110,31 @@ local function getTrackOrder(drivers)
     return #trackOrder
 end
 
+local function setAIFuelTankMax(sim, driver)
+    local fuelcons = ac.INIConfig.carData(driver.index, 'fuel_cons.ini'):get(
+                         'FUEL_EVAL', 'KM_PER_LITER', 0.0)
+    local fuelload = 0
+    local fuelPerLap = (sim.trackLengthM / 1000) / (fuelcons - (fuelcons * 0.1))
+
+    if sim.raceSessionType == ac.SessionType.Race then
+        fuelload = ((ac.getSession(sim.currentSessionIndex).laps + 2) *
+                       fuelPerLap)
+    elseif sim.raceSessionType == ac.SessionType.Qualify then
+        fuelload = 3.5 * fuelPerLap
+    end
+
+    physics.setCarFuel(driver.index, fuelload)
+end
+
 --- Race Control for qualify sessions
 --- @param config RARECONFIG.data
 --- @param driver Driver
-local function qualifySession(racecontrol, config, driver) end
+local function qualifySession(racecontrol, config, driver)
+    if racecontrol.sim.sessionTimeLeft <= 0 then
+        physics.setAIPitStopRequest(driver.index, false)
+        ac.log('sessionover')
+    end
+end
 
 --- Race Control for practice sessions
 --- @param config RARECONFIG.data
@@ -126,6 +147,13 @@ local function practiceSession(racecontrol, config, driver) end
 local function raceSession(lastUpdate, racecontrol, config, driver)
     local raceRules = config.RULES
     local aiRules = config.AI
+
+    if driver.car.isAIControlled then
+        if racecontrol.sim.isInMainMenu then
+            setAIFuelTankMax(racecontrol.sim, driver)
+            physics.setAIPitStopRequest(driver.index, false)
+        end
+    end
 
     -- notifications handler
     if lastUpdate then
