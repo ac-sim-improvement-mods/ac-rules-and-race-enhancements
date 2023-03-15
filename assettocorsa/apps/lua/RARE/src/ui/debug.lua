@@ -49,13 +49,6 @@ function debugMenu(sim, rc, error)
                              "[" .. math.round(driver.aiBaseBrakeHint * 100, 2) ..
                                  "] " .. math.round(driver.aiBrakeHint * 100, 2),
                              space)
-            inLineBulletText("Tyre Life Avg Limit", RARECONFIG.data.AI
-                                 .AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom ..
-                                 " %", space, driver)
-            inLineBulletText("Tyre Life Single Limit", RARECONFIG.data.AI
-                                 .AI_SINGLE_TYRE_LIFE +
-                                 driver.aiTyreSingleRandom .. " %", space,
-                             driver)
         end)
     end
 
@@ -110,19 +103,27 @@ function debugMenu(sim, rc, error)
                                                            driver.tyreCompoundStart),
                          space)
         inLineBulletText("Tyre Laps", driver.tyreLaps, space)
+
+        inLineBulletText("Tyre Life Avg Limit", RARECONFIG.data.AI
+                             .AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom .. " %",
+                         space, driver)
+        inLineBulletText("Tyre Life Single Limit", RARECONFIG.data.AI
+                             .AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom ..
+                             " %", space, driver)
+
         inLineBulletText("Tyre Life Average",
                          math.round(100 - (avg_tyre_wear * 100), 5), space)
         inLineBulletText("Tyre Life [FL]", math.round(
-                             100 - (driver.car.wheels[0].tyreWear * 100), 5),
+                             100 - (driver.car.wheels[0].tyreWear * 100), 1),
                          space)
         inLineBulletText("Tyre Life [RL]", math.round(
-                             100 - (driver.car.wheels[2].tyreWear * 100), 5),
+                             100 - (driver.car.wheels[2].tyreWear * 100), 1),
                          space)
         inLineBulletText("Tyre Life [FR]", math.round(
-                             100 - (driver.car.wheels[1].tyreWear * 100), 5),
+                             100 - (driver.car.wheels[1].tyreWear * 100), 1),
                          space)
         inLineBulletText("Tyre Life [RR]", math.round(
-                             100 - (driver.car.wheels[3].tyreWear * 100), 5),
+                             100 - (driver.car.wheels[3].tyreWear * 100), 1),
                          space)
     end)
 

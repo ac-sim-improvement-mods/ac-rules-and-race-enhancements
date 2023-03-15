@@ -29,22 +29,6 @@ local function setTyreCompoundColors(driver, compounds)
     end
 end
 
-local function setAIFuelTankMax(sim, driver)
-    local fuelcons = ac.INIConfig.carData(driver.index, 'fuel_cons.ini'):get(
-                         'FUEL_EVAL', 'KM_PER_LITER', 0.0)
-    local fuelload = 0
-    local fuelPerLap = (sim.trackLengthM / 1000) / (fuelcons - (fuelcons * 0.1))
-
-    if sim.raceSessionType == ac.SessionType.Race then
-        fuelload = ((ac.getSession(sim.currentSessionIndex).laps + 2) *
-                       fuelPerLap)
-    elseif sim.raceSessionType == ac.SessionType.Qualify then
-        fuelload = 3.5 * fuelPerLap
-    end
-
-    physics.setCarFuel(driver.index, fuelload)
-end
-
 local function setAITyreCompound(driver, compounds)
     math.randomseed(os.clock() * driver.index)
     math.random()
@@ -219,7 +203,6 @@ function initialize(sim)
         setTyreCompoundColors(driver, availableCompounds)
 
         if driver.car.isAIControlled then
-            setAIFuelTankMax(sim, driver)
             setAITyreCompound(driver, availableCompounds)
 
             if FIRST_LAUNCH then
