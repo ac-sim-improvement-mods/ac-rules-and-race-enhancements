@@ -3,17 +3,17 @@ local connect = require 'rare/connection'
 local drs = require 'src/controllers/drs'
 local vsc = require 'src/controllers/vsc'
 local ai = require 'src/controllers/ai'
-local popup = require 'src/ui/notifications'
+local notifications = require 'src/ui/notifications'
 
 local rc = {}
 
 DRIVERS = {}
 
-function readOnly( t )
+function readOnly(t)
     local proxy = {}
     local mt = {
         __index = t,
-        __newindex = function ( t, k, v )
+        __newindex = function(t, k, v)
             error("attempt to update a read-only value", 2)
         end
     }
@@ -37,24 +37,22 @@ rc.WeekendSessions = {
     Q2 = 4,
     Q3 = 5,
     Race = 6
-} 
+}
 
 ---Returns leaders completed lap count.
 ---@return lapCount number
 local function getLeaderCompletedLaps(sim)
-    for i=0, sim.carsCount - 1 do
+    for i = 0, sim.carsCount - 1 do
         local car = ac.getCar(i)
 
-        if car.racePosition == 1 then
-            return car.lapCount
-        end
+        if car.racePosition == 1 then return car.lapCount end
     end
 end
 
 ---Returns whether DRS is enabled or not
 ---@param config RARECONFIG.data
 ---@return drsEnabled boolean
-local function isDrsEnabled(config,leaderCompletedLaps)
+local function isDrsEnabled(config, leaderCompletedLaps)
     local drsActivationLap = config.RULES.DRS_ACTIVATION_LAP
     if leaderCompletedLaps + 1 >= drsActivationLap then
         return true, drsActivationLap
@@ -66,12 +64,12 @@ end
 ---Returns whether the track is too wet for DRS enabled or not
 ---@param config RARECONFIG.data
 ---@return wetTrack boolean
-local function isTrackWet(config,sim)
-    local wet_limit = config.RULES.DRS_WET_LIMIT/100
+local function isTrackWet(config, sim)
+    local wet_limit = config.RULES.DRS_WET_LIMIT / 100
     local track_wetness = sim.rainWetness
     local track_puddles = sim.rainWater
 
-    local total_wetness = ((track_wetness/5) + (track_puddles*10))/2
+    local total_wetness = ((track_wetness / 5) + (track_puddles * 10)) / 2
 
     if total_wetness >= wet_limit then
         return true
@@ -85,18 +83,20 @@ end
 --- @param drivers DRIVERS
 local function getTrackOrder(drivers)
     local trackOrder = {}
-    for index=0, #drivers do
+    for index = 0, #drivers do
         if not drivers[index].car.isInPitlane then
-            table.insert(trackOrder,drivers[index])
+            table.insert(trackOrder, drivers[index])
         else
             drivers[index].trackPosition = -1
         end
     end
 
     -- Sort drivers by position on track, and ignore drivers in the pits
-    table.sort(trackOrder, function (a,b) return a.car.splinePosition > b.car.splinePosition end)
+    table.sort(trackOrder, function(a, b)
+        return a.car.splinePosition > b.car.splinePosition
+    end)
 
-    for trackPos=1, #trackOrder do
+    for trackPos = 1, #trackOrder do
         local index = trackOrder[trackPos].index
         drivers[index].trackPosition = trackPos
 
@@ -110,78 +110,80 @@ local function getTrackOrder(drivers)
     return #trackOrder
 end
 
---- Race Control for race sessions
---- @param config RARECONFIG.data
---- @param driver Driver
-local function raceSession(lastUpdate,racecontrol,config,driver)
-        if lastUpdate then
-            if not lastUpdate.drsEnabled and racecontrol.drsEnabled then
-                popup.notification("DRS ENABLED")
-            end
-
-            if not lastUpdate.wetTrack and racecontrol.wetTrack then
-                popup.notification("DRS DISABLED - WET TRACK")
-            end
-
-            if lastUpdate.wetTrack and not racecontrol.wetTrack then
-                popup.notification("DRS ENABLED IN 2 LAPS")
-            end
-        end
-
-        if driver.car.isAIControlled then
-            if config.AI.AI_FORCE_PIT_TYRES == 1 then ai.pitNewTires(driver) end
-            if config.AI.AI_ALTERNATE_LEVEL == 1 then ai.alternateAttack(driver)  end
-        end
-
-        if config.RULES.DRS_RULES == 1 then drs.controller(driver,racecontrol.drsEnabled) else driver.drsAvailable = true end
-
-        return driver
-end
-
 --- Race Control for qualify sessions
 --- @param config RARECONFIG.data
 --- @param driver Driver
-local function qualifySession(racecontrol,config,driver)
-    if driver.car.isAIControlled then
-        --ai.qualifying(driver)
-        if config.AI.AI_ALTERNATE_LEVEL == 1 then ai.alternateAttack(driver)  end
-    end
-end
+local function qualifySession(racecontrol, config, driver) end
 
 --- Race Control for practice sessions
 --- @param config RARECONFIG.data
 --- @param driver Driver
-local function practiceSession(racecontrol,config,driver)
+local function practiceSession(racecontrol, config, driver) end
 
+--- Race Control for race sessions
+--- @param config RARECONFIG.data
+--- @param driver Driver
+local function raceSession(lastUpdate, racecontrol, config, driver)
+    local raceRules = config.RULES
+    local aiRules = config.AI
+
+    -- notifications handler
+    if lastUpdate then
+        if not lastUpdate.drsEnabled and racecontrol.drsEnabled then
+            notifications.popup("DRS ENABLED")
+        end
+
+        if not lastUpdate.wetTrack and racecontrol.wetTrack then
+            notifications.popup("DRS DISABLED - WET TRACK")
+        end
+
+        if lastUpdate.wetTrack and not racecontrol.wetTrack then
+            notifications.popup("DRS ENABLED IN 2 LAPS")
+        end
+    end
+
+    if raceRules.DRS_RULES == 1 then
+        drs.controller(racecontrol.sim, driver, racecontrol.drsEnabled)
+    else
+        driver.drsAvailable = true
+    end
+
+    if driver.car.isAIControlled then ai.controller(aiRules, driver) end
+
+    return driver
 end
 
 --- Switch for runnimg the different kinds of sessioms
 --- @param sessionType ac.SessionTypes
 --- @param config RARECONFIG.data
 --- @param driver Driver
-local function run(lastUpdate,racecontrol,sessionType,driver)
+local function runSession(lastUpdate, racecontrol, sessionType, driver)
     local config = RARECONFIG.data
 
     if sessionType == ac.SessionType.Race then
-        raceSession(lastUpdate,racecontrol,config,driver)
+        raceSession(lastUpdate, racecontrol, config, driver)
     elseif sessionType == ac.SessionType.Qualify then
-        qualifySession(racecontrol,config,driver)
+        qualifySession(racecontrol, config, driver)
     elseif sessionType == ac.SessionType.Practice then
-        practiceSession(racecontrol,config,driver)
+        practiceSession(racecontrol, config, driver)
     end
 
     return driver
 end
 
-local function update(sim,drivers)
-    local session = ac.getSession(sim.currentSessionIndex)
+local function update(sim, drivers)
     local config = RARECONFIG.data
     local carsOnTrackCount = getTrackOrder(drivers)
     local leaderCompletedLaps = getLeaderCompletedLaps(sim)
-    local drsEnabled,drsEnabledLap = isDrsEnabled(config,leaderCompletedLaps)
-    local wetTrack = isTrackWet(config,sim)
+    local drsEnabled, drsEnabledLap = isDrsEnabled(config, leaderCompletedLaps)
+    local wetTrack = isTrackWet(config, sim)
+    local session = nil
 
-    return readOnly{
+    if not sim.isOnlineRace then
+        session = ac.getSession(sim.currentSessionIndex)
+    end
+
+    return readOnly {
         sim = sim,
         session = session,
         carsOnTrackCount = carsOnTrackCount,
@@ -196,15 +198,16 @@ local racecontrol = nil
 
 --- Updates and returns race control variables
 --- @return racecontrol rc
-function rc.getRaceControl(dt,sim)
+function rc.getRaceControl(dt, sim)
     local drivers = DRIVERS
     local lastUpdate = racecontrol
-    racecontrol = update(sim,drivers)
+    racecontrol = update(sim, drivers)
 
-    for i=0, #drivers do
+    for i = 0, #drivers do
         local driver = drivers[i]
-        driver:update(dt,sim)
-        DRIVERS[i] = run(lastUpdate,racecontrol,sim.raceSessionType,driver)
+        driver:update(dt, sim)
+        DRIVERS[i] = runSession(lastUpdate, racecontrol, sim.raceSessionType,
+                                driver)
         connect.storeDriverData(driver)
     end
 

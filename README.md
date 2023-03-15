@@ -1,2 +1,7 @@
-# Assetto Corsa Rules and Race Enhancements Mod
-A mod for Assetto Corsa that adds F1 DRS rules, AI pit for new tyres, tyre strategies for AI, and enhances AI for races, qualifying, and practices.
+### Assetto Corsa Rules and Race Enhancements Mod (RARE)
+A mod for Assetto Corsa that adds a variety of features and enhancements that will improve the users sim racing experience.
+
+## Installation
+1. Clone repo
+2. Edit build-install.ps1 to point to local Assetto Corsa directory
+3. Run build-install.ps1
