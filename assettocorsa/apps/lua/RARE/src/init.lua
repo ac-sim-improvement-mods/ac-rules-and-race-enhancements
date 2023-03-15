@@ -1,33 +1,4 @@
-local connect = require 'rare/connection'
 require 'src/driver'
-
-local function setTyreCompoundColors(driver, compounds)
-    local compoundNames = {'C5', 'C4', 'C3', 'C2', 'C1'}
-    local extIni = ac.INIConfig.load(ac.getFolder(ac.FolderID.ContentCars) ..
-                                         "/" .. ac.getCarID(driver.index) ..
-                                         "/extension/ext_config.ini",
-                                     ac.INIFormat.Default)
-
-    for compound = 1, #compounds, 1 do
-        local compoundName = tostring(compoundNames[compounds[compound] + 1])
-        local compoundHardness = 'SOFT'
-
-        if compound == 1 then
-            compoundHardness = 'SOFT'
-        elseif compound == 2 then
-            compoundHardness = 'MEDIUM'
-        elseif compound == 3 then
-            compoundHardness = 'HARD'
-        else
-            compoundHardness = 'UNKNOWN'
-        end
-
-        extIni:setAndSave('TYRES_FX_CUSTOMTEXTURE_' .. compoundName,
-                          'TXDIFFUSE', compoundHardness .. '.dds')
-        extIni:setAndSave('TYRES_FX_CUSTOMTEXTURE_' .. compoundName, 'TXBLUR',
-                          compoundHardness .. '_Blur.dds')
-    end
-end
 
 local function setAIFuelTankMax(sim, driver)
     local fuelcons = ac.INIConfig.carData(driver.index, 'fuel_cons.ini'):get(
@@ -49,23 +20,29 @@ local function setAITyreCompound(driver, compounds)
     math.randomseed(os.clock() * driver.index)
     math.random()
     for i = 0, math.random(0, math.random(3)) do math.random() end
-
     local tyrevalue = compounds[math.random(1, #compounds)]
     physics.setAITyres(driver.index, tyrevalue)
     driver.tyreCompoundStart = tyrevalue
     driver.tyreCompoundsAvailable = compounds
-    ac.refreshCarColor(driver.index)
 end
 
-local function getTrackTyreCompounds()
+local function getTrackTyreCompounds(driver)
     local trackID = ac.getTrackID()
-    local trackIni = ac.INIConfig.load(ac.getFolder(ac.FolderID.ACApps) ..
-                                           "/lua/RARE/data/tracks/f1_preset.ini",
-                                       ac.INIFormat.Default)
+    local carID = ac.getCarID(driver.index)
+    local compoundsIni = ac.INIConfig.load(
+                             ac.getFolder(ac.FolderID.ACApps) ..
+                                 "/lua/RARE/data/tyre_compounds/" .. carID ..
+                                 ".ini", ac.INIFormat.Default)
 
-    local compounds = string.split(trackIni:get(trackID, 'COMPOUNDS',
-                                                "1,2,3,4,5"), ',')
+    driver.tyreCompoundMaterialTarget = compoundsIni:get('COMPOUNDS',
+                                                         'COMPOUND_TARGET_MATERIAL',
+                                                         "Unknown Compound Material Target")
+
+    local compounds = string.split(compoundsIni:get(trackID, 'COMPOUNDS', "0"),
+                                   ',')
     table.sort(compounds, function(a, b) return a < b end)
+
+    log(driver.name .. " has " .. #compounds .. " compounds available")
     return compounds
 end
 
@@ -95,15 +72,50 @@ local function getAIAlternateLevel(driver, driverIni)
                                         driver.car.aiAggression)
 end
 
---- Initialize RARE and returns initialized state
---- @return boolean
-function initialize(sim)
-    if FIRST_LAUNCH then
-        log("First initialization")
-    else
-        log("Reinitializing")
+local function createDrivers(sim)
+    local driverCount = ac.getSim().carsCount
+    local driverIni = ac.INIConfig.load(ac.getFolder(ac.FolderID.ACApps) ..
+                                            "/lua/RARE/data/drivers.ini",
+                                        ac.INIFormat.Default)
+
+    for i = 0, driverCount - 1 do
+        DRIVERS[i] = Driver(i)
+        local driver = DRIVERS[i]
+
+        driver.tyreCompoundsAvailable = getTrackTyreCompounds(driver)
+        -- setTyreCompoundColors(driver, driver.tyreCompoundsAvailable)
+
+        if driver.car.isAIControlled then
+            setAIFuelTankMax(sim, driver)
+            setAITyreCompound(driver, driver.tyreCompoundsAvailable)
+
+            if FIRST_LAUNCH then
+                setAIAlternateLevel(driver, driverIni)
+            else
+                getAIAlternateLevel(driver, driverIni)
+            end
+
+            if RARECONFIG.data.AI.AI_RELATIVE_SCALING == 1 then
+                driver.aiLevel = driver.aiLevel *
+                                     RARECONFIG.data.AI.AI_RELATIVE_LEVEL / 100
+                driver.aiThrottleLimitBase =
+                    math.lerp(0.5, 1, 1 - ((1 - driver.aiLevel) / 0.3))
+            end
+
+            physics.setAILevel(driver.index, 1)
+            physics.setAIAggression(driver.index, driver.aiAggression)
+        end
     end
 
+    log("Created " .. driverCount .. " drivers")
+end
+
+local function initDataDir()
+    local rareDataDir = ac.getFolder(ac.FolderID.ACApps) .. "/lua/RARE/data"
+    if not io.dirExists(rareDataDir) then io.createDir(rareDataDir) end
+end
+
+local function cspVersionCheck()
     log(SCRIPT_NAME .. " version: " .. SCRIPT_VERSION)
     log(SCRIPT_NAME .. " version: " .. SCRIPT_VERSION_CODE)
     log("CSP version: " .. ac.getPatchVersionCode())
@@ -116,7 +128,9 @@ function initialize(sim)
                 "(" .. CSP_MIN_VERSION_CODE .. ")" .. " required!")
         return false
     end
+end
 
+local function loadSettings(sim)
     local configFile = "settings.ini"
     try(function()
         RARECONFIG = MappedConfig(ac.getFolder(ac.FolderID.ACApps) ..
@@ -192,8 +206,13 @@ function initialize(sim)
         return false
     end, function() end)
 
-    if RARECONFIG.data.MISC.PHYSICS_REBOOT == 1 then setTrackSurfaces() end
+end
 
+local function checkPhysics()
+    if RARECONFIG.data.MISC.PHYSICS_REBOOT == 1 then setTrackSurfaces() end
+end
+
+local function loadDRSZones()
     -- Get DRS Zones from track data folder
     try(function()
         DRS_ZONES = DrsZones("drs_zones.ini")
@@ -202,43 +221,19 @@ function initialize(sim)
         log("[WARN]" .. err)
         log("[WARN] Failed to load DRS Zones!")
     end, function() end)
+end
 
-    if not io.dirExists(ac.getFolder(ac.FolderID.ACApps) .. "/lua/RARE/data") then
-        io.createDir(ac.getFolder(ac.FolderID.ACApps) .. "/lua/RARE/data")
-    end
-    local driverIni = ac.INIConfig.load(ac.getFolder(ac.FolderID.ACApps) ..
-                                            "/lua/RARE/data/drivers.ini",
-                                        ac.INIFormat.Default)
+--- Initialize RARE and returns initialized state
+--- @return boolean
+function initialize(sim)
+    log(FIRST_LAUNCH and "First initialization" or "Reinitializing")
 
-    local availableCompounds = getTrackTyreCompounds()
-
-    for i = 0, ac.getSim().carsCount - 1 do
-        DRIVERS[i] = Driver(i)
-        local driver = DRIVERS[i]
-
-        setTyreCompoundColors(driver, availableCompounds)
-
-        if driver.car.isAIControlled then
-            setAIFuelTankMax(sim, driver)
-            setAITyreCompound(driver, availableCompounds)
-
-            if FIRST_LAUNCH then
-                setAIAlternateLevel(driver, driverIni)
-            else
-                getAIAlternateLevel(driver, driverIni)
-            end
-
-            if RARECONFIG.data.AI.AI_RELATIVE_SCALING == 1 then
-                driver.aiLevel = driver.aiLevel *
-                                     RARECONFIG.data.AI.AI_RELATIVE_LEVEL / 100
-                driver.aiThrottleLimitBase =
-                    math.lerp(0.5, 1, 1 - ((1 - driver.aiLevel) / 0.3))
-            end
-
-            physics.setAILevel(driver.index, 1)
-            physics.setAIAggression(driver.index, driver.aiAggression)
-        end
-    end
+    cspVersionCheck()
+    loadSettings(sim)
+    checkPhysics()
+    loadDRSZones()
+    initDataDir()
+    createDrivers(sim)
 
     log("[Initialized]")
     FIRST_LAUNCH = false

@@ -1,7 +1,7 @@
 SCRIPT_NAME = "Rules and Race Enhancements"
 SCRIPT_SHORT_NAME = "RARE"
-SCRIPT_VERSION = "1.0.8.5"
-SCRIPT_VERSION_CODE = 10856
+SCRIPT_VERSION = "1.0.9.9.preview8"
+SCRIPT_VERSION_CODE = 10998
 SCRIPT_BUILD_DATE = "2022-11-28"
 CSP_MIN_VERSION_CODE = 2144
 CSP_MIN_VERSION = "1.79"
@@ -15,6 +15,7 @@ require 'src/ui/notifications'
 local sim = ac.getSim()
 local audio = nil
 local rc = require 'src/rc'
+local cc = require 'src/controllers/compounds'
 local racecontrol = nil
 
 FIRST_LAUNCH = true
@@ -62,11 +63,13 @@ function script.update(dt)
         -- A simple On/Off for the app
         if not ac.isWindowOpen('rare') then return end
         if REBOOT then ac.restartAssettoCorsa() end
+
         if not sim.isInMainMenu and not sim.isSessionStarted then
             RESTARTED = false
         else
             racecontrol = rc.getRaceControl(dt, sim)
-            audio.driver(sim)
+            audio.update(sim)
+            cc.update(sim)
         end
     else
         if sim.isInMainMenu or sim.isSessionStarted then
