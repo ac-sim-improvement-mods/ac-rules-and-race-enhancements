@@ -39,7 +39,7 @@ local function formula1(sim, driver)
     end
 end
 
-function audio.driver(sim)
+function audio.update(sim)
     local driver = DRIVERS[sim.focusedCar]
     formula1(sim, driver)
 end
