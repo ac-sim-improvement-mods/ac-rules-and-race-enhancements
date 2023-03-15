@@ -55,10 +55,6 @@ function debugMenu(sim, rc, error)
     ui.treeNode("[PIT STOPS]",
                 ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed,
                 function()
-        if driver.car.isAIControlled then
-            inLineBulletText("Pitting New Tyres", upperBool(driver.aiPitting),
-                             space)
-        end
         inLineBulletText("In Pit Lane", upperBool(driver.car.isInPitlane), space)
         inLineBulletText("In Pits", upperBool(driver.car.isInPit), space)
         inLineBulletText("Pit Stop Count", driver.pitstopCount, space)
@@ -112,7 +108,11 @@ function debugMenu(sim, rc, error)
                              " %", space, driver)
 
         inLineBulletText("Tyre Life Average",
-                         math.round(100 - (avg_tyre_wear * 100), 5), space)
+                         math.round(100 - (avg_tyre_wear * 100), 1), space)
+        if driver.car.isAIControlled then
+            inLineBulletText("Pitting New Tyres", upperBool(driver.aiPitting),
+                             space)
+        end
         inLineBulletText("Tyre Life [FL]", math.round(
                              100 - (driver.car.wheels[0].tyreWear * 100), 1),
                          space)
