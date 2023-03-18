@@ -34,9 +34,6 @@ local function setTyreCompoundsColor(driver)
                                                                     driver.tyreCompoundMaterialTarget)
                 :setMaterialTexture('txBlur', compoundBlurTexture)
         end
-
-        -- log(os.clock() .. " " .. driver.name .. " " .. driver.index .. " " ..
-        --         compoundHardness .. " " .. driver.tyreCompoundMaterialTarget)
     end
 end
 
