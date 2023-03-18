@@ -1,7 +1,7 @@
 SCRIPT_NAME = "Rules and Race Enhancements"
 SCRIPT_SHORT_NAME = "RARE"
-SCRIPT_VERSION = "1.0.9.9.preview8"
-SCRIPT_VERSION_CODE = 10998
+SCRIPT_VERSION = "1.1.0.3.preview6"
+SCRIPT_VERSION_CODE = 11036
 SCRIPT_BUILD_DATE = "2022-11-28"
 CSP_MIN_VERSION_CODE = 2144
 CSP_MIN_VERSION = "1.79"
@@ -93,9 +93,11 @@ function script.windowMain(dt)
 end
 
 function script.windowDebug(dt)
+    local rareEnabled = ac.isWindowOpen('rare')
     local windowName = SCRIPT_SHORT_NAME .. " Debug"
     local scriptVersion = SCRIPT_VERSION .. " (" .. SCRIPT_VERSION_CODE .. ")"
-    local windowTitle = windowName .. " | " .. scriptVersion
+    local windowTitle = windowName .. " | " .. scriptVersion .. " | " ..
+                            (rareEnabled and "ENABLED" or "DISABLED")
     local error = errorCheck()
     ac.setWindowTitle("debug", windowTitle)
 
