@@ -337,16 +337,16 @@ function debugMenu(sim, rc, error)
     ui.treeNode("[WEATHER]",
                 ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed,
                 function()
-        local totalWetness = ((sim.rainWetness / 5) + (sim.rainWater * 10)) / 2
+        local totalWetness = (sim.rainWetness + (sim.rainWater * 10)) * 100
         inLineBulletText("Weather Type", weatherTypeString(sim), space)
         inLineBulletText("Rain Intensity",
                          math.round(sim.rainIntensity * 100, 2) .. "%", space)
         inLineBulletText("Track Wetness",
-                         math.round(sim.rainWetness * 100, 2) .. "%", space)
+                         math.round(sim.rainWetness * 1000, 2) .. "%", space)
         inLineBulletText("Track Puddles",
-                         math.round(sim.rainWater * 100, 2) .. "%", space)
-        inLineBulletText("Total Wetness",
-                         math.round(totalWetness * 100, 2) .. "%", space)
+                         math.round(sim.rainWater * 1000, 2) .. "%", space)
+        inLineBulletText("Total Wetness", math.round(totalWetness, 2) .. "%",
+                         space)
         inLineBulletText("Total Wetness Limit", math.round(
                              RARECONFIG.data.RULES.DRS_WET_LIMIT, 2) .. "%",
                          space)

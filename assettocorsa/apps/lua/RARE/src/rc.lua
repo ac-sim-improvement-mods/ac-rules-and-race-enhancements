@@ -69,9 +69,10 @@ local function isTrackWet(config, sim)
     local track_wetness = sim.rainWetness
     local track_puddles = sim.rainWater
 
-    local total_wetness = ((track_wetness / 5) + (track_puddles * 10)) / 2
+    local total_wetness = (track_wetness + (track_puddles * 10)) * 100
+    ac.log(total_wetness)
 
-    if total_wetness >= wet_limit then
+    if total_wetness >= 101 then
         return true
     else
         return false
