@@ -190,12 +190,6 @@ local function loadSettings(sim)
 	end, function() end)
 end
 
-local function checkPhysics()
-	if RARECONFIG.data.MISC.PHYSICS_REBOOT == 1 then
-		setTrackSurfaces()
-	end
-end
-
 local function loadDRSZones()
 	-- Get DRS Zones from track data folder
 	try(function()
@@ -214,7 +208,16 @@ function initialize(sim)
 
 	cspVersionCheck()
 	loadSettings(sim)
-	checkPhysics()
+
+	if not physics.allowed() then
+		createRareTrackConfig()
+		setPhysicsAllowed()
+		setTimeout(function()
+			REBOOT_CONFIG = "[RACE]" .. "\nCONFIG_TRACK=" .. ac.getTrackLayout() .. "_rare"
+			REBOOT = true
+		end, 5, "reboot")
+	end
+
 	loadDRSZones()
 	initDataDir()
 	createDrivers(sim)
