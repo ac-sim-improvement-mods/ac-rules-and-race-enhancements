@@ -215,27 +215,115 @@ local currentTrackModels = trackDir .. "\\models_" .. ac.getTrackLayout() .. ".i
 local rareTrackModels = trackDir .. "\\models_" .. ac.getTrackLayout() .. "_rare.ini"
 
 function createRareTrackConfig()
+	local roboargs = " /E /COPY:DAT /DCOPY:DAT /R:10 /W:3"
+
 	log("Checking for _rare layout")
-	if not string.find(currentTrackLayoutDir, "_rare") then
-		log("Current track layout is not _rare")
-		if not io.dirExists(rareTrackLayoutDir) then
-			log("Created RARE track layout directory")
-			local roboargs = " /E /COPY:DAT /DCOPY:DAT /R:10 /W:3"
+	if ac.getTrackLayout() ~= "" then
+		if not string.find(currentTrackLayoutDir, "_rare") then
+			log("Current track layout is not _rare")
+			if not io.dirExists(rareTrackLayoutDir) then
+				log("Created RARE track layout directory")
 
-			os.execute("robocopy " .. currentTrackLayoutDir .. " " .. rareTrackLayoutDir .. roboargs, 30000, true)
-			os.execute("robocopy " .. currentTrackLayoutUIDir .. " " .. rareTrackLayoutUIDir .. roboargs, 30000, true)
-			io.copyFile(currentTrackModels, rareTrackModels, true)
-
-			setTimeout(function()
-				ac.log(ac.getFolder(ac.FolderID.ACApps) .. "\\lua\\rare\\icon.png")
-				ac.log(rareTrackLayoutUIDir .. "\\outline.png")
-				io.deleteFile(rareTrackLayoutUIDir .. "\\outline.png")
-				io.copyFile(
-					ac.getFolder(ac.FolderID.ACApps) .. "\\lua\\rare\\icon.png",
-					rareTrackLayoutUIDir .. "\\outline.png"
+				os.execute("robocopy " .. currentTrackLayoutDir .. " " .. rareTrackLayoutDir .. roboargs, 30000, true)
+				os.execute(
+					"robocopy " .. currentTrackLayoutUIDir .. " " .. rareTrackLayoutUIDir .. roboargs,
+					30000,
+					true
 				)
-			end, 2, "png")
+				io.copyFile(currentTrackModels, rareTrackModels, true)
+
+				setTimeout(function()
+					ac.log(ac.getFolder(ac.FolderID.ACApps) .. "\\lua\\rare\\icon.png")
+					ac.log(rareTrackLayoutUIDir .. "\\outline.png")
+					io.deleteFile(rareTrackLayoutUIDir .. "\\outline.png")
+					io.copyFile(
+						ac.getFolder(ac.FolderID.ACApps) .. "\\lua\\rare\\icon.png",
+						rareTrackLayoutUIDir .. "\\outline.png"
+					)
+				end, 2, "png")
+			end
 		end
+	else
+		log("Created RARE track layout directory")
+		local currentTrackLayoutUIDir = trackDir .. "\\ui"
+		rareTrackLayoutDir = trackDir .. "\\" .. ac.getTrackID() .. "_rare"
+
+		os.execute(
+			"robocopy "
+				.. currentTrackLayoutDir
+				.. "\\data"
+				.. " "
+				.. currentTrackLayoutDir
+				.. "\\"
+				.. ac.getTrackID()
+				.. "\\data"
+				.. " /E /MOVE /R:10 /W:3",
+			30000,
+			true
+		)
+		os.execute(
+			"robocopy "
+				.. currentTrackLayoutDir
+				.. "\\ai"
+				.. " "
+				.. currentTrackLayoutDir
+				.. "\\"
+				.. ac.getTrackID()
+				.. "\\ai"
+				.. " /E /MOVE /R:10 /W:3",
+			30000,
+			true
+		)
+		io.copyFile(
+			currentTrackLayoutDir .. "\\map.png",
+			currentTrackLayoutDir .. "\\" .. ac.getTrackID() .. "\\map.png",
+			true
+		)
+
+		os.execute(
+			"robocopy "
+				.. currentTrackLayoutDir
+				.. "\\"
+				.. ac.getTrackID()
+				.. " "
+				.. currentTrackLayoutDir
+				.. "\\"
+				.. ac.getTrackID()
+				.. "_rare"
+				.. roboargs,
+			30000,
+			true
+		)
+
+		io.copyFile(currentTrackLayoutDir .. "\\map.png", rareTrackLayoutDir .. "\\map.png", true)
+
+		os.execute(
+			"robocopy "
+				.. currentTrackLayoutUIDir
+				.. " "
+				.. currentTrackLayoutUIDir
+				.. "\\"
+				.. ac.getTrackID()
+				.. " /MOV /R:10 /W:3",
+			30000,
+			true
+		)
+
+		os.execute(
+			"robocopy "
+				.. currentTrackLayoutUIDir
+				.. "\\"
+				.. ac.getTrackID()
+				.. " "
+				.. currentTrackLayoutUIDir
+				.. "\\"
+				.. ac.getTrackID()
+				.. "_rare"
+				.. roboargs,
+			30000,
+			true
+		)
+		io.copyFile(trackDir .. "\\models.ini", trackDir .. "\\models_" .. ac.getTrackID() .. "_rare.ini", true)
 	end
 end
 
