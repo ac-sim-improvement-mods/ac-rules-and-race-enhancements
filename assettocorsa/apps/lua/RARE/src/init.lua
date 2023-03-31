@@ -42,6 +42,7 @@ local function getTrackTyreCompounds(driver)
 		compoundsIni:get("COMPOUNDS", "COMPOUND_TARGET_MATERIAL", "Unknown Compound Material Target")
 
 	local compounds = string.split(compoundsIni:get(trackID, "COMPOUNDS", "0"), ",")
+	compoundsIni:setAndSave(trackID, "COMPOUNDS", compoundsIni:get(trackID, "COMPOUNDS", "0"))
 	table.sort(compounds, function(a, b)
 		return a < b
 	end)
@@ -80,7 +81,6 @@ local function createDrivers(sim)
 		local driver = DRIVERS[i]
 
 		driver.tyreCompoundsAvailable = getTrackTyreCompounds(driver)
-		-- setTyreCompoundColors(driver, driver.tyreCompoundsAvailable)
 
 		if driver.car.isAIControlled then
 			setAIFuelTankMax(sim, driver)
@@ -120,23 +120,9 @@ local function cspVersionCheck()
 	if not compatibleCspVersion() then
 		ui.toast(
 			ui.Icons.Warning,
-			"[RARE] Incompatible CSP version. CSP "
-				.. CSP_MIN_VERSION
-				.. " "
-				.. "("
-				.. CSP_MIN_VERSION_CODE
-				.. ")"
-				.. " required!"
+			"[RARE] Incompatible CSP version. CSP " .. CSP_MIN_VERSION .. " (" .. CSP_MIN_VERSION_CODE .. ") required!"
 		)
-		log(
-			"[WARN] Incompatible CSP version. CSP "
-				.. CSP_MIN_VERSION
-				.. " "
-				.. "("
-				.. CSP_MIN_VERSION_CODE
-				.. ")"
-				.. " required!"
-		)
+		log("[WARN] Incompatible CSP version. CSP " .. CSP_MIN_VERSION .. " (" .. CSP_MIN_VERSION_CODE .. ") required!")
 		return false
 	end
 end

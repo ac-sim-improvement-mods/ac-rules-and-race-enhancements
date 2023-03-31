@@ -1,7 +1,7 @@
 SCRIPT_NAME = "Rules and Race Enhancements"
 SCRIPT_SHORT_NAME = "RARE"
-SCRIPT_VERSION = "1.1.1.2.preview2"
-SCRIPT_VERSION_CODE = 11122
+SCRIPT_VERSION = "1.1.1.3.preview0"
+SCRIPT_VERSION_CODE = 11130
 SCRIPT_BUILD_DATE = "2022-11-28"
 CSP_MIN_VERSION_CODE = 2144
 CSP_MIN_VERSION = "1.79"
@@ -39,6 +39,7 @@ local function errorCheck()
 	local error = ac.getLastError()
 	if error then
 		log(error)
+		ui.toast(ui.Icons.Warning, "[RARE] AN ERROR HAS OCCURED")
 		INITIALIZED = initialize(sim)
 		return error
 	else
