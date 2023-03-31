@@ -213,7 +213,10 @@ function initialize(sim)
 		createRareTrackConfig()
 		setPhysicsAllowed()
 		setTimeout(function()
-			REBOOT_CONFIG = "[RACE]" .. "\nCONFIG_TRACK=" .. ac.getTrackLayout() .. "_rare"
+			REBOOT_CONFIG = "[RACE]"
+				.. "\nCONFIG_TRACK="
+				.. (ac.getTrackLayout() ~= "" and ac.getTrackLayout() or ac.getTrackID())
+				.. "_rare"
 			REBOOT = true
 		end, 5, "reboot")
 	end
