@@ -21,9 +21,13 @@ local function setAITyreCompound(driver, compounds)
 		math.random()
 	end
 	local tyrevalue = compounds[math.random(1, #compounds)]
-	physics.setAITyres(driver.index, tyrevalue)
 	driver.tyreCompoundStart = tyrevalue
 	driver.tyreCompoundsAvailable = compounds
+
+	if ac.getPatchVersionCode() >= 2278 then
+		physics.setAITyres(driver.index, tyrevalue)
+		log("[" .. driver.index .. "] " .. driver.name .. " tyre compound set to " .. tyrevalue)
+	end
 end
 
 local function getTrackTyreCompounds(driver)
@@ -42,7 +46,7 @@ local function getTrackTyreCompounds(driver)
 		return a < b
 	end)
 
-	log(driver.name .. " has " .. #compounds .. " compounds available")
+	log("[" .. driver.index .. "] " .. driver.name .. " has " .. #compounds .. " compounds available")
 	return compounds
 end
 
@@ -178,7 +182,7 @@ local function loadSettings(sim)
 				PHYSICS_REBOOT = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
 			},
 		})
-		log("[Loaded] Config file: " .. ac.getFolder(ac.FolderID.ACApps) .. "/lua/RARE/" .. configFile)
+		log("Config file: " .. ac.getFolder(ac.FolderID.ACApps) .. "/lua/RARE/" .. configFile)
 		return true
 	end, function(err)
 		log("[ERROR] Failed to load config")
@@ -215,7 +219,7 @@ function initialize(sim)
 	initDataDir()
 	createDrivers(sim)
 
-	log("[Initialized]")
+	log(SCRIPT_SHORT_NAME .. " Initialized")
 	FIRST_LAUNCH = false
 	return true
 end

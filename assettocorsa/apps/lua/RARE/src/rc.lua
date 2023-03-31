@@ -149,7 +149,10 @@ local function raceSession(lastUpdate, racecontrol, config, driver)
 	if driver.car.isAIControlled then
 		if racecontrol.sim.isInMainMenu then
 			setAIFuelTankMax(racecontrol.sim, driver)
-			physics.setAIPitStopRequest(driver.index, false)
+
+			if ac.getPatchVersionCode() >= 2278 then
+				physics.setAIPitStopRequest(driver.index, false)
+			end
 		end
 	end
 
