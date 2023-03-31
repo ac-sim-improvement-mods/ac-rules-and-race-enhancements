@@ -537,56 +537,56 @@ function settingsMenu(sim)
 			ui.newLine(1)
 		end)
 
-		ui.tabItem("MISC", ui.TabItemFlags.None, function()
-			ui.newLine(1)
+		-- ui.tabItem("MISC", ui.TabItemFlags.None, function()
+		-- 	ui.newLine(1)
 
-			slider(
-				RARECONFIG,
-				"MISC",
-				"PHYSICS_REBOOT",
-				0,
-				1,
-				1,
-				true,
-				RARECONFIG.data.MISC.PHYSICS_REBOOT == 1 and "Auto App Injection Reboot: ENABLED"
-					or "Auto App Injection Reboot: DISABLED",
-				"If the app can't access physics\nAutomatically inject necessary lines into surfaces.ini\nReboot Assetto Corsa",
-				function(v)
-					return math.round(v, 0)
-				end
-			)
+		-- 	slider(
+		-- 		RARECONFIG,
+		-- 		"MISC",
+		-- 		"PHYSICS_REBOOT",
+		-- 		0,
+		-- 		1,
+		-- 		1,
+		-- 		true,
+		-- 		RARECONFIG.data.MISC.PHYSICS_REBOOT == 1 and "Auto App Injection Reboot: ENABLED"
+		-- 			or "Auto App Injection Reboot: DISABLED",
+		-- 		"If the app can't access physics\nAutomatically inject necessary lines into surfaces.ini\nReboot Assetto Corsa",
+		-- 		function(v)
+		-- 			return math.round(v, 0)
+		-- 		end
+		-- 	)
 
-			ui.newLine(1)
+		-- 	ui.newLine(1)
 
-			local injectionButtonFlag = physics.allowed() and ui.ButtonFlags.Disabled or ui.ButtonFlags.None
-			if ui.button("App Injection", vec2(ui.windowWidth() - 77, 25), injectionButtonFlag) then
-				setTrackSurfaces()
-			end
-			if ui.itemHovered() then
-				ui.setTooltip("Inject necessary lines into surfaces.ini\nReboot Assetto Corsa")
-			end
+		-- 	local injectionButtonFlag = physics.allowed() and ui.ButtonFlags.Disabled or ui.ButtonFlags.None
+		-- 	if ui.button("App Injection", vec2(ui.windowWidth() - 77, 25), injectionButtonFlag) then
+		-- 		setTrackSurfaces()
+		-- 	end
+		-- 	if ui.itemHovered() then
+		-- 		ui.setTooltip("Inject necessary lines into surfaces.ini\nReboot Assetto Corsa")
+		-- 	end
 
-			local revertButtonFlag = physics.allowed() and ui.ButtonFlags.None or ui.ButtonFlags.Disabled
-			if ui.button("Revert App Injection", vec2(ui.windowWidth() - 77, 25), revertButtonFlag) then
-				resetTrackSurfaces()
-			end
-			if ui.itemHovered() then
-				ui.setTooltip("NECESSARY FOR PLAYING ONLINE\n\nRevert surfaces.ini\nReboot Assetto Corsa")
-			end
+		-- 	local revertButtonFlag = physics.allowed() and ui.ButtonFlags.None or ui.ButtonFlags.Disabled
+		-- 	if ui.button("Revert App Injection", vec2(ui.windowWidth() - 77, 25), revertButtonFlag) then
+		-- 		resetTrackSurfaces()
+		-- 	end
+		-- 	if ui.itemHovered() then
+		-- 		ui.setTooltip("NECESSARY FOR PLAYING ONLINE\n\nRevert surfaces.ini\nReboot Assetto Corsa")
+		-- 	end
 
-			-- if ui.button("AI COMP OVERRIDE "..upperBool(AI_COMP_OVERRIDE), vec2(ui.windowWidth()-77,25), ui.ButtonFlags.None) then
-			--     AI_COMP_OVERRIDE = not AI_COMP_OVERRIDE
-			-- end
+		-- 	-- if ui.button("AI COMP OVERRIDE "..upperBool(AI_COMP_OVERRIDE), vec2(ui.windowWidth()-77,25), ui.ButtonFlags.None) then
+		-- 	--     AI_COMP_OVERRIDE = not AI_COMP_OVERRIDE
+		-- 	-- end
 
-			-- SPLINE_OFFSET = ui.slider("SPLINE", SPLINE_OFFSET, -10, 10, '%.3f')
-			-- physics.setAISplineOffset(sim.focusedCar, SPLINE_OFFSET)
+		-- 	-- SPLINE_OFFSET = ui.slider("SPLINE", SPLINE_OFFSET, -10, 10, '%.3f')
+		-- 	-- physics.setAISplineOffset(sim.focusedCar, SPLINE_OFFSET)
 
-			-- if ui.button("RESET TRACK PHYSICS", vec2(40,30), ui.ButtonFlags.None) then
-			--     ac.setWindowOpen('rare', not ac.isWindowOpen('rare'))
-			-- end
+		-- 	-- if ui.button("RESET TRACK PHYSICS", vec2(40,30), ui.ButtonFlags.None) then
+		-- 	--     ac.setWindowOpen('rare', not ac.isWindowOpen('rare'))
+		-- 	-- end
 
-			ui.newLine(1)
-		end)
+		-- 	ui.newLine(1)
+		-- end)
 	end)
 
 	ui.setCursor(vec2(0, 601))
