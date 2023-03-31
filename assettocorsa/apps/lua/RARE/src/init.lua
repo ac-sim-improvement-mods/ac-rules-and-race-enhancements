@@ -40,6 +40,9 @@ local function getTrackTyreCompounds(driver)
 
 	driver.tyreCompoundMaterialTarget =
 		compoundsIni:get("COMPOUNDS", "COMPOUND_TARGET_MATERIAL", "Unknown Compound Material Target")
+	driver.tyreCompoundSoftTexture = compoundsIni:get("COMPOUNDS", "SOFT_COMPOUND_TEXTURE", "")
+	driver.tyreCompoundMediumTexture = compoundsIni:get("COMPOUNDS", "MEDIUM_COMPOUND_TEXTURE", "")
+	driver.tyreCompoundHardTexture = compoundsIni:get("COMPOUNDS", "HARD_COMPOUND_TEXTURE", "")
 
 	local compounds = string.split(compoundsIni:get(trackID, "COMPOUNDS", "0"), ",")
 	compoundsIni:setAndSave(trackID, "COMPOUNDS", compoundsIni:get(trackID, "COMPOUNDS", "0"))

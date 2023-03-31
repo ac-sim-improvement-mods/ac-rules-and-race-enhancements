@@ -12,12 +12,16 @@ local function setTyreCompoundsColor(driver)
 		local compoundHardness = ""
 
 		if tonumber(driver.tyreCompoundsAvailable[1]) == driverCompound then
-			compoundHardness = "SOFT"
+			compoundHardness = driver.tyreCompoundSoftTexture
 		elseif tonumber(driver.tyreCompoundsAvailable[2]) == driverCompound then
-			compoundHardness = "MEDIUM"
+			compoundHardness = driver.tyreCompoundMediumTexture
 		elseif tonumber(driver.tyreCompoundsAvailable[3]) == driverCompound then
-			compoundHardness = "HARD"
+			compoundHardness = driver.tyreCompoundHardTexture
 		else
+			return
+		end
+
+		if compoundHardness == "" then
 			return
 		end
 
@@ -40,7 +44,7 @@ local function restrictCompoundChoice()
 	local compoundCount = #driver.tyreCompoundsAvailable
 	if compoundCount > 1 then
 		if driver.car.compoundIndex < tonumber(driver.tyreCompoundsAvailable[1]) then
-			ac.setSetupSpinnerValue("COMPOUND", driver.tyreCompoundsAvailable[compoundCount])
+			ac.setSetupSpinnerValue("COMPOUND", driver.tyreCompoundsAvailable[1])
 		elseif driver.car.compoundIndex > tonumber(driver.tyreCompoundsAvailable[compoundCount]) then
 			ac.setSetupSpinnerValue("COMPOUND", driver.tyreCompoundsAvailable[compoundCount])
 		end

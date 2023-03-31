@@ -42,6 +42,9 @@ Driver = class("Driver", function(carIndex)
 	local tyreCompoundsAvailable = { 0 }
 	local tyreStints = {}
 	local tyreCompoundMaterialTarget = ""
+	local tyreCompoundSoftTexture = ""
+	local tyreComoundMediumTexture = ""
+	local tyreCompoundHardTexture = ""
 
 	local trackPosition = -1
 	local carAhead = -1
@@ -68,6 +71,9 @@ Driver = class("Driver", function(carIndex)
 	log("[" .. index .. "] " .. name .. " loaded")
 
 	return {
+		tyreCompoundSoftTexture = tyreCompoundSoftTexture,
+		tyreComoundMediumTexture = tyreComoundMediumTexture,
+		tyreCompoundHardTexture = tyreCompoundHardTexture,
 		tyreCompoundMaterialTarget = tyreCompoundMaterialTarget,
 		pittedLaps = pittedLaps,
 		tyreStints = tyreStints,
