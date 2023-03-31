@@ -124,8 +124,10 @@ function ai.pitNewTyres(driver)
             pitStrategyCall(driver, false)
         end
     else
-        if driver.car.isInPitlane and not driver.car.isInPit and
-            driver.aiPitting then driver.aiPrePitFuel = driver.car.fuel end
+        if driver.car.isInPitlane and not driver.car.isInPit then
+            driver.aiPrePitFuel = driver.car.fuel
+        end
+
         if driver.car.isInPit then pitstop(driver) end
     end
 end
