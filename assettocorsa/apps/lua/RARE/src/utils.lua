@@ -206,125 +206,85 @@ function resetTrackSurfaces()
 	-- end
 end
 
+local function editUiFIle(inputFile)
+	local file = io.open(inputFile, "r")
+	local fileContent = {}
+	for line in file:lines() do
+		table.insert(fileContent, line)
+	end
+	io.close(file)
+
+	fileContent[2] = "\t" .. '"name": "' .. ac.getTrackName() .. ' RARE",'
+
+	file = io.open(inputFile, "w")
+	for index, value in ipairs(fileContent) do
+		file:write(value .. "\n")
+	end
+	io.close(file)
+end
+
+local trackLayout = ac.getTrackLayout() ~= "" and ac.getTrackLayout() or ac.getTrackID()
 local trackDir = ac.getFolder(ac.FolderID.ContentTracks) .. "\\" .. ac.getTrackID()
-local currentTrackLayoutDir = trackDir .. "\\" .. ac.getTrackLayout()
-local rareTrackLayoutDir = trackDir .. "\\" .. ac.getTrackLayout() .. "_rare"
-local currentTrackLayoutUIDir = trackDir .. "\\ui\\" .. ac.getTrackLayout()
-local rareTrackLayoutUIDir = trackDir .. "\\ui\\" .. ac.getTrackLayout() .. "_rare"
-local currentTrackModels = trackDir .. "\\models_" .. ac.getTrackLayout() .. ".ini"
-local rareTrackModels = trackDir .. "\\models_" .. ac.getTrackLayout() .. "_rare.ini"
+local currentTrackLayoutDir = trackDir .. "\\" .. trackLayout
+local rareTrackLayoutDir = trackDir .. "\\" .. trackLayout .. "_rare"
+local currentTrackUIDir = trackDir .. "\\ui\\" .. trackLayout
+local rareTrackUIDir = trackDir .. "\\ui\\" .. trackLayout .. "_rare"
 
 function createRareTrackConfig()
-	local roboargs = " /E /COPY:DAT /DCOPY:DAT /R:10 /W:3"
-
-	log("Checking for _rare layout")
-	if ac.getTrackLayout() ~= "" then
-		if not string.find(currentTrackLayoutDir, "_rare") then
-			log("Current track layout is not _rare")
-			if not io.dirExists(rareTrackLayoutDir) then
-				log("Created RARE track layout directory")
-
-				os.execute("robocopy " .. currentTrackLayoutDir .. " " .. rareTrackLayoutDir .. roboargs, 30000, true)
-				os.execute(
-					"robocopy " .. currentTrackLayoutUIDir .. " " .. rareTrackLayoutUIDir .. roboargs,
-					30000,
-					true
-				)
-				io.copyFile(currentTrackModels, rareTrackModels, true)
-
-				setTimeout(function()
-					ac.log(ac.getFolder(ac.FolderID.ACApps) .. "\\lua\\rare\\icon.png")
-					ac.log(rareTrackLayoutUIDir .. "\\outline.png")
-					io.deleteFile(rareTrackLayoutUIDir .. "\\outline.png")
-					io.copyFile(
-						ac.getFolder(ac.FolderID.ACApps) .. "\\lua\\rare\\icon.png",
-						rareTrackLayoutUIDir .. "\\outline.png"
-					)
-				end, 2, "png")
-			end
-		end
+	if trackLayout == ac.getTrackID() then
+		currentTrackLayoutDir = trackDir
+		currentTrackUIDir = trackDir .. "\\ui"
+		io.copyFile(trackDir .. "\\models.ini", trackDir .. "\\models_" .. trackLayout .. "_rare.ini", true)
+		io.copyFile(trackDir .. "\\models.vao-patch", trackDir .. "\\models_" .. trackLayout .. "_rare.vao-patch", true)
 	else
-		log("Created RARE track layout directory")
-		local currentTrackLayoutUIDir = trackDir .. "\\ui"
-		rareTrackLayoutDir = trackDir .. "\\" .. ac.getTrackID() .. "_rare"
-
-		os.execute(
-			"robocopy "
-				.. currentTrackLayoutDir
-				.. "\\data"
-				.. " "
-				.. currentTrackLayoutDir
-				.. "\\"
-				.. ac.getTrackID()
-				.. "\\data"
-				.. " /E /MOVE /R:10 /W:3",
-			30000,
-			true
-		)
-		os.execute(
-			"robocopy "
-				.. currentTrackLayoutDir
-				.. "\\ai"
-				.. " "
-				.. currentTrackLayoutDir
-				.. "\\"
-				.. ac.getTrackID()
-				.. "\\ai"
-				.. " /E /MOVE /R:10 /W:3",
-			30000,
-			true
-		)
 		io.copyFile(
-			currentTrackLayoutDir .. "\\map.png",
-			currentTrackLayoutDir .. "\\" .. ac.getTrackID() .. "\\map.png",
+			trackDir .. "\\models_" .. trackLayout .. ".ini",
+			trackDir .. "\\models_" .. trackLayout .. "_rare.ini",
 			true
 		)
 
-		os.execute(
-			"robocopy "
-				.. currentTrackLayoutDir
-				.. "\\"
-				.. ac.getTrackID()
-				.. " "
-				.. currentTrackLayoutDir
-				.. "\\"
-				.. ac.getTrackID()
-				.. "_rare"
-				.. roboargs,
-			30000,
+		io.copyFile(
+			trackDir .. "\\models_" .. trackLayout .. ".vao-patch",
+			trackDir .. "\\models_" .. trackLayout .. "_rare.vao-patch",
 			true
 		)
-
-		io.copyFile(currentTrackLayoutDir .. "\\map.png", rareTrackLayoutDir .. "\\map.png", true)
-
-		os.execute(
-			"robocopy "
-				.. currentTrackLayoutUIDir
-				.. " "
-				.. currentTrackLayoutUIDir
-				.. "\\"
-				.. ac.getTrackID()
-				.. " /MOV /R:10 /W:3",
-			30000,
-			true
-		)
-
-		os.execute(
-			"robocopy "
-				.. currentTrackLayoutUIDir
-				.. "\\"
-				.. ac.getTrackID()
-				.. " "
-				.. currentTrackLayoutUIDir
-				.. "\\"
-				.. ac.getTrackID()
-				.. "_rare"
-				.. roboargs,
-			30000,
-			true
-		)
-		io.copyFile(trackDir .. "\\models.ini", trackDir .. "\\models_" .. ac.getTrackID() .. "_rare.ini", true)
 	end
+
+	if not string.find(currentTrackLayoutDir, "_rare") then
+		io.createDir(rareTrackLayoutDir)
+
+		io.createDir(rareTrackLayoutDir .. "\\ai")
+		io.scanDir(currentTrackLayoutDir .. "\\ai", function(fileName, fileAttributes, callbackData)
+			io.copyFile(currentTrackLayoutDir .. "\\ai\\" .. fileName, rareTrackLayoutDir .. "\\ai\\" .. fileName)
+		end)
+
+		io.createDir(rareTrackLayoutDir .. "\\data")
+		io.scanDir(currentTrackLayoutDir .. "\\data", function(fileName, fileAttributes, callbackData)
+			io.copyFile(currentTrackLayoutDir .. "\\data\\" .. fileName, rareTrackLayoutDir .. "\\data\\" .. fileName)
+		end)
+
+		if io.dirExists(currentTrackLayoutDir .. "\\extension") then
+			io.createDir(rareTrackLayoutDir .. "\\extension")
+			io.scanDir(currentTrackLayoutDir .. "\\extension", function(fileName, fileAttributes, callbackData)
+				io.copyFile(
+					currentTrackLayoutDir .. "\\extension\\" .. fileName,
+					rareTrackLayoutDir .. "\\extension\\" .. fileName
+				)
+			end)
+		end
+
+		io.copyFile(currentTrackLayoutDir .. "\\map.png", rareTrackLayoutDir .. "\\map.png")
+
+		io.createDir(rareTrackUIDir)
+		io.scanDir(currentTrackUIDir, function(fileName, fileAttributes, callbackData)
+			io.copyFile(currentTrackUIDir .. "\\" .. fileName, rareTrackUIDir .. "\\" .. fileName)
+		end)
+
+		io.deleteFile(rareTrackUIDir .. "\\outline.png")
+		io.copyFile(ac.getFolder(ac.FolderID.ACApps) .. "\\lua\\rare\\icon.png", rareTrackUIDir .. "\\outline.png")
+	end
+
+	editUiFIle(rareTrackUIDir .. "\\ui_track.json")
 end
 
 function setPhysicsAllowed()
