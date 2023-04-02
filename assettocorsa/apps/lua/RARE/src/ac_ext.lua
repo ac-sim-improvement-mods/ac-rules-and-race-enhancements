@@ -1,7 +1,7 @@
 --- Returns time delta (s) between the driver and driver ahead on track
 ---@param driver Driver
 ---@return number
-function getDelta(sim, carIndex, car2Index)
+function ac.getDelta(sim, carIndex, car2Index)
     ---@diagnostic disable-next-line: return-type-mismatch
     local car = ac.getCar(carIndex)
     local car2 = ac.getCar(car2Index)
@@ -16,7 +16,7 @@ end
 --- Converts session type number to the corresponding session type string
 ---@param sim ac.StateSim
 ---@return string
-function sessionTypeString(sim)
+function ac.sessionTypeString(sim)
     local sessionTypes = {
         "UNDEFINED", "PRACTICE", "QUALIFY", "RACE", "HOTLAP", "TIME ATTACK",
         "DRIFT", "DRAG"
@@ -28,7 +28,7 @@ end
 --- Converts weather type number to the corresponding weather type string
 ---@param sim ac.StateSim
 ---@return string
-function weatherTypeString(sim)
+function ac.weatherTypeString(sim)
     local weatherTypes = {
         "Light Thunderstorm", ---Value: 0.
         "Thunderstorm", ---Value: 1.

@@ -12,11 +12,9 @@ require("src/init")
 require("src/ui/debug")
 require("src/ui/settings")
 require("src/ui/notifications")
-local sim = ac.getSim()
 local audio = nil
 local rc = require("src/rc")
 local cc = require("src/controllers/compounds")
-local racecontrol = nil
 
 FIRST_LAUNCH = true
 INITIALIZED = false
@@ -25,35 +23,32 @@ REBOOT = false
 REBOOT_CONFIG = ""
 RARECONFIG = nil
 
---- Check if AC has restarted
---- @param sim StateSim
-local function restartCheck(sim)
-	if not RESTARTED and sim.isInMainMenu then
+local sim = ac.getSim()
+local racecontrol = nil
+
+ac.onSessionStart(function(sessionIndex, restarted)
+	if restarted then
 		RESTARTED = true
 		INITIALIZED = false
 	end
-end
-
---- Check and log last error
-local function errorCheck()
-	local error = ac.getLastError()
-	if error then
-		log(error)
-		ui.toast(ui.Icons.Warning, "[RARE] AN ERROR HAS OCCURED")
-		INITIALIZED = initialize(sim)
-		return error
-	else
-		return nil
-	end
-end
+end)
 
 function script.update(dt)
 	sim = ac.getSim()
-	restartCheck(sim)
-
+	
 	if sim.isOnlineRace then
 		ac.unloadApp()
 		return
+	end
+	
+	local error = ac.getLastError()
+	if error then
+		ui.toast(ui.Icons.Warning, "[RARE] AN ERROR HAS OCCURED")
+		log(error)
+	end
+
+	if REBOOT then
+		ac.restartAssettoCorsa(REBOOT_CONFIG)
 	end
 
 	if sim.isInMainMenu then
@@ -66,21 +61,13 @@ function script.update(dt)
 		if not ac.isWindowOpen("rare") then
 			return
 		end
-		if REBOOT then
-			ac.restartAssettoCorsa(REBOOT_CONFIG)
-		end
 
-		if not sim.isInMainMenu and not sim.isSessionStarted then
-			RESTARTED = false
-		else
+		if sim.isLive then
 			racecontrol = rc.getRaceControl(dt, sim)
 			audio.update(sim)
 			cc.update(sim)
 		end
 	else
-		if REBOOT then
-			ac.restartAssettoCorsa(REBOOT_CONFIG)
-		end
 		if sim.isInMainMenu or sim.isSessionStarted then
 			INITIALIZED = initialize(sim)
 			audio = require("src/audio")

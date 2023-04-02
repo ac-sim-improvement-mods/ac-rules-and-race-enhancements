@@ -1,10 +1,12 @@
+local utils = {}
+
 --- Log messages
 --- @param message string
 function log(message)
 	ac.log("[RARE] " .. message)
 end
 
-function randomizer(index, range)
+function utils.randomizer(index, range)
 	math.randomseed(os.clock() * index)
 	math.random()
 	for i = 0, math.random(index) do
@@ -17,7 +19,7 @@ end
 --- @param label string
 --- @param text string
 --- @param space number
-function inLineBulletText(label, text, space)
+function utils.inLineBulletText(label, text, space)
 	if not space then
 		space = 10
 	end
@@ -56,7 +58,7 @@ end
 --- Converts boolean to uppercase string
 ---@param bool boolean
 ---@return string
-function upperBool(bool)
+function utils.upperBool(bool)
 	return string.upper(tostring(bool))
 end
 
@@ -133,7 +135,7 @@ end
 ---@param mult number
 ---@param format string
 ---@param tooltip string?
-function slider(cfg, section, key, from, to, mult, isbool, format, tooltip, preprocess)
+function utils.slider(cfg, section, key, from, to, mult, isbool, format, tooltip, preprocess)
 	if not cfg.data[section] then
 		error("No such section: " .. section, 2)
 	end
@@ -183,11 +185,11 @@ end
 
 --- Returns state of installed CSP version being compatible with this app
 --- @return boolean
-function compatibleCspVersion()
+function utils.compatibleCspVersion()
 	return ac.getPatchVersionCode() >= CSP_MIN_VERSION_CODE and true or false
 end
 
-function resetTrackSurfaces()
+function utils.resetTrackSurfaces()
 	-- local config = ac.INIConfig.load(ac.getFolder(ac.FolderID.ACApps) .. "/lua/RARE/settings.ini", ac.INIFormat.Default)
 	-- local surfacesFile = ac.getTrackDataFilename("surfaces.ini")
 	-- local surfacesFileBackup = ac.getTrackDataFilename("_surfaces.ini")
@@ -230,7 +232,7 @@ local rareTrackLayoutDir = trackDir .. "\\" .. trackLayout .. "_rare"
 local currentTrackUIDir = trackDir .. "\\ui\\" .. trackLayout
 local rareTrackUIDir = trackDir .. "\\ui\\" .. trackLayout .. "_rare"
 
-function createRareTrackConfig()
+function utils.createRareTrackConfig()
 	if trackLayout == ac.getTrackID() then
 		currentTrackLayoutDir = trackDir
 		currentTrackUIDir = trackDir .. "\\ui"
@@ -287,10 +289,12 @@ function createRareTrackConfig()
 	editUiFIle(rareTrackUIDir .. "\\ui_track.json")
 end
 
-function setPhysicsAllowed()
+function utils,setPhysicsAllowed()
 	local surfacesFile = rareTrackLayoutDir .. "\\data\\surfaces.ini"
 	local surfacesIni = ac.INIConfig.load(surfacesFile, ac.INIFormat.Default)
 
 	surfacesIni:setAndSave("SURFACE_0", "WAV_PITCH", "extended-0")
 	surfacesIni:setAndSave("_SCRIPTING_PHYSICS", "ALLOW_APPS", "1")
 end
+
+return utils
