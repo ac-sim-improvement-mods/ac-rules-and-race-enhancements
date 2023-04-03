@@ -57,6 +57,7 @@ Driver = class("Driver", function(carIndex)
 	local drsCheck = false
 	local drsAvailable = false
 	local drsDeployable = false
+	local drsDetected = { }
 	local drsBeepFx = false
 	local drsFlapFx = false
 
@@ -71,6 +72,7 @@ Driver = class("Driver", function(carIndex)
 	log("[" .. index .. "] " .. name .. " loaded")
 
 	return {
+		drsDetected = drsDetected,	
 		tyreCompoundSoftTexture = tyreCompoundSoftTexture,
 		tyreComoundMediumTexture = tyreComoundMediumTexture,
 		tyreCompoundHardTexture = tyreCompoundHardTexture,

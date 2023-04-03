@@ -63,25 +63,25 @@ end, class.NoInitialize)
 --- not in a drs zone, and within 1 second of the car ahead on track
 ---@param driver Driver
 local function setDrsAvailable(driver, drsEnabled)
-	if not driver.car.isInPitlane and drsEnabled then
-		local inDrsZone = driver.car.drsAvailable
-		local inDrsRange = inDrsRange(driver)
-
-		if crossedDetectionLine(driver) == false then
-			driver.drsCheck = inDrsRange
-			if driver.drsAvailable and inDrsZone and driver.car.drsActive then
-				driver.drsDeployable = true
-				driver.drsAvailable = true
-			elseif driver.drsAvailable and not inDrsZone and driver.drsDeployable then
-				driver.drsDeployable = false
-				driver.drsAvailable = false
+	if not drsEnabled then
+		return false	
+	elseif driver.lapCount >= DRS_LAPS then
+		for zone in zones do
+			if splinePos >= zone.detection then
+				if not drsDetect[zone].crossed then
+					drzDetect[zone]= inDrsRange
+				elseif splinePos >= zone.end then 
+					drsDetect[zone].detected = true
+					drsDetect[zone].detected = false
+				end
 			end
-		else
-			driver.drsDeployable = false
-			driver.drsAvailable = driver.drsCheck
 		end
-	else
-		driver.drsAvailable = false
+		
+		if driver,car.drsAvailable and not driver.car.isInPitlane then
+			return drsDetect[activeZone]
+		else
+			return false
+		end
 	end
 end
 
@@ -237,7 +237,7 @@ end
 --- @param drsEnabled boolean
 function drs.controller(sim, driver, drsEnabled)
 	setDriverDrsZones(driver)
-	setDrsAvailable(driver, drsEnabled)
+	driver.drsAvailable = setDrsAvailable(driver, drsEnabled)
 	setDriverDRS(sim, driver, drsEnabled and driver.drsAvailable or false)
 end
 
