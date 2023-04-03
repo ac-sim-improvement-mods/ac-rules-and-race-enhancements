@@ -1,3 +1,5 @@
+local utils = require("src/utils")
+
 ---@class Driver
 ---@param carIndex number
 ---@return Driver
@@ -52,12 +54,17 @@ Driver = class("Driver", function(carIndex)
 
 	local drsActivationZone = car.drsAvailable
 	local drsZoneNextId = 0
-	local drsZoneId = 0
+	local drsZoneId = 1
 	local drsZonePrevId = 0
 	local drsCheck = false
 	local drsAvailable = false
 	local drsDeployable = false
-	local drsDetected = { }
+	local drsDetection = {}
+	drsDetection[0] = false
+	drsDetection[1] = false
+	drsDetection[2] = false
+	drsDetection[3] = false
+
 	local drsBeepFx = false
 	local drsFlapFx = false
 
@@ -66,13 +73,13 @@ Driver = class("Driver", function(carIndex)
 	local returnRacePosition = -1
 	local returnPostionTimer = -1
 
-	local aiTyreAvgRandom = randomizer(index, RARECONFIG.data.AI.AI_AVG_TYRE_LIFE_RANGE)
-	local aiTyreSingleRandom = randomizer(index, RARECONFIG.data.AI.AI_SINGLE_TYRE_LIFE_RANGE)
+	local aiTyreAvgRandom = utils.randomizer(index, RARECONFIG.data.AI.AI_AVG_TYRE_LIFE_RANGE)
+	local aiTyreSingleRandom = utils.randomizer(index, RARECONFIG.data.AI.AI_SINGLE_TYRE_LIFE_RANGE)
 
 	log("[" .. index .. "] " .. name .. " loaded")
 
 	return {
-		drsDetected = drsDetected,	
+		drsDetection = drsDetection,
 		tyreCompoundSoftTexture = tyreCompoundSoftTexture,
 		tyreComoundMediumTexture = tyreComoundMediumTexture,
 		tyreCompoundHardTexture = tyreCompoundHardTexture,
@@ -152,8 +159,8 @@ end
 local function getPitstopCount(driver)
 	if driver.car.isInPit and not driver.pitted then
 		driver.pitted = true
-		driver.aiTyreAvgRandom = randomizer(driver.index, RARECONFIG.data.AI.AI_AVG_TYRE_LIFE_RANGE)
-		driver.aiTyreSingleRandom = randomizer(driver.index, RARECONFIG.data.AI.AI_SINGLE_TYRE_LIFE_RANGE)
+		driver.aiTyreAvgRandom = utils.randomizer(driver.index, RARECONFIG.data.AI.AI_AVG_TYRE_LIFE_RANGE)
+		driver.aiTyreSingleRandom = utils.randomizer(driver.index, RARECONFIG.data.AI.AI_SINGLE_TYRE_LIFE_RANGE)
 		return driver.pitstopCount + 1
 	elseif not driver.car.isInPitlane and driver.pitted then
 		driver.pitted = false
@@ -198,6 +205,6 @@ function Driver:update(dt, sim)
 	self.pitstopTime = getPitstopTime(dt, self)
 
 	if self.carAhead >= 0 then
-		self.carAheadDelta = getDelta(sim, self.index, self.carAhead)
+		self.carAheadDelta = ac.getDelta(sim, self.index, self.carAhead)
 	end
 end

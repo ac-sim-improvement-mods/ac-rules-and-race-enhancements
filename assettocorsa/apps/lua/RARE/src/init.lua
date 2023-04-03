@@ -1,4 +1,5 @@
 require("src/driver")
+local utils = require("src/utils")
 
 local function setAIFuelTankMax(sim, driver)
 	local fuelcons = ac.INIConfig.carData(driver.index, "fuel_cons.ini"):get("FUEL_EVAL", "KM_PER_LITER", 0.0)
@@ -120,7 +121,7 @@ local function cspVersionCheck()
 	log(SCRIPT_NAME .. " version: " .. SCRIPT_VERSION_CODE)
 	log("CSP version: " .. ac.getPatchVersionCode())
 
-	if not compatibleCspVersion() then
+	if not utils.compatibleCspVersion() then
 		ui.toast(
 			ui.Icons.Warning,
 			"[RARE] Incompatible CSP version. CSP " .. CSP_MIN_VERSION .. " (" .. CSP_MIN_VERSION_CODE .. ") required!"

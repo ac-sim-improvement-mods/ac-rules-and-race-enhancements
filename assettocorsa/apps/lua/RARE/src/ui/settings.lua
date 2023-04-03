@@ -1,3 +1,4 @@
+local utils = require("src/utils")
 local notifications = require("src/ui/notifications")
 
 SPLINE_OFFSET = 0
@@ -57,7 +58,7 @@ function settingsMenu(sim)
 			ui.tabItem("RULES", ui.TabItemFlags.None, function()
 				ui.newLine(1)
 				ui.header("DRS")
-				slider(
+				utils.slider(
 					RARECONFIG,
 					"RULES",
 					"DRS_RULES",
@@ -73,7 +74,7 @@ function settingsMenu(sim)
 				)
 
 				if RARECONFIG.data.RULES.DRS_RULES == 1 then
-					DRS_ENABLED_LAP = slider(
+					DRS_ENABLED_LAP = utils.slider(
 						RARECONFIG,
 						"RULES",
 						"DRS_ACTIVATION_LAP",
@@ -87,7 +88,7 @@ function settingsMenu(sim)
 							return v
 						end
 					)
-					slider(
+					utils.slider(
 						RARECONFIG,
 						"RULES",
 						"DRS_GAP_DELTA",
@@ -104,7 +105,7 @@ function settingsMenu(sim)
 
 					ui.newLine(1)
 
-					slider(
+					utils.slider(
 						RARECONFIG,
 						"RULES",
 						"DRS_WET_DISABLE",
@@ -123,21 +124,21 @@ function settingsMenu(sim)
 				ui.newLine(1)
 
 				-- ui.header("VSC:")
-				-- slider(RARECONFIG, 'RULES', 'VSC_RULES', 0, 1, 1, true, RARECONFIG.data.RULES.VSC_RULES == 1 and "VSC Rules: ENABLED" or "VSC Rules: DISABLED",
+				-- utils.slider(RARECONFIG, 'RULES', 'VSC_RULES', 0, 1, 1, true, RARECONFIG.data.RULES.VSC_RULES == 1 and "VSC Rules: ENABLED" or "VSC Rules: DISABLED",
 				-- 'Enable a Virtual Safety Car to be deployed',
 				-- function (v) return math.round(v, 0) end)
 				-- if RARECONFIG.data.RULES.VSC_RULES == 1 then
-				--     slider(RARECONFIG, 'RULES', 'VSC_INIT_TIME', 0, 300, 1, false, 'Call After Yellow Flag For: %.0f s',
+				--     utils.slider(RARECONFIG, 'RULES', 'VSC_INIT_TIME', 0, 300, 1, false, 'Call After Yellow Flag For: %.0f s',
 				--     'Time a yellow flag must be up before calling the VSC',
 				--     function (v) return math.round(v, 0) end)
-				--     slider(RARECONFIG, 'RULES', 'VSC_DEPLOY_TIME', 0, 300, 1, false, 'Ends After Deployed For: %.0f s',
+				--     utils.slider(RARECONFIG, 'RULES', 'VSC_DEPLOY_TIME', 0, 300, 1, false, 'Ends After Deployed For: %.0f s',
 				--     'Time that the VSC is deployed before ending',
 				--     function (v) return math.round(v, 0) end)
 				-- end
 				-- ui.newLine(1)
 
 				ui.header("PIT STOPS")
-				slider(
+				utils.slider(
 					RARECONFIG,
 					"RULES",
 					"RACE_REFUELING",
@@ -175,7 +176,7 @@ function settingsMenu(sim)
 				ui.newLine(1)
 
 				ui.header("LEVEL")
-				slider(
+				utils.slider(
 					RARECONFIG,
 					"AI",
 					"AI_ALTERNATE_LEVEL",
@@ -193,7 +194,7 @@ function settingsMenu(sim)
 
 				ui.newLine(1)
 
-				slider(
+				utils.slider(
 					RARECONFIG,
 					"AI",
 					"AI_RELATIVE_SCALING",
@@ -209,7 +210,7 @@ function settingsMenu(sim)
 					end
 				)
 
-				slider(
+				utils.slider(
 					RARECONFIG,
 					"AI",
 					"AI_RELATIVE_LEVEL",
@@ -230,7 +231,7 @@ function settingsMenu(sim)
 				if ac.getPatchVersionCode() >= 2278 then
 					ui.newLine(1)
 
-					slider(
+					utils.slider(
 						RARECONFIG,
 						"AI",
 						"AI_MGUK_CONTROL",
@@ -250,7 +251,7 @@ function settingsMenu(sim)
 				ui.newLine(1)
 
 				ui.header("TYRES")
-				slider(
+				utils.slider(
 					RARECONFIG,
 					"AI",
 					"AI_FORCE_PIT_TYRES",
@@ -270,7 +271,7 @@ function settingsMenu(sim)
 
 				local driver = DRIVERS[sim.focusedCar]
 				if RARECONFIG.data.AI.AI_FORCE_PIT_TYRES == 1 then
-					slider(
+					utils.slider(
 						RARECONFIG,
 						"AI",
 						"AI_AVG_TYRE_LIFE",
@@ -287,7 +288,7 @@ function settingsMenu(sim)
 						end
 					)
 
-					slider(
+					utils.slider(
 						RARECONFIG,
 						"AI",
 						"AI_AVG_TYRE_LIFE_RANGE",
@@ -304,7 +305,7 @@ function settingsMenu(sim)
 
 					ui.newLine(1)
 
-					slider(
+					utils.slider(
 						RARECONFIG,
 						"AI",
 						"AI_SINGLE_TYRE_LIFE",
@@ -319,7 +320,7 @@ function settingsMenu(sim)
 						end
 					)
 
-					slider(
+					utils.slider(
 						RARECONFIG,
 						"AI",
 						"AI_SINGLE_TYRE_LIFE_RANGE",
@@ -395,7 +396,7 @@ function settingsMenu(sim)
 			ui.header("VOLUME")
 			local acVolume = ac.getAudioVolume(ac.AudioChannel.Main)
 
-			slider(
+			utils.slider(
 				RARECONFIG,
 				"AUDIO",
 				"MASTER",
@@ -410,9 +411,20 @@ function settingsMenu(sim)
 				end
 			)
 
-			slider(RARECONFIG, "AUDIO", "DRS_BEEP", 0, 100, 1, false, "DRS Beep: %.0f%%", "DRS Beep Volume", function(v)
-				return math.round(v, 0)
-			end)
+			utils.slider(
+				RARECONFIG,
+				"AUDIO",
+				"DRS_BEEP",
+				0,
+				100,
+				1,
+				false,
+				"DRS Beep: %.0f%%",
+				"DRS Beep Volume",
+				function(v)
+					return math.round(v, 0)
+				end
+			)
 			DRS_BEEP:setVolume(acVolume * RARECONFIG.data.AUDIO.MASTER / 100 * RARECONFIG.data.AUDIO.DRS_BEEP / 100)
 
 			ui.sameLine(0, 2)
@@ -424,9 +436,20 @@ function settingsMenu(sim)
 				ui.setTooltip("Test DRS Beep")
 			end
 
-			slider(RARECONFIG, "AUDIO", "DRS_FLAP", 0, 100, 1, false, "DRS Flap: %.0f%%", "DRS Flap Volume", function(v)
-				return math.round(v, 0)
-			end)
+			utils.slider(
+				RARECONFIG,
+				"AUDIO",
+				"DRS_FLAP",
+				0,
+				100,
+				1,
+				false,
+				"DRS Flap: %.0f%%",
+				"DRS Flap Volume",
+				function(v)
+					return math.round(v, 0)
+				end
+			)
 			DRS_FLAP:setVolume(acVolume * RARECONFIG.data.AUDIO.MASTER / 100 * RARECONFIG.data.AUDIO.DRS_FLAP / 100)
 
 			ui.sameLine(0, 2)
@@ -445,7 +468,7 @@ function settingsMenu(sim)
 			ui.newLine(1)
 			ui.header("RACE CONTROL BANNER")
 
-			slider(
+			utils.slider(
 				RARECONFIG,
 				"NOTIFICATIONS",
 				"X_POS",
@@ -470,7 +493,7 @@ function settingsMenu(sim)
 				ui.setTooltip("Center X")
 			end
 
-			slider(
+			utils.slider(
 				RARECONFIG,
 				"NOTIFICATIONS",
 				"Y_POS",
@@ -494,7 +517,7 @@ function settingsMenu(sim)
 				ui.setTooltip("Center Y")
 			end
 
-			slider(
+			utils.slider(
 				RARECONFIG,
 				"NOTIFICATIONS",
 				"DURATION",
@@ -509,7 +532,7 @@ function settingsMenu(sim)
 				end
 			)
 
-			slider(
+			utils.slider(
 				RARECONFIG,
 				"NOTIFICATIONS",
 				"SCALE",
@@ -540,7 +563,7 @@ function settingsMenu(sim)
 		-- ui.tabItem("MISC", ui.TabItemFlags.None, function()
 		-- 	ui.newLine(1)
 
-		-- 	slider(
+		-- 	utils.slider(
 		-- 		RARECONFIG,
 		-- 		"MISC",
 		-- 		"PHYSICS_REBOOT",
@@ -578,7 +601,7 @@ function settingsMenu(sim)
 		-- 	--     AI_COMP_OVERRIDE = not AI_COMP_OVERRIDE
 		-- 	-- end
 
-		-- 	-- SPLINE_OFFSET = ui.slider("SPLINE", SPLINE_OFFSET, -10, 10, '%.3f')
+		-- 	-- SPLINE_OFFSET = ui.utils.slider("SPLINE", SPLINE_OFFSET, -10, 10, '%.3f')
 		-- 	-- physics.setAISplineOffset(sim.focusedCar, SPLINE_OFFSET)
 
 		-- 	-- if ui.button("RESET TRACK PHYSICS", vec2(40,30), ui.ButtonFlags.None) then

@@ -1,7 +1,7 @@
 SCRIPT_NAME = "Rules and Race Enhancements"
 SCRIPT_SHORT_NAME = "RARE"
-SCRIPT_VERSION = "1.1.1.6.preview9"
-SCRIPT_VERSION_CODE = 11169
+SCRIPT_VERSION = "1.1.2.7.preview5"
+SCRIPT_VERSION_CODE = 11275
 SCRIPT_BUILD_DATE = "2023-03-31"
 CSP_MIN_VERSION_CODE = 2144
 CSP_MIN_VERSION = "1.79"
@@ -35,12 +35,12 @@ end)
 
 function script.update(dt)
 	sim = ac.getSim()
-	
+
 	if sim.isOnlineRace then
 		ac.unloadApp()
 		return
 	end
-	
+
 	local error = ac.getLastError()
 	if error then
 		ui.toast(ui.Icons.Warning, "[RARE] AN ERROR HAS OCCURED")
@@ -95,7 +95,7 @@ function script.windowDebug(dt)
 	local windowName = SCRIPT_SHORT_NAME .. " Debug"
 	local scriptVersion = SCRIPT_VERSION .. " (" .. SCRIPT_VERSION_CODE .. ")"
 	local windowTitle = windowName .. " | " .. scriptVersion .. " | " .. (rareEnabled and "ENABLED" or "DISABLED")
-	local error = errorCheck()
+	local error = ac.getLastError()
 	ac.setWindowTitle("debug", windowTitle)
 
 	if INITIALIZED and not sim.isInMainMenu and racecontrol ~= nil then

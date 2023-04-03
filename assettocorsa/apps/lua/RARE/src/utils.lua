@@ -289,7 +289,7 @@ function utils.createRareTrackConfig()
 	editUiFIle(rareTrackUIDir .. "\\ui_track.json")
 end
 
-function utils,setPhysicsAllowed()
+function utils.setPhysicsAllowed()
 	local surfacesFile = rareTrackLayoutDir .. "\\data\\surfaces.ini"
 	local surfacesIni = ac.INIConfig.load(surfacesFile, ac.INIFormat.Default)
 
