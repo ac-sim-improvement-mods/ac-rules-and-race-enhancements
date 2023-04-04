@@ -172,7 +172,7 @@ local function raceSession(lastUpdate, racecontrol, config, driver)
 	end
 
 	if raceRules.DRS_RULES == 1 then
-		drs.controller(racecontrol.sim, driver, racecontrol.drsEnabled)
+		drs.controller(racecontrol, driver, racecontrol.drsEnabled)
 	else
 		driver.drsAvailable = true
 	end

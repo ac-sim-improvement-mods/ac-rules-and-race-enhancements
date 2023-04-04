@@ -191,7 +191,6 @@ function debugMenu(sim, rc, error)
 					utils.inLineBulletText("Detection Line", tostring(getDetectionLineDistanceM(driver)) .. " m", space)
 					utils.inLineBulletText("Start Line", tostring(getStartLineDistanceM(driver)) .. " m", space)
 					utils.inLineBulletText("End Line", tostring(getEndLineDistanceM(driver)) .. " m", space)
-					ac.debug("whattf", stringify(driver.drsDetection))
 					utils.inLineBulletText(
 						"Track Progress M",
 						tostring(math.round(driver.car.splinePosition * sim.trackLengthM, 5)) .. " m",

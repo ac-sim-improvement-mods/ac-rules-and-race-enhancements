@@ -44,7 +44,7 @@ end, class.NoInitialize)
 --- Checks if driver is before the detection line, not in the pits,
 --- not in a drs zone, and within 1 second of the car ahead on track
 ---@param driver Driver
-local function setDrsAvailable(driver, drsEnabled)
+local function setDrsAvailable(driver, drsEnabled, drsEnabledLap)
 	local drsZones = DRS_ZONES
 	local detectionLines = drsZones.detectionLines
 	local startLines = drsZones.startLines
@@ -91,7 +91,7 @@ local function setDrsAvailable(driver, drsEnabled)
 		end
 	end
 
-	if drsEnabled and not driver.car.isInPitlane then
+	if drsEnabled and driver.car.lapCount + 1 >= drsEnabledLap and not driver.car.isInPitlane then
 		return driver.drsDetection[driver.drsZoneId]
 	else
 		return false
@@ -236,10 +236,10 @@ end
 --- Control driver's DRS deployment
 --- @param driver Driver
 --- @param drsEnabled boolean
-function drs.controller(sim, driver, drsEnabled)
+function drs.controller(rc, driver, drsEnabled)
 	-- setDriverDrsZones(driver)
-	driver.drsAvailable = setDrsAvailable(driver, drsEnabled)
-	setDriverDRS(sim, driver, drsEnabled and driver.drsAvailable or false)
+	driver.drsAvailable = setDrsAvailable(driver, drsEnabled, rc.drsEnabledLap)
+	setDriverDRS(rc.sim, driver, drsEnabled and driver.drsAvailable or false)
 end
 
 return drs
