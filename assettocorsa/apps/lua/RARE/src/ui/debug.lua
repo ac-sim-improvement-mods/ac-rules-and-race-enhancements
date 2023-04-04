@@ -232,6 +232,8 @@ function debugMenu(sim, rc, error)
 			utils.inLineBulletText("Physics Allowed", utils.upperBool(physics.allowed()), space)
 			utils.inLineBulletText("Physics Late", sim.physicsLate, space)
 			utils.inLineBulletText("Track", ac.getTrackName(), space)
+			utils.inLineBulletText("Track Length", sim.trackLengthM, space)
+			utils.inLineBulletText("Mini Sectors", #driver.miniSectors, space)
 			utils.inLineBulletText(
 				"Time",
 				string.format("%02d:%02d:%02d", sim.timeHours, sim.timeMinutes, sim.timeSeconds),

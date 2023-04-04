@@ -51,6 +51,8 @@ Driver = class("Driver", function(carIndex)
 	local trackPosition = -1
 	local carAhead = -1
 	local carAheadDelta = -1
+	local miniSectors = {}
+	local currentMiniSector = 0
 
 	local drsActivationZone = car.drsAvailable
 	local drsZoneNextId = 0
@@ -60,10 +62,6 @@ Driver = class("Driver", function(carIndex)
 	local drsAvailable = false
 	local drsDeployable = false
 	local drsDetection = {}
-	drsDetection[0] = false
-	drsDetection[1] = false
-	drsDetection[2] = false
-	drsDetection[3] = false
 
 	local drsBeepFx = false
 	local drsFlapFx = false
@@ -79,6 +77,8 @@ Driver = class("Driver", function(carIndex)
 	log("[" .. index .. "] " .. name .. " loaded")
 
 	return {
+		currentMiniSector = currentMiniSector,
+		miniSectors = miniSectors,
 		drsDetection = drsDetection,
 		tyreCompoundSoftTexture = tyreCompoundSoftTexture,
 		tyreComoundMediumTexture = tyreComoundMediumTexture,
@@ -197,6 +197,10 @@ local function getPitstopTime(dt, driver)
 	end
 end
 
+local function getMiniSectorGap(driver, carAheadIndex)
+	return driver.miniSectors[driver.currentMiniSector] - DRIVERS[carAheadIndex].miniSectors[driver.currentMiniSector]
+end
+
 function Driver:update(dt, sim)
 	self.lapPitted = getLapPitted(self)
 	self.tyreLaps = getTyreLapCount(self)
@@ -204,7 +208,13 @@ function Driver:update(dt, sim)
 	self.pitlaneTime = getPitTime(dt, self)
 	self.pitstopTime = getPitstopTime(dt, self)
 
+	if self.currentMiniSector ~= math.floor((self.car.splinePosition * sim.trackLengthM) / 50) then
+		self.currentMiniSector = math.floor((self.car.splinePosition * sim.trackLengthM) / 50)
+		self.miniSectors[self.currentMiniSector] = os.clock()
+	end
+
 	if self.carAhead >= 0 then
-		self.carAheadDelta = ac.getDelta(sim, self.index, self.carAhead)
+		-- self.carAheadDelta = ac.getDelta(sim, self.index, self.carAhead)
+		self.carAheadDelta = getMiniSectorGap(self, self.carAhead) or ac.getDelta(sim, self.index, self.carAhead)
 	end
 end

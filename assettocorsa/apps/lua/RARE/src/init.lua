@@ -86,6 +86,14 @@ local function createDrivers(sim)
 
 		driver.tyreCompoundsAvailable = getTrackTyreCompounds(driver)
 
+		for i = 0, #DRS_ZONES.startLines do
+			driver.drsDetection[i] = false
+		end
+
+		for i = 0, math.floor(sim.trackLengthM / 50) do
+			driver.miniSectors[i] = 0
+		end
+
 		if driver.car.isAIControlled then
 			setAIFuelTankMax(sim, driver)
 			setAITyreCompound(driver, driver.tyreCompoundsAvailable)
