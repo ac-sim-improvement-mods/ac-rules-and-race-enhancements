@@ -1,10 +1,10 @@
 local compounds = {}
 local driverCompounds = {}
 
-local function setTyreCompoundsColor(driver, time)
+local function setTyreCompoundsColor(driver, time, force)
 	local driverCompound = driver.car.compoundIndex
 
-	if driver.tyreCompoundTextureTimer < os.clock() and driverCompound ~= driverCompounds[driver.index] then
+	if (driver.tyreCompoundTextureTimer < os.clock() and driverCompound ~= driverCompounds[driver.index]) or force then
 		driver.tyreCompoundTextureTimer = os.clock() + time
 	end
 
@@ -60,18 +60,15 @@ function compounds.update(sim)
 	if not sim.isSessionStarted and sim.isInMainMenu then
 		for i = 0, #DRIVERS do
 			local driver = DRIVERS[i]
-			setTyreCompoundsColor(driver, 100)
+			setTyreCompoundsColor(driver, 15, true)
 		end
-	elseif not sim.isInMainMenu then
+	else
 		for i = 0, #DRIVERS do
 			local driver = DRIVERS[i]
 			if driver.car.isInPit then
-				setTyreCompoundsColor(driver, 0.2)
+				setTyreCompoundsColor(driver, 0.2, false)
 			end
 		end
-	else
-		local driver = DRIVERS[0]
-		setTyreCompoundsColor(driver, 0.2)
 	end
 end
 

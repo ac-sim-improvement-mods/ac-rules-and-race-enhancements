@@ -291,7 +291,7 @@ function debugMenu(sim, rc, error)
 
 	ui.treeNode("[WEATHER]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
 		local totalWetness = (sim.rainWetness + (sim.rainWater * 10)) * 1000
-		utils.inLineBulletText("Weather Type", weatherTypeString(sim), space)
+		utils.inLineBulletText("Weather Type", ac.weatherTypeString(sim), space)
 		utils.inLineBulletText("Rain Intensity", math.round(sim.rainIntensity * 100, 2) .. "%", space)
 		utils.inLineBulletText("Track Wetness", math.round(sim.rainWetness * 1000, 2) .. "%", space)
 		utils.inLineBulletText("Track Puddles", math.round(sim.rainWater * 1000, 2) .. "%", space)
