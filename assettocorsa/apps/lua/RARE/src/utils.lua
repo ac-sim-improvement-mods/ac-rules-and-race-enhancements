@@ -233,6 +233,21 @@ function utils.createRareTrackConfig()
 	if trackLayout == ac.getTrackID() then
 		currentTrackLayoutDir = trackDir
 		currentTrackUIDir = trackDir .. "\\ui"
+
+		io.copyFile(
+			trackDir .. "\\" .. trackLayout .. ".vao-patch",
+			trackDir .. "\\" .. trackLayout .. "_rare.vao-patch",
+			true
+		)
+
+		if not io.fileExists(trackDir .. "\\models.ini") then
+			io.save(trackDir .. "\\models_" .. trackLayout .. "_rare.ini")
+			local modelIni = ac.INIConfig.load(trackDir .. "\\models_" .. trackLayout .. "_rare.ini")
+			modelIni:setAndSave("MODEL_0", "FILE", trackLayout .. ".kn5")
+			modelIni:setAndSave("MODEL_0", "POSITION", "0,0,0")
+			modelIni:setAndSave("MODEL_0", "ROTATION", "0,0,0")
+		end
+
 		io.copyFile(trackDir .. "\\models.ini", trackDir .. "\\models_" .. trackLayout .. "_rare.ini", true)
 		io.copyFile(trackDir .. "\\models.vao-patch", trackDir .. "\\models_" .. trackLayout .. "_rare.vao-patch", true)
 	else
