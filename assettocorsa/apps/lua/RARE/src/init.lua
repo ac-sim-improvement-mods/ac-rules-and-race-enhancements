@@ -41,9 +41,12 @@ local function getTrackTyreCompounds(driver)
 
 	driver.tyreCompoundMaterialTarget =
 		compoundsIni:get("COMPOUNDS", "COMPOUND_TARGET_MATERIAL", "Unknown Compound Material Target")
-	driver.tyreCompoundSoftTexture = compoundsIni:get("COMPOUNDS", "SOFT_COMPOUND_TEXTURE", "")
-	driver.tyreCompoundMediumTexture = compoundsIni:get("COMPOUNDS", "MEDIUM_COMPOUND_TEXTURE", "")
-	driver.tyreCompoundHardTexture = compoundsIni:get("COMPOUNDS", "HARD_COMPOUND_TEXTURE", "")
+	driver.tyreCompoundSoftTexture =
+		compoundsIni:get("COMPOUNDS", "SOFT_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
+	driver.tyreCompoundMediumTexture =
+		compoundsIni:get("COMPOUNDS", "MEDIUM_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
+	driver.tyreCompoundHardTexture =
+		compoundsIni:get("COMPOUNDS", "HARD_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
 
 	local compounds = string.split(compoundsIni:get(trackID, "COMPOUNDS", "0"), ",")
 	compoundsIni:setAndSave(trackID, "COMPOUNDS", compoundsIni:get(trackID, "COMPOUNDS", "0"))
@@ -208,14 +211,14 @@ function initialize(sim)
 	loadSettings(sim)
 
 	if not physics.allowed() then
-		createRareTrackConfig()
-		setPhysicsAllowed()
+		utils.createRareTrackConfig()
+		utils.setPhysicsAllowed()
 		setTimeout(function()
-			REBOOT_CONFIG = "[RACE]"
+			local rareLayout = "[RACE]"
 				.. "\nCONFIG_TRACK="
 				.. (ac.getTrackLayout() ~= "" and ac.getTrackLayout() or ac.getTrackID())
 				.. "_rare"
-			REBOOT = true
+			ac.restartAssettoCorsa(rareLayout)
 		end, 5, "reboot")
 	end
 

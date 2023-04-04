@@ -1,12 +1,14 @@
 local compounds = {}
 local driverCompounds = {}
 
-local function setTyreCompoundsColor(driver)
+local function setTyreCompoundsColor(driver, time)
 	local driverCompound = driver.car.compoundIndex
 
-	if driverCompound ~= driverCompounds[driver.index] then
-		driverCompounds[driver.index] = driverCompound
+	if driver.tyreCompoundTextureTimer < os.clock() and driverCompound ~= driverCompounds[driver.index] then
+		driver.tyreCompoundTextureTimer = os.clock() + time
+	end
 
+	if driver.tyreCompoundTextureTimer >= os.clock() then
 		local extensionDir = ac.getFolder(ac.FolderID.ContentCars) .. "/" .. ac.getCarID(driver.index) .. "/extension/"
 
 		local compoundHardness = ""
@@ -28,14 +30,14 @@ local function setTyreCompoundsColor(driver)
 		local compoundTexture = extensionDir .. compoundHardness .. ".dds"
 		local compoundBlurTexture = extensionDir .. compoundHardness .. "_Blur.dds"
 
-		for _ = 0, 2 do
-			ac.findNodes("carRoot:" .. driver.index)
-				:findMeshes("material:" .. driver.tyreCompoundMaterialTarget)
-				:setMaterialTexture("txDiffuse", compoundTexture)
-			ac.findNodes("carRoot:" .. driver.index)
-				:findMeshes("material:" .. driver.tyreCompoundMaterialTarget)
-				:setMaterialTexture("txBlur", compoundBlurTexture)
-		end
+		ac.findNodes("carRoot:" .. driver.index)
+			:findMeshes("material:" .. driver.tyreCompoundMaterialTarget)
+			:setMaterialTexture("txDiffuse", compoundTexture)
+		ac.findNodes("carRoot:" .. driver.index)
+			:findMeshes("material:" .. driver.tyreCompoundMaterialTarget)
+			:setMaterialTexture("txBlur", compoundBlurTexture)
+
+		driverCompounds[driver.index] = driverCompound
 	end
 end
 
@@ -55,16 +57,16 @@ function compounds.update(sim)
 	if sim.isInMainMenu then
 		restrictCompoundChoice()
 	end
-	if not sim.isSessionStarted or sim.isInMainMenu then
+	if not sim.isSessionStarted and sim.isInMainMenu then
 		for i = 0, #DRIVERS do
 			local driver = DRIVERS[i]
-			setTyreCompoundsColor(driver)
+			setTyreCompoundsColor(driver, 100)
 		end
 	else
 		for i = 0, #DRIVERS do
 			local driver = DRIVERS[i]
 			if driver.car.isInPit then
-				setTyreCompoundsColor(driver)
+				setTyreCompoundsColor(driver, 0.2)
 			end
 		end
 	end

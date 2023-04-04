@@ -47,6 +47,7 @@ Driver = class("Driver", function(carIndex)
 	local tyreCompoundSoftTexture = ""
 	local tyreComoundMediumTexture = ""
 	local tyreCompoundHardTexture = ""
+	local tyreCompoundTextureTimer = 0
 
 	local trackPosition = -1
 	local carAhead = -1
@@ -77,6 +78,7 @@ Driver = class("Driver", function(carIndex)
 	log("[" .. index .. "] " .. name .. " loaded")
 
 	return {
+		tyreCompoundTextureTimer = tyreCompoundTextureTimer,
 		currentMiniSector = currentMiniSector,
 		miniSectors = miniSectors,
 		drsDetection = drsDetection,

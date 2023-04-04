@@ -5,6 +5,7 @@ SPLINE_OFFSET = 0
 
 function settingsMenu(sim)
 	local scriptVersion = SCRIPT_VERSION .. " (" .. SCRIPT_VERSION_CODE .. ")"
+	local rareEnable = ac.isWindowOpen("rare")
 	ac.setWindowTitle("settings", SCRIPT_NAME .. " Settings | " .. scriptVersion)
 
 	if sim.isInMainMenu then
@@ -15,31 +16,18 @@ function settingsMenu(sim)
 		ui.popFont()
 
 		ui.sameLine(0, 0)
-		ui.drawRectFilled(
-			vec2(380, 30),
-			vec2(420, 60),
-			(ac.isWindowOpen("rare") and physics.allowed()) and rgbm(0, 1, 0, 0.5) or rgbm(1, 0, 0, 0.5)
-		)
+		ui.drawRectFilled(vec2(380, 30), vec2(420, 60), rareEnable and rgbm(0, 1, 0, 0.5) or rgbm(1, 0, 0, 0.5))
 
 		ui.sameLine(380, 0)
 		ui.setCursor(vec2(380, 30))
-		local enabledButtonFlags = physics.allowed() and ui.ButtonFlags.None or ui.ButtonFlags.Disabled
-		if
-			ui.button(
-				(ac.isWindowOpen("rare") and physics.allowed()) and "ON" or "OFF",
-				vec2(40, 30),
-				enabledButtonFlags
-			)
-		then
+
+		-- local enabledButtonFlags = physics.allowed() and ui.ButtonFlags.None or ui.ButtonFlags.Disabled
+		if ui.button(rareEnable and "ON" or "OFF", vec2(40, 30), ui.ButtonFlags.None) then
 			ac.setWindowOpen("rare", not ac.isWindowOpen("rare"))
 		end
 
 		if ui.itemHovered() then
-			if physics.allowed() then
-				ui.setTooltip("Enable or Disable " .. SCRIPT_SHORT_NAME .. " app")
-			else
-				ui.setTooltip("In 'MISC' settings, click the 'App Injection' button to enable RARE")
-			end
+			ui.setTooltip("Enable or Disable " .. SCRIPT_SHORT_NAME .. " app")
 		end
 	end
 
