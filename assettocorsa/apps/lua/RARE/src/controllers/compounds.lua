@@ -62,13 +62,16 @@ function compounds.update(sim)
 			local driver = DRIVERS[i]
 			setTyreCompoundsColor(driver, 100)
 		end
-	else
+	elseif not sim.isInMainMenu then
 		for i = 0, #DRIVERS do
 			local driver = DRIVERS[i]
 			if driver.car.isInPit then
 				setTyreCompoundsColor(driver, 0.2)
 			end
 		end
+	else
+		local driver = DRIVERS[0]
+		setTyreCompoundsColor(driver, 0.2)
 	end
 end
 

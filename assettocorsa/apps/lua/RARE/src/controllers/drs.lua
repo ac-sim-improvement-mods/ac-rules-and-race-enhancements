@@ -45,53 +45,53 @@ end, class.NoInitialize)
 --- not in a drs zone, and within 1 second of the car ahead on track
 ---@param driver Driver
 local function setDrsAvailable(driver, drsEnabled, drsEnabledLap)
-	local drsZones = DRS_ZONES
-	local detectionLines = drsZones.detectionLines
-	local startLines = drsZones.startLines
-	local endLines = drsZones.endLines
-	local driverSplinePosition = driver.car.splinePosition
-
-	for i = 0, #startLines do
-		local detectionLine = detectionLines[i]
-		local startLine = startLines[i]
-		local endLine = endLines[i]
-
-		-- This handles when a DRS start zone is past the finish line after the detection zone
-		if detectionLine > startLine then
-			if driverSplinePosition >= 0 and driverSplinePosition < startLine then
-				driverSplinePosition = driverSplinePosition + 1
-			end
-			startLine = startLine + 1
-		end
-
-		-- This handles when a DRS start zone is past the finish line after the detection zone
-		if startLine > endLine then
-			if driverSplinePosition >= 0 and driverSplinePosition < endLine then
-				driverSplinePosition = driverSplinePosition + 1
-			end
-			endLine = endLine + 1
-		end
-
-		local isInDrsZone = driverSplinePosition >= detectionLine and driverSplinePosition < endLine
-		local isInDrsActivationZone = isInDrsZone and driverSplinePosition >= startLine
-
-		-- if driver.car.index == 10 then
-		-- 	ac.debug("driver." .. i .. ".detectionLine", detectionLine)
-		-- 	ac.debug("driver." .. i .. ".startLine", startLine)
-		-- 	ac.debug("driver." .. i .. ".zendLine", endLine)
-		-- 	ac.debug("driver.pos", driverSplinePosition)
-		-- end
-
-		if not isInDrsZone then
-			driver.drsDetection[i] = inDrsRange(driver)
-		elseif isInDrsActivationZone then
-			driver.drsZoneId = i
-			driver.drsZoneNextId = i == #startLines and 0 or i + 1
-			driver.drsZonePrevId = i == 0 and #startLines or i - 1
-		end
-	end
-
 	if drsEnabled and driver.car.lapCount + 1 >= drsEnabledLap and not driver.car.isInPitlane then
+		local drsZones = DRS_ZONES
+		local detectionLines = drsZones.detectionLines
+		local startLines = drsZones.startLines
+		local endLines = drsZones.endLines
+		local driverSplinePosition = driver.car.splinePosition
+
+		for i = 0, #startLines do
+			local detectionLine = detectionLines[i]
+			local startLine = startLines[i]
+			local endLine = endLines[i]
+
+			-- This handles when a DRS start zone is past the finish line after the detection zone
+			if detectionLine > startLine then
+				if driverSplinePosition >= 0 and driverSplinePosition < startLine then
+					driverSplinePosition = driverSplinePosition + 1
+				end
+				startLine = startLine + 1
+			end
+
+			-- This handles when a DRS start zone is past the finish line after the detection zone
+			if startLine > endLine then
+				if driverSplinePosition >= 0 and driverSplinePosition < endLine then
+					driverSplinePosition = driverSplinePosition + 1
+				end
+				endLine = endLine + 1
+			end
+
+			local isInDrsZone = driverSplinePosition >= detectionLine and driverSplinePosition < endLine
+			local isInDrsActivationZone = isInDrsZone and driverSplinePosition >= startLine
+
+			-- if driver.car.index == 10 then
+			-- 	ac.debug("driver." .. i .. ".detectionLine", detectionLine)
+			-- 	ac.debug("driver." .. i .. ".startLine", startLine)
+			-- 	ac.debug("driver." .. i .. ".zendLine", endLine)
+			-- 	ac.debug("driver.pos", driverSplinePosition)
+			-- end
+
+			if not isInDrsZone then
+				driver.drsDetection[i] = inDrsRange(driver)
+			elseif isInDrsActivationZone then
+				driver.drsZoneId = i
+				driver.drsZoneNextId = i == #startLines and 0 or i + 1
+				driver.drsZonePrevId = i == 0 and #startLines or i - 1
+			end
+		end
+
 		return driver.drsDetection[driver.drsZoneId]
 	else
 		return false

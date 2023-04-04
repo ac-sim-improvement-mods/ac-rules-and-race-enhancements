@@ -7,11 +7,8 @@ function log(message)
 end
 
 function utils.randomizer(index, range)
-	math.randomseed(os.clock() * index)
+	math.randomseed(os.clock() + index)
 	math.random()
-	for i = 0, math.random(index) do
-		math.random()
-	end
 	return math.random(-range, range)
 end
 

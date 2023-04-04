@@ -1,7 +1,7 @@
 SCRIPT_NAME = "Rules and Race Enhancements"
 SCRIPT_SHORT_NAME = "RARE"
-SCRIPT_VERSION = "1.1.3.9.preview3"
-SCRIPT_VERSION_CODE = 11393
+SCRIPT_VERSION = "1.1.3.9.preview5"
+SCRIPT_VERSION_CODE = 11395
 SCRIPT_BUILD_DATE = "2023-03-31"
 CSP_MIN_VERSION_CODE = 2144
 CSP_MIN_VERSION = "1.79"
@@ -28,6 +28,7 @@ ac.onSessionStart(function(sessionIndex, restarted)
 	if restarted then
 		RESTARTED = true
 		INITIALIZED = false
+		log("Session restarted")
 	end
 end)
 
