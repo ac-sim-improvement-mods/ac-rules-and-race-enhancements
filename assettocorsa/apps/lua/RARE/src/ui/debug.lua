@@ -230,8 +230,9 @@ function debugMenu(sim, rc, error)
 			utils.inLineBulletText("Race Started", utils.upperBool(sim.isSessionStarted), space)
 			utils.inLineBulletText("Physics Allowed", utils.upperBool(physics.allowed()), space)
 			utils.inLineBulletText("Physics Late", sim.physicsLate, space)
-			utils.inLineBulletText("Track", ac.getTrackName(), space)
-			utils.inLineBulletText("Track Length", sim.trackLengthM, space)
+			utils.inLineBulletText("Track Name", ac.getTrackName(), space)
+			utils.inLineBulletText("Track ID", ac.getTrackID(), space)
+			utils.inLineBulletText("Track Length", math.round(sim.trackLengthM), space)
 			utils.inLineBulletText("Mini Sectors", #driver.miniSectors, space)
 			utils.inLineBulletText(
 				"Time",
@@ -247,6 +248,13 @@ function debugMenu(sim, rc, error)
 			end
 		end
 	)
+
+	ui.treeNode("[SESSION MODIFIERS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
+		utils.inLineBulletText("Tyre Blankets", utils.upperBool(sim.allowTyreBlankets), space)
+		utils.inLineBulletText("Mechanical Damage Rate", tostring(sim.mechanicalDamageRate * 100) .. "%", space)
+		utils.inLineBulletText("Tyre Consumption Rate", tostring(sim.tyreConsumptionRate * 100) .. "%", space)
+		utils.inLineBulletText("Fuel Consumption Rate", tostring(sim.fuelConsumptionRate * 100) .. "%", space)
+	end)
 
 	if RARECONFIG.data.RULES.VSC_RULES == 1 then
 		ui.treeNode("[VSC]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
@@ -264,7 +272,6 @@ function debugMenu(sim, rc, error)
 		utils.inLineBulletText("Extended Physics", utils.upperBool(driver.car.extendedPhysics), space)
 		utils.inLineBulletText("Physics Available", utils.upperBool(driver.car.physicsAvailable), space)
 		utils.inLineBulletText("DRS Present", utils.upperBool(driver.car.drsPresent), space)
-		utils.inLineBulletText("Kunos Car", utils.upperBool(driver.car.isKunosCar), space)
 	end)
 
 	ui.treeNode("[DRIVER]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
