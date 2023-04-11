@@ -156,8 +156,10 @@ local function raceSession(lastUpdate, racecontrol, config, driver)
 		end
 	end
 
-	-- notifications handler
 	if raceRules.DRS_RULES == 1 then
+		drs.controller(racecontrol, driver, racecontrol.drsEnabled)
+
+		-- notifications handler
 		if lastUpdate then
 			if not lastUpdate.drsEnabled and racecontrol.drsEnabled then
 				notifications.popup("DRS ENABLED")
@@ -171,10 +173,6 @@ local function raceSession(lastUpdate, racecontrol, config, driver)
 				notifications.popup("DRS ENABLED IN 2 LAPS")
 			end
 		end
-	end
-
-	if raceRules.DRS_RULES == 1 then
-		drs.controller(racecontrol, driver, racecontrol.drsEnabled)
 	else
 		driver.drsAvailable = true
 	end
