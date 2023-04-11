@@ -210,6 +210,10 @@ function Driver:update(dt, sim)
 	self.pitlaneTime = getPitTime(dt, self)
 	self.pitstopTime = getPitstopTime(dt, self)
 
+	if not self.car.isInPit and self.car.fuel > 1 then
+		self.aiPrePitFuel = self.car.fuel
+	end
+
 	if self.currentMiniSector ~= math.floor((self.car.splinePosition * sim.trackLengthM) / 50) then
 		self.currentMiniSector = math.floor((self.car.splinePosition * sim.trackLengthM) / 50)
 		self.miniSectors[self.currentMiniSector] = os.clock()
