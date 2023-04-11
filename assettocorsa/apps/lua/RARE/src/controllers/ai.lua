@@ -100,7 +100,7 @@ local function pitStrategyCall(driver, forced)
 end
 --- Occurs when a driver is in the pit
 ---@param driver Driver
-local function pitstop(driver)
+local function pitstop(raceRules, driver)
 	if driver.aiPitting then
 		if not driver.tyreCompoundChange and driver.tyreCompoundNext ~= driver.tyreCompoundStart then
 			driver.tyreCompoundChange = true
@@ -123,13 +123,16 @@ local function pitstop(driver)
 		end
 	end
 
-	physics.setCarFuel(driver.index, driver.aiPrePitFuel)
+	if raceRules.RACE_REFUELING ~= 1 then
+		physics.setCarFuel(driver.index, driver.aiPrePitFuel)
+	end
+
 	driver.aiPitting = false
 end
 
 --- Determines when an AI driver should pit for new tyres
 --- @param driver Driver
-function ai.pitNewTyres(driver)
+function ai.pitNewTyres(raceRules, driver)
 	if not driver.car.isInPitlane and not driver.aiPitting then
 		if singleTyreWearBelowLimit(driver) then
 			pitStrategyCall(driver, true)
@@ -138,7 +141,7 @@ function ai.pitNewTyres(driver)
 		end
 	else
 		if driver.car.isInPit then
-			pitstop(driver)
+			pitstop(raceRules, driver)
 		end
 
 		if driver.aiPitCall then
@@ -398,9 +401,9 @@ function ai.mgukController(driver)
 	end
 end
 
-function ai.controller(aiRules, driver)
+function ai.controller(raceRules, aiRules, driver)
 	if aiRules.AI_FORCE_PIT_TYRES == 1 then
-		ai.pitNewTyres(driver)
+		ai.pitNewTyres(raceRules, driver)
 	end
 	if aiRules.AI_ALTERNATE_LEVEL == 1 then
 		ai.alternateLevel(driver)

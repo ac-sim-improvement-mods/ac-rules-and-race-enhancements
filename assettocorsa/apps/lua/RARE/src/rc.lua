@@ -178,7 +178,7 @@ local function raceSession(lastUpdate, racecontrol, config, driver)
 	end
 
 	if driver.car.isAIControlled then
-		ai.controller(aiRules, driver)
+		ai.controller(raceRules, aiRules, driver)
 	end
 
 	return driver
