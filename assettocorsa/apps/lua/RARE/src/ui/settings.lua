@@ -31,13 +31,10 @@ function settingsMenu(sim)
 		end
 	end
 
-	if ac.isWindowOpen("rare") then
+	if ac.isWindowOpen("rare") and INITIALIZED then
 		ui.newLine(3)
 	else
 		ui.newLine(0)
-	end
-
-	if not ac.isWindowOpen("rare") then
 		return
 	end
 
