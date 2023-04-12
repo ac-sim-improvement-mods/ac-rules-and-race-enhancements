@@ -122,7 +122,7 @@ function settingsMenu(sim)
 				-- end
 				-- ui.newLine(1)
 
-				ui.header("PIT STOPS")
+				ui.header("FUEL")
 				utils.slider(
 					RARECONFIG,
 					"RULES",
@@ -246,26 +246,6 @@ function settingsMenu(sim)
 					end
 				)
 
-				if ac.getPatchVersionCode() >= 2278 then
-					ui.newLine(1)
-
-					utils.slider(
-						RARECONFIG,
-						"AI",
-						"AI_MGUK_CONTROL",
-						0,
-						1,
-						1,
-						true,
-						RARECONFIG.data.AI.AI_MGUK_CONTROL == 1 and "AI Dynamic MGUK: ENABLED"
-							or "AI Dynamic MGUK: DISABLED",
-						"Enables AI to make MGUK changes during the race",
-						function(v)
-							return math.round(v, 0)
-						end
-					)
-				end
-
 				ui.newLine(1)
 
 				ui.header("TYRES")
@@ -354,6 +334,43 @@ function settingsMenu(sim)
 					)
 
 					ui.newLine(1)
+
+					ui.header("FUEL")
+					utils.slider(
+						RARECONFIG,
+						"AI",
+						"AI_TANK_FILL",
+						0,
+						1,
+						1,
+						true,
+						RARECONFIG.data.AI.AI_TANK_FILL == 1 and "Fill Fuel Tank: ENABLED" or "Fill Fuel Tank: DISABLED",
+						"Enable or disable refueling AI car's fuel tank with enough fuel for the whole race, given the capacity is high enough",
+						function(v)
+							return math.round(v, 0)
+						end
+					)
+
+					if ac.getPatchVersionCode() >= 2278 then
+						ui.newLine(1)
+
+						ui.header("MISC")
+						utils.slider(
+							RARECONFIG,
+							"AI",
+							"AI_MGUK_CONTROL",
+							0,
+							1,
+							1,
+							true,
+							RARECONFIG.data.AI.AI_MGUK_CONTROL == 1 and "AI Dynamic MGUK: ENABLED"
+								or "AI Dynamic MGUK: DISABLED",
+							"Enables AI to make MGUK changes during the race",
+							function(v)
+								return math.round(v, 0)
+							end
+						)
+					end
 
 					if not sim.isInMainMenu and ac.getPatchVersionCode() >= 2278 then
 						if driver.car.isAIControlled then
