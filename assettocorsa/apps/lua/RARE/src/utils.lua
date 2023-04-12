@@ -230,7 +230,7 @@ local currentTrackUIDir = trackDir .. "\\ui\\" .. trackLayout
 local rareTrackUIDir = trackDir .. "\\ui\\" .. trackLayout .. "_rare"
 
 function utils.createRareTrackConfig()
-	if not string.find(currentTrackLayoutDir, "_rare") then
+	if string.find(currentTrackLayoutDir, "_rare") then
 		return
 	end
 
