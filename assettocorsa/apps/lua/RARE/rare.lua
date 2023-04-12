@@ -1,7 +1,7 @@
 SCRIPT_NAME = "Rules and Race Enhancements"
 SCRIPT_SHORT_NAME = "RARE"
-SCRIPT_VERSION = "1.1.4.2.preview9"
-SCRIPT_VERSION_CODE = 11429
+SCRIPT_VERSION = "1.1.4.3.preview0"
+SCRIPT_VERSION_CODE = 11430
 SCRIPT_BUILD_DATE = "2023-04-11"
 CSP_MIN_VERSION_CODE = 2144
 CSP_MIN_VERSION = "1.79"
@@ -48,7 +48,6 @@ function script.update(dt)
 
 	if sim.isInMainMenu then
 		ac.setWindowOpen("settings_setup", true)
-		ac.setWindowOpen("main_setup", true)
 	end
 
 	if not ac.isWindowOpen("rare") then
