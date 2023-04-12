@@ -54,19 +54,24 @@ local function restrictCompoundChoice()
 end
 
 function compounds.update(sim)
-	if sim.isInMainMenu then
-		restrictCompoundChoice()
-	end
-	if not sim.isSessionStarted and sim.isInMainMenu then
-		for i = 0, #DRIVERS do
-			local driver = DRIVERS[i]
-			setTyreCompoundsColor(driver, 15, true)
+	if RARECONFIG.data.RULES.RESTRICT_COMPOUNDS == 1 then
+		if sim.isInMainMenu then
+			restrictCompoundChoice()
 		end
-	else
-		for i = 0, #DRIVERS do
-			local driver = DRIVERS[i]
-			if driver.car.isInPit then
-				setTyreCompoundsColor(driver, 0.2, false)
+	end
+
+	if RARECONFIG.data.RULES.CORRECT_COMPOUNDS_COLORS == 1 then
+		if not sim.isSessionStarted and sim.isInMainMenu then
+			for i = 0, #DRIVERS do
+				local driver = DRIVERS[i]
+				setTyreCompoundsColor(driver, 15, true)
+			end
+		else
+			for i = 0, #DRIVERS do
+				local driver = DRIVERS[i]
+				if driver.car.isInPit then
+					setTyreCompoundsColor(driver, 0.2, false)
+				end
 			end
 		end
 	end

@@ -140,6 +140,39 @@ function settingsMenu(sim)
 				)
 
 				ui.newLine(1)
+
+				ui.header("TYRE COMPOUNDS")
+				utils.slider(
+					RARECONFIG,
+					"RULES",
+					"RESTRICT_COMPOUNDS",
+					0,
+					1,
+					1,
+					true,
+					RARECONFIG.data.RULES.RESTRICT_COMPOUNDS == 1 and "Restrict Compound Choice: ENABLED"
+						or "Restrict Compound Choice: DISABLED",
+					"Enable or disable restricting compound choice to user defined set\nRequires configration in order to work",
+					function(v)
+						return math.round(v, 0)
+					end
+				)
+				utils.slider(
+					RARECONFIG,
+					"RULES",
+					"CORRECT_COMPOUNDS_COLORS",
+					0,
+					1,
+					1,
+					true,
+					RARECONFIG.data.RULES.CORRECT_COMPOUNDS_COLORS == 1 and "HMS Compound Colors: ENABLED"
+						or "HMS Compound Colors: DISABLED",
+					"Enable or disable changing the compound colors to reflect the Hard (white) Medium (yellow) and Soft (red) compound\nRequires configration in order to work",
+					function(v)
+						return math.round(v, 0)
+					end
+				)
+
 				-- ui.newLine(5)
 
 				-- if ui.button("APPLY SETTINGS", vec2(ui.windowWidth()-40,25), ui.ButtonFlags.None) then
