@@ -191,17 +191,6 @@ function debugMenu(sim, rc, error)
 					utils.inLineBulletText("Detection Line", tostring(getDetectionLineDistanceM(driver)) .. " m", space)
 					utils.inLineBulletText("Start Line", tostring(getStartLineDistanceM(driver)) .. " m", space)
 					utils.inLineBulletText("End Line", tostring(getEndLineDistanceM(driver)) .. " m", space)
-					utils.inLineBulletText(
-						"Track Progress M",
-						tostring(math.round(driver.car.splinePosition * sim.trackLengthM, 5)) .. " m",
-						space
-					)
-					utils.inLineBulletText(
-						"Track Progress %",
-						tostring(math.round(driver.car.splinePosition * 100, 2)) .. " %",
-						space
-					)
-					utils.inLineBulletText("Upcoming Turn", ac.getTrackUpcomingTurn(driver.car.index), space)
 				else
 					ui.bulletText("IN PITS")
 				end
@@ -210,6 +199,35 @@ function debugMenu(sim, rc, error)
 			end
 		end)
 	end
+
+	ui.treeNode("[POSITION]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
+		utils.inLineBulletText(
+			"Track Progress M",
+			tostring(math.round(driver.car.splinePosition * sim.trackLengthM, 5)) .. " m",
+			space
+		)
+		utils.inLineBulletText("Current Spline", driver.car.splinePosition, space)
+		utils.inLineBulletText("Grid Spline", driver.startingGridSplinePosition, space)
+		utils.inLineBulletText("Spline Delta", driver.car.splinePosition - driver.startingGridSplinePosition, space)
+		utils.inLineBulletText("Current Side", driver.startingGridSideline, space)
+		utils.inLineBulletText("Grid Side", driver.startingGridSideline, space)
+		utils.inLineBulletText(
+			"Side Delta",
+			ac.worldCoordinateToTrack(driver.car.position).x - driver.startingGridSideline,
+			space
+		)
+		if driver.car.isAIControlled then
+			utils.inLineBulletText("AI Offset", driver.aiSplineOffset, space)
+		end
+
+		utils.inLineBulletText("Upcoming Turn", ac.getTrackUpcomingTurn(driver.car.index), space)
+		utils.inLineBulletText("Began Formation Lap", utils.upperBool(driver.hasBeganFormationLap), space)
+		utils.inLineBulletText("Is Warming Tyres", utils.upperBool(driver.isWarmingTyres), space)
+		utils.inLineBulletText("Is Warming Left Tyres", utils.upperBool(driver.isWarmingLeft), space)
+		utils.inLineBulletText("Is Warming Right Tyres", utils.upperBool(driver.isWarmingRight), space)
+		utils.inLineBulletText("Is Aligning To Grid", utils.upperBool(driver.isAligningToGrid), space)
+		utils.inLineBulletText("Is Parking On Grid", utils.upperBool(driver.isParkingOnGrid), space)
+	end)
 
 	ui.treeNode("[DAMAGE]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
 		utils.inLineBulletText("Damage 0", driver.car.damage[0], space)
@@ -227,8 +245,9 @@ function debugMenu(sim, rc, error)
 		ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed,
 		function()
 			utils.inLineBulletText(SCRIPT_SHORT_NAME .. " Enabled", utils.upperBool(ac.isWindowOpen("rare")), space)
-			utils.inLineBulletText("Race Started", utils.upperBool(sim.isSessionStarted), space)
 			utils.inLineBulletText("Physics Allowed", utils.upperBool(physics.allowed()), space)
+			utils.inLineBulletText("Race Started", utils.upperBool(sim.isSessionStarted), space)
+			utils.inLineBulletText("Time Since Race Started", ac.lapTimeToString(-sim.timeToSessionStart), space)
 			utils.inLineBulletText("Physics Late", sim.physicsLate, space)
 			utils.inLineBulletText("Track Name", ac.getTrackName(), space)
 			utils.inLineBulletText("Track ID", ac.getTrackID(), space)
@@ -278,6 +297,8 @@ function debugMenu(sim, rc, error)
 		utils.inLineBulletText("Driver [" .. driver.index .. "]", driver.name, space)
 		utils.inLineBulletText("Team", ac.getDriverTeam(driver.car.index), space)
 		utils.inLineBulletText("Number", ac.getDriverNumber(driver.car.index), space)
+		utils.inLineBulletText("Session Distance KM", math.round(driver.car.drivenInRace), space)
+		utils.inLineBulletText("Starting Race Position", driver.startingGridRacePosition .. "/" .. sim.carsCount, space)
 		utils.inLineBulletText("Race Position", driver.car.racePosition .. "/" .. sim.carsCount, space)
 		utils.inLineBulletText("Track Position", driver.trackPosition .. "/" .. rc.carsOnTrackCount, space)
 		if not sim.isOnlineRace then

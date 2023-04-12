@@ -49,6 +49,18 @@ Driver = class("Driver", function(carIndex)
 	local tyreCompoundHardTexture = ""
 	local tyreCompoundTextureTimer = 0
 
+	local startingGridWorldPosition = vec3()
+	local startingGridSideline = vec2()
+	local startingGridSplinePosition = -1
+	local startingGridRacePosition = -1
+	local isRetakingPosition = false
+	local isReturningPosition = false
+	local hasBeganFormationLap = false
+	local isWarmingTyres = false
+	local isWarmingLeft = false
+	local isWarmingRight = false
+	local isAligningToGrid = false
+	local isParkingOnGrid = false
 	local trackPosition = -1
 	local carAhead = -1
 	local carAheadDelta = -1
@@ -78,6 +90,18 @@ Driver = class("Driver", function(carIndex)
 	log("[" .. index .. "] " .. name .. " loaded")
 
 	return {
+		isRetakingPosition = isRetakingPosition,
+		isReturningPosition = isReturningPosition,
+		isWarmingLeft = isWarmingLeft,
+		isWarmingRight = isWarmingRight,
+		isWarmingTyres = isWarmingTyres,
+		startingGridRacePosition = startingGridRacePosition,
+		isParkingOnGrid = isParkingOnGrid,
+		isAligningToGrid = isAligningToGrid,
+		hasBeganFormationLap = hasBeganFormationLap,
+		startingGridSplinePosition = startingGridSplinePosition,
+		startingGridSideline = startingGridSideline,
+		startingGridWorldPosition = startingGridWorldPosition,
 		tyreCompoundTextureTimer = tyreCompoundTextureTimer,
 		currentMiniSector = currentMiniSector,
 		miniSectors = miniSectors,
@@ -203,12 +227,38 @@ local function getMiniSectorGap(driver, carAheadIndex)
 	return driver.miniSectors[driver.currentMiniSector] - DRIVERS[carAheadIndex].miniSectors[driver.currentMiniSector]
 end
 
+local function getIsAligningToGrid(driver, hasBeganFormationLap)
+	local splineDelta = math.abs(driver.startingGridSplinePosition - driver.car.splinePosition)
+
+	if hasBeganFormationLap then
+		if splineDelta < 0.1 then
+			return true
+		else
+			return false
+		end
+	else
+		return false
+	end
+end
+
 function Driver:update(dt, sim)
 	self.lapPitted = getLapPitted(self)
 	self.tyreLaps = getTyreLapCount(self)
 	self.pitstopCount = getPitstopCount(self)
 	self.pitlaneTime = getPitTime(dt, self)
 	self.pitstopTime = getPitstopTime(dt, self)
+
+	if self.car.drivenInRace > 200 and self.car.drivenInRace < 2000 then
+		if not self.hasBeganFormationLap then
+			if self.car.splinePosition > 0.2 then
+				self.hasBeganFormationLap = true
+			end
+		end
+	end
+
+	if not self.isAligningToGrid then
+		self.isAligningToGrid = getIsAligningToGrid(self, self.hasBeganFormationLap)
+	end
 
 	if not self.car.isInPit and self.car.fuel > 1 then
 		self.aiPrePitFuel = self.car.fuel

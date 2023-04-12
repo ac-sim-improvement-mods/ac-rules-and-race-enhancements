@@ -97,6 +97,10 @@ local function createDrivers(sim)
 			driver.miniSectors[i] = 0
 		end
 
+		driver.startingGridSplinePosition = driver.car.splinePosition
+		driver.startingGridSideline = ac.worldCoordinateToTrack(driver.car.position).x
+		driver.startingGridRacePosition = driver.car.racePosition
+
 		if driver.car.isAIControlled then
 			setAIFuelTankMax(sim, driver)
 			setAITyreCompound(driver, driver.tyreCompoundsAvailable)
