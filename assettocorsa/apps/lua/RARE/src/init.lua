@@ -98,7 +98,9 @@ local function createDrivers(sim)
 		end
 
 		if driver.car.isAIControlled then
-			setAIFuelTankMax(sim, driver)
+			if RARECONFIG.data.AI.AI_TANK_FILL == 1 then
+				setAIFuelTankMax(sim, driver)
+			end
 			setAITyreCompound(driver, driver.tyreCompoundsAvailable)
 
 			if FIRST_LAUNCH then
