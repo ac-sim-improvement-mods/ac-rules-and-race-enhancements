@@ -401,31 +401,39 @@ function ai.mgukController(driver)
 	end
 end
 
-function ai.tyreWarmup(driver, turnDistance)
+function ai.tyreWarmup(driver, isFormulaCar, turnDistance)
 	if driver.isReturningPosition or driver.isRetakingPosition then
 		return
+	end
+
+	local maxOffset = 5
+	local step = 0.05
+
+	if isFormulaCar then
+		maxOffset = 3
+		step = 0.1
 	end
 
 	if turnDistance > 150 then
 		local target = 0
 		if driver.isWarmingRight then
-			target = 3
+			target = maxOffset
 			driver.isWarmingLeft = false
-			driver.aiSplineOffset = driver.aiSplineOffset + 0.1
+			driver.aiSplineOffset = driver.aiSplineOffset + step
 		elseif driver.isWarmingLeft then
-			target = -3
+			target = -maxOffset
 			driver.isWarmingRight = false
-			driver.aiSplineOffset = driver.aiSplineOffset - 0.1
+			driver.aiSplineOffset = driver.aiSplineOffset - step
 		else
-			target = math.random(0, 1) == 1 and 3 or -3
-			driver.isWarmingRight = target == 3 and true or false
-			driver.isWarmingLeft = target == 3 and false or true
+			target = math.random(0, 1) == 1 and maxOffset or -maxOffset
+			driver.isWarmingRight = target == maxOffset and true or false
+			driver.isWarmingLeft = target == maxOffset and false or true
 		end
 
-		if driver.aiSplineOffset >= 2 then
+		if driver.aiSplineOffset >= maxOffset - 1 then
 			driver.isWarmingRight = false
 			driver.isWarmingLeft = true
-		elseif driver.aiSplineOffset <= -2 then
+		elseif driver.aiSplineOffset <= -maxOffset + 1 then
 			driver.isWarmingRight = true
 			driver.isWarmingLeft = false
 		end
@@ -441,53 +449,114 @@ function ai.tyreWarmup(driver, turnDistance)
 	physics.setAISplineOffset(driver.index, driver.aiSplineOffset)
 end
 
-function ai.speedControl(driver, speed, splineDelta, turnDistance)
-	if driver.startingGridRacePosition == 1 then
-		speed = 200
-	else
-		if driver.carAheadDelta > 10 then
-			speed = speed + 40
-		elseif driver.carAheadDelta > 5.5 then
-			speed = speed + 30
-		elseif driver.carAheadDelta > 3.5 then
-			speed = speed + 20
-		elseif driver.carAheadDelta > 1.5 then
-			speed = speed + 10
-		elseif driver.carAheadDelta < 0.25 then
-			speed = speed - 40
-		elseif driver.carAheadDelta < 0.50 then
-			speed = speed - 30
-		elseif driver.carAheadDelta < 0.75 then
-			speed = speed - 20
-		elseif driver.carAheadDelta < 1 then
-			speed = speed - 15
+-- function ai.speedControl(isStandingStart, driver, speed, splineDelta, turnDistance)
+-- 	if driver.startingGridRacePosition ~= 1 then
+-- 		if driver.carAheadDelta > 10 then
+-- 			speed = speed + 40
+-- 		elseif driver.carAheadDelta > 5.5 then
+-- 			speed = speed + 30
+-- 		elseif driver.carAheadDelta > 3.5 then
+-- 			speed = speed + 20
+-- 		elseif driver.carAheadDelta > 1.5 then
+-- 			speed = speed + 10
+-- 		elseif driver.carAheadDelta < 0.25 then
+-- 			speed = speed - 40
+-- 		elseif driver.carAheadDelta < 0.50 then
+-- 			speed = speed - 30
+-- 		elseif driver.carAheadDelta < 0.75 then
+-- 			speed = speed - 20
+-- 		elseif driver.carAheadDelta < 1 then
+-- 			speed = speed - 15
+-- 		end
+-- 	else
+-- 		if ac.getSim().timeToSessionStart > -5000 then
+-- 			speed = speed - 40
+-- 		end
+-- 	end
+
+-- 	if driver.isAligningToGrid and isStandingStart then
+-- 		if splineDelta < 0.01 then
+-- 			speed = 5
+-- 		elseif splineDelta < 0.02 then
+-- 			speed = 10
+-- 		elseif splineDelta < 0.03 then
+-- 			speed = 20
+-- 		elseif splineDelta < 0.05 then
+-- 			speed = 50
+-- 		elseif splineDelta < 0.1 then
+-- 			speed = 100
+-- 		elseif splineDelta < 0.15 then
+-- 			driver.aiSplineOffset = 0
+-- 		end
+-- 	else
+-- 		if driver.car.racePosition > driver.startingGridRacePosition then
+-- 			speed = speed + 5
+-- 		elseif driver.car.racePosition < driver.startingGridRacePosition then
+-- 			speed = speed - 45
+-- 		end
+-- 	end
+
+-- 	ac.debug(driver.car.racePosition .. "speedlimit", speed)
+-- 	ac.debug(driver.car.racePosition .. "aheaddelta", driver.carAheadDelta)
+
+-- 	physics.setAITopSpeed(driver.index, speed)
+-- 	physics.setAIAggression(driver.index, 0)
+-- end
+
+function ai.speedControl(isStandingStart, driver, speed, splineDelta, turnDistance)
+	local baseSpeed = speed
+	local newSpeed = baseSpeed
+	if driver.startingGridRacePosition ~= 1 then
+		if driver.carAheadDelta > 3 then
+			newSpeed = 1e9
+		elseif driver.carAheadDelta > 1 then
+			newSpeed = baseSpeed + 15
+		elseif driver.carAheadDelta > 0.2 then
+			newSpeed = baseSpeed + 5
+		elseif driver.carAheadDelta < 0.05 then
+			newSpeed = baseSpeed - 15
 		end
 	end
 
-	if driver.isAligningToGrid then
+	if driver.isAligningToGrid and isStandingStart then
 		if splineDelta < 0.01 then
-			speed = 5
+			newSpeed = 5
 		elseif splineDelta < 0.02 then
-			speed = 10
+			newSpeed = 10
 		elseif splineDelta < 0.03 then
-			speed = 20
+			newSpeed = 20
 		elseif splineDelta < 0.05 then
-			speed = 50
+			newSpeed = 50
 		elseif splineDelta < 0.1 then
-			speed = 100
+			newSpeed = 100
 		elseif splineDelta < 0.15 then
 			driver.aiSplineOffset = 0
 		end
 	else
 		if driver.car.racePosition > driver.startingGridRacePosition then
-			speed = 195 + 10
+			driver.isRetakingPosition = true
+			driver.isReturningPosition = false
+			newSpeed = baseSpeed + 45
 		elseif driver.car.racePosition < driver.startingGridRacePosition then
-			speed = 195 - 40
+			driver.isReturningPosition = true
+			driver.isRetakingPosition = false
+			newSpeed = baseSpeed - 20
+		else
+			driver.isReturningPosition = false
+			driver.isRetakingPosition = false
 		end
 	end
 
-	physics.setAITopSpeed(driver.index, speed)
-	physics.setAIAggression(driver.index, 0)
+	ac.debug(driver.car.racePosition .. "speedlimit", newSpeed)
+	ac.debug(driver.car.racePosition .. "aheaddelta", driver.carAheadDelta)
+
+	physics.setAITopSpeed(driver.index, newSpeed)
+
+	if driver.car.racePosition % 2 == 0 then
+		physics.setAIAggression(driver.index, 0)
+	else
+		physics.setAIAggression(driver.index, 1)
+	end
 end
 
 function ai.parkOnGrid(driver, connection, splineDelta)
@@ -526,9 +595,9 @@ function ai.releaseAlignToGrid(driver, connection)
 	end
 end
 
-function ai.standingStart(driver, connection, speed, sideDelta, splineDelta, sidePos, turnDistance)
-	ai.speedControl(driver, speed, splineDelta, turnDistance)
-	ai.tyreWarmup(driver, turnDistance)
+function ai.standingStart(driver, connection, speed, sideDelta, splineDelta, turnDistance)
+	ai.speedControl(true, driver, speed, splineDelta, turnDistance)
+	ai.tyreWarmup(driver, true, turnDistance)
 
 	if driver.isAligningToGrid then
 		ai.alignToGrid(driver, connection, sideDelta, splineDelta)
@@ -537,23 +606,46 @@ function ai.standingStart(driver, connection, speed, sideDelta, splineDelta, sid
 	end
 end
 
-function ai.rollingStart() end
+function ai.rollingStart(driver, connection, speed, sideDelta, splineDelta, turnDistance)
+	-- if driver.hasBeganFormationLap then
+	-- 	ai.tyreWarmup(driver, false, turnDistance)
+	-- end
+
+	ai.speedControl(false, driver, speed, splineDelta, turnDistance)
+
+	driver.aiSplineOffset = 0
+	if driver.car.racePosition % 2 == 0 then
+		driver.aiSplineOffset = -1
+	else
+		driver.aiSplineOffset = 1
+	end
+	physics.setAISplineOffset(driver.index, driver.aiSplineOffset)
+end
 
 function ai.runFormationLap(driver, connection)
-	local speed = 180
 	local sidePos = ac.worldCoordinateToTrack(driver.car.position).x
 	local splineDelta = math.abs(driver.startingGridSplinePosition - driver.car.splinePosition)
 	local sideDelta = math.abs(math.round(sidePos - driver.startingGridSideline, 1))
 	local turnDistance = ac.getTrackUpcomingTurn(driver.index).x
 
 	if true then
-		ai.standingStart(driver, connection, speed, sideDelta, splineDelta, sidePos, turnDistance)
+		ai.rollingStart(driver, connection, 100, sideDelta, splineDelta, turnDistance)
 	else
-		ai.rollingStart()
+		ai.standingStart(driver, connection, 180, sideDelta, splineDelta, turnDistance)
 	end
 end
 
-function ai.controller(raceRules, aiRules, driver)
+function ai.bleedOffset(driver)
+	if driver.aiSplineOffset > 0 then
+		driver.aiSplineOffset = math.clamp(driver.aiSplineOffset - 0.01, 0, 10)
+	elseif driver.aiSplineOffset < 0 then
+		driver.aiSplineOffset = math.clamp(driver.aiSplineOffset + 0.01, 0, 10)
+	end
+
+	physics.setAISplineOffset(driver.index, driver.aiSplineOffset)
+end
+
+function ai.controller(racecontrol, raceRules, aiRules, driver)
 	local connection = ac.connect({
 		ac.StructItem.key("ext_car_" .. driver.car.index),
 		brake = ac.StructItem.boolean(),
@@ -567,9 +659,12 @@ function ai.controller(raceRules, aiRules, driver)
 		diffHispd = ac.StructItem.float(),
 	}, true, ac.SharedNamespace.CarScript)
 
-	if true then
+	if racecontrol.formationLap then
 		ai.runFormationLap(driver, connection)
 	else
+		ai.bleedOffset(driver)
+		physics.setAITopSpeed(driver.index, 1e9)
+
 		if aiRules.AI_FORCE_PIT_TYRES == 1 then
 			ai.pitNewTyres(raceRules, driver)
 		end

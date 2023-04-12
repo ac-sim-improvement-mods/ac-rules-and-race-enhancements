@@ -200,7 +200,7 @@ function debugMenu(sim, rc, error)
 		end)
 	end
 
-	ui.treeNode("[POSITION]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
+	ui.treeNode("[FORMATION]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
 		utils.inLineBulletText(
 			"Track Progress M",
 			tostring(math.round(driver.car.splinePosition * sim.trackLengthM, 5)) .. " m",
@@ -208,9 +208,9 @@ function debugMenu(sim, rc, error)
 		)
 		utils.inLineBulletText("Current Spline", driver.car.splinePosition, space)
 		utils.inLineBulletText("Grid Spline", driver.startingGridSplinePosition, space)
-		utils.inLineBulletText("Spline Delta", driver.car.splinePosition - driver.startingGridSplinePosition, space)
 		utils.inLineBulletText("Current Side", driver.startingGridSideline, space)
 		utils.inLineBulletText("Grid Side", driver.startingGridSideline, space)
+		utils.inLineBulletText("Spline Delta", driver.car.splinePosition - driver.startingGridSplinePosition, space)
 		utils.inLineBulletText(
 			"Side Delta",
 			ac.worldCoordinateToTrack(driver.car.position).x - driver.startingGridSideline,
@@ -221,7 +221,10 @@ function debugMenu(sim, rc, error)
 		end
 
 		utils.inLineBulletText("Upcoming Turn", ac.getTrackUpcomingTurn(driver.car.index), space)
+		utils.inLineBulletText("Leader on Formation Lap", utils.upperBool(rc.formationLap), space)
 		utils.inLineBulletText("Began Formation Lap", utils.upperBool(driver.hasBeganFormationLap), space)
+		utils.inLineBulletText("Is Returning Position", utils.upperBool(driver.isReturningPosition), space)
+		utils.inLineBulletText("Is Retaking Position", utils.upperBool(driver.isRetakingPosition), space)
 		utils.inLineBulletText("Is Warming Tyres", utils.upperBool(driver.isWarmingTyres), space)
 		utils.inLineBulletText("Is Warming Left Tyres", utils.upperBool(driver.isWarmingLeft), space)
 		utils.inLineBulletText("Is Warming Right Tyres", utils.upperBool(driver.isWarmingRight), space)

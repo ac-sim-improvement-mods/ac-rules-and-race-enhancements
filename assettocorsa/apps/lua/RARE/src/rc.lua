@@ -178,7 +178,7 @@ local function raceSession(lastUpdate, racecontrol, config, driver)
 	end
 
 	if driver.car.isAIControlled then
-		ai.controller(raceRules, aiRules, driver)
+		ai.controller(racecontrol, raceRules, aiRules, driver)
 	end
 
 	return driver
@@ -202,11 +202,25 @@ local function runSession(lastUpdate, racecontrol, sessionType, driver)
 	return driver
 end
 
+local function isFormationLap(drivers)
+	for index = 0, #drivers do
+		local driver = drivers[index]
+		if driver.car.racePosition == 1 then
+			if driver.car.lapCount < 1 then
+				return true
+			else
+				return false
+			end
+		end
+	end
+end
+
 local function update(sim, drivers)
 	local config = RARECONFIG.data
 	local carsOnTrackCount = getTrackOrder(drivers)
 	local leaderCompletedLaps = getLeaderCompletedLaps(sim)
 	local drsEnabled, drsEnabledLap = isDrsEnabled(config, leaderCompletedLaps)
+	local formationLap = isFormationLap(drivers)
 	local wetTrack = isTrackWet(config, sim)
 	local session = nil
 
@@ -221,6 +235,7 @@ local function update(sim, drivers)
 		leaderCompletedLaps = leaderCompletedLaps,
 		drsEnabled = drsEnabled,
 		drsEnabledLap = drsEnabledLap,
+		formationLap = formationLap,
 		wetTrack = wetTrack,
 	})
 end
