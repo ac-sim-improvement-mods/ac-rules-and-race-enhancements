@@ -98,7 +98,7 @@ function script.windowDebug(dt)
 	ac.setWindowTitle("debug", windowTitle)
 
 	if INITIALIZED and not sim.isInMainMenu and racecontrol ~= nil then
-		debugMenu(sim, racecontrol, error)
+		debug_window(sim, racecontrol, error)
 	end
 end
 
