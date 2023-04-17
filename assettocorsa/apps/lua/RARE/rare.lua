@@ -69,7 +69,7 @@ function script.update(dt)
 	else
 		if sim.isInMainMenu or sim.isSessionStarted then
 			INITIALIZED = initialize(sim)
-			audio = require("src/audio")
+			audio = require("src/controllers/audio")
 		end
 	end
 end
