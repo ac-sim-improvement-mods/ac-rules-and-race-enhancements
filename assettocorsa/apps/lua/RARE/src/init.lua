@@ -145,10 +145,6 @@ local function cspVersionCheck()
 	end
 end
 
-local function loadSettings(sim)
-
-end
-
 local function loadDRSZones()
 	-- Get DRS Zones from track data folder
 	try(function()
