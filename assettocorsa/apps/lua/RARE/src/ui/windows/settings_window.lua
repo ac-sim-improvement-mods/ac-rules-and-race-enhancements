@@ -1,4 +1,5 @@
 local utils = require("src/helpers/utils")
+local inject = require("src/controllers/injection")
 local notifications = require("src/ui/windows/notification_window")
 local injected = physics.allowed()
 
@@ -601,7 +602,7 @@ function settingsMenu(sim)
 			if injected then
 				ac.setWindowOpen("rare", not ac.isWindowOpen("rare"))
 			else
-				utils.injectRare()
+				inject.injectRare()
 			end
 		end
 
@@ -624,7 +625,6 @@ function settingsMenu(sim)
 	ui.tabBar("settingstabbar", ui.TabBarFlags.None, function()
 		rulesTab(sim)
 		aiTab(sim)
-
 		audioTab()
 		uiTab(sim)
 	end)
