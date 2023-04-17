@@ -1,4 +1,4 @@
-local utils = require("src/utils")
+local utils = require("src/helpers/utils")
 local drs = require("src/controllers/drs")
 
 function debugMenu(sim, rc, error)

@@ -1,5 +1,5 @@
-require("src/driver")
-local utils = require("src/utils")
+require("src/classses/driver")
+local utils = require("src/helpers/utils")
 
 local function setAIFuelTankMax(sim, driver)
 	local fuelcons = ac.INIConfig.carData(driver.index, "fuel_cons.ini"):get("FUEL_EVAL", "KM_PER_LITER", 0.0)

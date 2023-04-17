@@ -1,5 +1,5 @@
-local utils = require("src/utils")
-local notifications = require("src/ui/notifications")
+local utils = require("src/helpers/utils")
+local notifications = require("src/ui/windows/notification_window")
 local injected = physics.allowed()
 
 SPLINE_OFFSET = 0

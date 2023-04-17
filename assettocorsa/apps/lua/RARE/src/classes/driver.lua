@@ -1,4 +1,4 @@
-local utils = require("src/utils")
+local utils = require("src/helpers/utils")
 
 ---@class Driver
 ---@param carIndex number
