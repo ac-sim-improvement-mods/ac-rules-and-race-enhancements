@@ -249,12 +249,14 @@ function debugMenu(sim, rc, error)
 		end
 	)
 
-	ui.treeNode("[SESSION MODIFIERS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
-		utils.inLineBulletText("Tyre Blankets", utils.upperBool(sim.allowTyreBlankets), space)
-		utils.inLineBulletText("Mechanical Damage Rate", tostring(sim.mechanicalDamageRate * 100) .. "%", space)
-		utils.inLineBulletText("Tyre Consumption Rate", tostring(sim.tyreConsumptionRate * 100) .. "%", space)
-		utils.inLineBulletText("Fuel Consumption Rate", tostring(sim.fuelConsumptionRate * 100) .. "%", space)
-	end)
+	if ac.getPatchVersionCode() >= 2278 then
+		ui.treeNode("[SESSION MODIFIERS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
+			utils.inLineBulletText("Tyre Blankets", utils.upperBool(sim.allowTyreBlankets), space)
+			utils.inLineBulletText("Mechanical Damage Rate", tostring(sim.mechanicalDamageRate * 100) .. "%", space)
+			utils.inLineBulletText("Tyre Consumption Rate", tostring(sim.tyreConsumptionRate * 100) .. "%", space)
+			utils.inLineBulletText("Fuel Consumption Rate", tostring(sim.fuelConsumptionRate * 100) .. "%", space)
+		end)
+	end
 
 	if RARECONFIG.data.RULES.VSC_RULES == 1 then
 		ui.treeNode("[VSC]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
