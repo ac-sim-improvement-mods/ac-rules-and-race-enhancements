@@ -6,14 +6,14 @@ SCRIPT_BUILD_DATE = "2023-04-17"
 CSP_MIN_VERSION_CODE = 2144
 CSP_MIN_VERSION = "1.79"
 
-require("src/ac_ext")
-require("src/utils")
+require("src/helpers/ac_ext")
+require("src/helpers/utils")
 require("src/init")
-require("src/ui/debug")
-require("src/ui/settings")
-require("src/ui/notifications")
+require("src/ui/windows/debug_window")
+require("src/ui/windows/settings_window")
+require("src/ui/windows/notifications")
 local audio = nil
-local rc = require("src/rc")
+local rc = require("src/controllers/rc")
 local cc = require("src/controllers/compounds")
 
 FIRST_LAUNCH = true
