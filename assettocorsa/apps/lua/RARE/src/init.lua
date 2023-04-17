@@ -214,19 +214,6 @@ function initialize(sim)
 
 	cspVersionCheck()
 	loadSettings(sim)
-
-	if not physics.allowed() then
-		utils.createRareTrackConfig()
-		utils.setPhysicsAllowed()
-		setTimeout(function()
-			local rareLayout = "[RACE]"
-				.. "\nCONFIG_TRACK="
-				.. (ac.getTrackLayout() ~= "" and ac.getTrackLayout() or ac.getTrackID())
-				.. "_rare"
-			ac.restartAssettoCorsa(rareLayout)
-		end, 5, "reboot")
-	end
-
 	loadDRSZones()
 	initDataDir()
 	createDrivers(sim)

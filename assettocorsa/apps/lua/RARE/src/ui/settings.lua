@@ -1,5 +1,6 @@
 local utils = require("src/utils")
 local notifications = require("src/ui/notifications")
+local injected = physics.allowed()
 
 SPLINE_OFFSET = 0
 
@@ -585,22 +586,35 @@ function settingsMenu(sim)
 		ui.popFont()
 
 		ui.sameLine(0, 0)
-		ui.drawRectFilled(vec2(380, 30), vec2(420, 60), rareEnable and rgbm(0, 1, 0, 0.5) or rgbm(1, 0, 0, 0.5))
+		ui.drawRectFilled(
+			vec2(380, 30),
+			vec2(420, 60),
+			(rareEnable and injected) and rgbm(0, 1, 0, 0.5) or rgbm(1, 0, 0, 0.5)
+		)
 
 		ui.sameLine(380, 0)
 		ui.setCursor(vec2(380, 30))
 
 		-- local enabledButtonFlags = physics.allowed() and ui.ButtonFlags.None or ui.ButtonFlags.Disabled
-		if ui.button(rareEnable and "ON" or "OFF", vec2(40, 30), ui.ButtonFlags.None) then
-			ac.setWindowOpen("rare", not ac.isWindowOpen("rare"))
+		local buttonLabel = (rareEnable and injected) and "ON" or "OFF"
+		if ui.button(buttonLabel, vec2(40, 30), ui.ButtonFlags.None) then
+			if injected then
+				ac.setWindowOpen("rare", not ac.isWindowOpen("rare"))
+			else
+				utils.injectRare()
+			end
 		end
 
 		if ui.itemHovered() then
-			ui.setTooltip("Enable or Disable " .. SCRIPT_SHORT_NAME .. " app")
+			if not physics.allowed() then
+				ui.setTooltip("Inject " .. SCRIPT_SHORT_NAME .. " App")
+			else
+				ui.setTooltip("Enable or Disable " .. SCRIPT_SHORT_NAME .. " App")
+			end
 		end
 	end
 
-	if ac.isWindowOpen("rare") and INITIALIZED then
+	if ac.isWindowOpen("rare") and INITIALIZED and injected then
 		ui.newLine(3)
 	else
 		ui.newLine(0)

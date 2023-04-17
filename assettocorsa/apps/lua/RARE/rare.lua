@@ -1,7 +1,7 @@
 SCRIPT_NAME = "Rules and Race Enhancements"
 SCRIPT_SHORT_NAME = "RARE"
-SCRIPT_VERSION = "1.1.4.3.preview1"
-SCRIPT_VERSION_CODE = 11431
+SCRIPT_VERSION = "1.1.4.4.preview3"
+SCRIPT_VERSION_CODE = 11443
 SCRIPT_BUILD_DATE = "2023-04-11"
 CSP_MIN_VERSION_CODE = 2144
 CSP_MIN_VERSION = "1.79"
@@ -65,6 +65,14 @@ function script.update(dt)
 			INITIALIZED = initialize(sim)
 			audio = require("src/audio")
 		end
+	end
+
+	if not physics.allowed() then
+		ui.toast(
+			ui.Icons.Warning,
+			"[RARE] INJECT THE APP! Inject the app by clicking the 'OFF' button in the RARE window while in the setup menu."
+		)
+		return
 	end
 end
 

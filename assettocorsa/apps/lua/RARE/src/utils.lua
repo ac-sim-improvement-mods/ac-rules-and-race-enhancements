@@ -230,10 +230,6 @@ local currentTrackUIDir = trackDir .. "\\ui\\" .. trackLayout
 local rareTrackUIDir = trackDir .. "\\ui\\" .. trackLayout .. "_rare"
 
 function utils.createRareTrackConfig()
-	if string.find(currentTrackLayoutDir, "_rare") then
-		return
-	end
-
 	if trackLayout == ac.getTrackID() then
 		currentTrackLayoutDir = trackDir
 		currentTrackUIDir = trackDir .. "\\ui"
@@ -309,6 +305,22 @@ function utils.setPhysicsAllowed()
 
 	surfacesIni:setAndSave("SURFACE_0", "WAV_PITCH", "extended-0")
 	surfacesIni:setAndSave("_SCRIPTING_PHYSICS", "ALLOW_APPS", "1")
+end
+
+function utils.injectRare()
+	if not physics.allowed() then
+		if string.find(currentTrackLayoutDir, "_rare") then
+			return
+		else
+			utils.createRareTrackConfig()
+		end
+		utils.setPhysicsAllowed()
+		local rareLayout = "[RACE]"
+			.. "\nCONFIG_TRACK="
+			.. (ac.getTrackLayout() ~= "" and ac.getTrackLayout() or ac.getTrackID())
+			.. "_rare"
+		ac.restartAssettoCorsa(rareLayout)
+	end
 end
 
 return utils
