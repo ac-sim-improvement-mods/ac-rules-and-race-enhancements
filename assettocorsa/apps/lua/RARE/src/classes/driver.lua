@@ -1,147 +1,82 @@
 local utils = require("src/helpers/utils")
 
----@class Driver
----@param carIndex number
----@return Driver
-Driver = class("Driver", function(carIndex)
-	local index = carIndex
-	local car = ac.getCar(index)
-	local name = ac.getDriverName(index)
-	local lapsCompleted = car.lapCount
+Driver = class("Driver")
 
-	local aiThrottleLimitBase = 1
-	local aiThrottleLimit = 1
-	local aiLevel = 1
-	local aiAggression = 0
-	local aiPrePitFuel = 0
-	local aiPitCall = false
-	local aiPitting = false
-	local aiSplineOffset = 0
-	local aiMoveAside = false
-	local aiSpeedUp = false
-	local aiMgukDelivery = 0
-	local aiMgukRecovery = 0
-	local aiBaseBrakeHint = 1
-	local aiBrakeHint = 1
+function Driver:initialize(carIndex)
+	self.index = carIndex
+	self.car = ac.getCar(carIndex)
+	self.name = ac.getDriverName(carIndex)
 
-	local outLap = false
-	local flyingLap = false
-	local inLap = false
-	local inLapCount = 0
+	self.aiThrottleLimitBase = 1
+	self.aiThrottleLimit = 1
+	self.aiLevel = 1
+	self.aiAggression = 0
+	self.aiPrePitFuel = 0
+	self.aiPitCall = false
+	self.aiPitting = false
+	self.aiSplineOffset = 0
+	self.aiMoveAside = false
+	self.aiSpeedUp = false
+	self.aiMgukDelivery = 0
+	self.aiMgukRecovery = 0
+	self.aiBaseBrakeHint = 1
+	self.aiBrakeHint = 1
 
-	local pitstopCount = 0
-	local pitstopTime = 0
-	local pitlane = false
-	local pitlaneTime = 0
-	local pitstop = false
-	local pitted = false
-	local lapPitted = 0
-	local pittedLaps = {}
-	local tyreLaps = 0
-	local tyreCompoundStart = car.compoundIndex
-	local tyreCompoundNext = car.compoundIndex
-	local tyreCompoundChange = false
-	local tyreCompoundsAvailable = { 0 }
-	local tyreStints = {}
-	local tyreCompoundMaterialTarget = ""
-	local tyreCompoundSoftTexture = ""
-	local tyreComoundMediumTexture = ""
-	local tyreCompoundHardTexture = ""
-	local tyreCompoundTextureTimer = 0
+	self.outLap = false
+	self.flyingLap = false
+	self.inLap = false
+	self.inLapCount = 0
 
-	local trackPosition = -1
-	local carAhead = -1
-	local carAheadDelta = -1
-	local miniSectors = {}
-	local currentMiniSector = 0
+	self.pitstopCount = 0
+	self.pitstopTime = 0
+	self.pitlane = false
+	self.pitlaneTime = 0
+	self.pitstop = false
+	self.pitted = false
+	self.lapPitted = 0
+	self.pittedLaps = {}
+	self.tyreLaps = 0
+	self.tyreCompoundStart = car.compoundIndex
+	self.tyreCompoundNext = car.compoundIndex
+	self.tyreCompoundChange = false
+	self.tyreCompoundsAvailable = { 0 }
+	self.tyreStints = {}
+	self.tyreCompoundMaterialTarget = ""
+	self.tyreCompoundSoftTexture = ""
+	self.tyreComoundMediumTexture = ""
+	self.tyreCompoundHardTexture = ""
+	self.tyreCompoundTextureTimer = 0
 
-	local drsActivationZone = car.drsAvailable
-	local drsZoneNextId = 0
-	local drsZoneId = 1
-	local drsZonePrevId = 0
-	local drsCheck = false
-	local drsAvailable = false
-	local drsDeployable = false
-	local drsDetection = {}
+	self.trackPosition = -1
+	self.carAhead = -1
+	self.carAheadDelta = -1
+	self.miniSectors = {}
+	self.currentMiniSector = 0
 
-	local drsBeepFx = false
-	local drsFlapFx = false
+	self.drsActivationZone = car.drsAvailable
+	self.drsZoneNextId = 0
+	self.drsZoneId = 1
+	self.drsZonePrevId = 0
+	self.drsCheck = false
+	self.drsAvailable = false
+	self.drsDeployable = false
+	self.drsDetection = {}
 
-	local timePenalty = 0
-	local illegalOvertake = false
-	local returnRacePosition = -1
-	local returnPostionTimer = -1
+	self.drsBeepFx = false
+	self.drsFlapFx = false
 
-	local aiTyreAvgRandom = utils.randomizer(index, RARECONFIG.data.AI.AI_AVG_TYRE_LIFE_RANGE)
-	local aiTyreSingleRandom = utils.randomizer(index, RARECONFIG.data.AI.AI_SINGLE_TYRE_LIFE_RANGE)
+	self.timePenalty = 0
+	self.illegalOvertake = false
+	self.returnRacePosition = -1
+	self.returnPostionTimer = -1
 
-	log("[" .. index .. "] " .. name .. " loaded")
+	self.aiTyreAvgRandom = utils.randomizer(index, RARECONFIG.data.AI.AI_AVG_TYRE_LIFE_RANGE)
+	self.aiTyreSingleRandom = utils.randomizer(index, RARECONFIG.data.AI.AI_SINGLE_TYRE_LIFE_RANGE)
 
-	return {
-		tyreCompoundTextureTimer = tyreCompoundTextureTimer,
-		currentMiniSector = currentMiniSector,
-		miniSectors = miniSectors,
-		drsDetection = drsDetection,
-		tyreCompoundSoftTexture = tyreCompoundSoftTexture,
-		tyreComoundMediumTexture = tyreComoundMediumTexture,
-		tyreCompoundHardTexture = tyreCompoundHardTexture,
-		tyreCompoundMaterialTarget = tyreCompoundMaterialTarget,
-		pittedLaps = pittedLaps,
-		tyreStints = tyreStints,
-		aiBrakeHint = aiBrakeHint,
-		aiBaseBrakeHint = aiBaseBrakeHint,
-		tyreCompoundsAvailable = tyreCompoundsAvailable,
-		tyreCompoundStart = tyreCompoundStart,
-		tyreCompoundNext = tyreCompoundNext,
-		tyreCompoundChange = tyreCompoundChange,
-		aiSplineOffset = aiSplineOffset,
-		aiSpeedUp = aiSpeedUp,
-		aiMoveAside = aiMoveAside,
-		inLapCount = inLapCount,
-		inLap = inLap,
-		flyingLap = flyingLap,
-		outLap = outLap,
-		aiThrottleLimitBase = aiThrottleLimitBase,
-		aiThrottleLimit = aiThrottleLimit,
-		pitlaneTime = pitlaneTime,
-		pitlane = pitlane,
-		pitstop = pitstop,
-		pitstopTime = pitstopTime,
-		pitted = pitted,
-		pitstopCount = pitstopCount,
-		tyreLaps = tyreLaps,
-		lapPitted = lapPitted,
-		drsBeepFx = drsBeepFx,
-		drsFlapFx = drsFlapFx,
-		drsZoneNextId = drsZoneNextId,
-		drsDeployable = drsDeployable,
-		drsZonePrevId = drsZonePrevId,
-		drsZoneId = drsZoneId,
-		drsActivationZone = drsActivationZone,
-		drsAvailable = drsAvailable,
-		drsCheck = drsCheck,
-		aiTyreSingleRandom = aiTyreSingleRandom,
-		aiTyreAvgRandom = aiTyreAvgRandom,
-		aiPitting = aiPitting,
-		aiPitCall = aiPitCall,
-		aiPrePitFuel = aiPrePitFuel,
-		aiLevel = aiLevel,
-		aiAggression = aiAggression,
-		returnPostionTimer = returnPostionTimer,
-		returnRacePosition = returnRacePosition,
-		timePenalty = timePenalty,
-		illegalOvertake = illegalOvertake,
-		carAheadDelta = carAheadDelta,
-		carAhead = carAhead,
-		trackPosition = trackPosition,
-		lapsCompleted = lapsCompleted,
-		index = index,
-		name = name,
-		car = car,
-		aiMgukDelivery = aiMgukDelivery,
-		aiMgukRecovery = aiMgukRecovery,
-	}
-end, class.NoInitialize)
+	log("[" .. self.index .. "] " .. self.name .. " initialized")
+
+	return self
+end
 
 --- Returns lap pitted or lap count if driver just pitted
 ---@param driver Driver
