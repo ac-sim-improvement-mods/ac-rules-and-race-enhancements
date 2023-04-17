@@ -1,7 +1,7 @@
 local notifications = {}
 
-NOTIFICATION_TIMER = 0
-NOTIFICATION_TEXT = ""
+local notificationTimer = 0
+local notificationText = ""
 
 --- Override function to add clarity and default values for drawing text
 local function drawText(textdraw)
@@ -90,7 +90,7 @@ local function drawRaceControl(text)
 end
 
 local function drawNotification()
-	drawRaceControl(NOTIFICATION_TEXT)
+	drawRaceControl(notificationText)
 end
 
 local fadingTimer = ui.FadingElement(drawNotification, false)
@@ -100,14 +100,14 @@ function notifications.popup(text, timer)
 		timer = RARECONFIG.data.NOTIFICATIONS.DURATION
 	end
 
-	NOTIFICATION_TIMER = timer
-	NOTIFICATION_TEXT = text
+	notificationTimer = timer
+	notificationText = text
 end
 
 function notificationHandler(dt)
-	local timer = NOTIFICATION_TIMER
+	local timer = notificationTimer
 	timer = timer - dt
-	NOTIFICATION_TIMER = timer
+	notificationTimer = timer
 	fadingTimer(timer > 0 and timer < 60)
 end
 
