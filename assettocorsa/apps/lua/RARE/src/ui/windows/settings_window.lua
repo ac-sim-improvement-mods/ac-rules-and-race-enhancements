@@ -358,7 +358,7 @@ local function aiTab(sim)
 			if not sim.isInMainMenu and ac.getPatchVersionCode() >= 2278 then
 				if driver.car.isAIControlled then
 					local buttonFlags = ui.ButtonFlags.None
-					if driver.aiPitting or driver.car.isInPitlane then
+					if driver.isAIPitting or driver.car.isInPitlane then
 						buttonFlags = ui.ButtonFlags.Disabled
 					end
 					if ui.button("FORCE FOCUSED AI TO PIT NOW", vec2(ui.windowWidth() - 77, 25), buttonFlags) then

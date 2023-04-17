@@ -52,7 +52,7 @@ local function getNextTyreCompound(driver)
 	math.randomseed(os.clock() * driver.index)
 	math.random()
 
-	if not driver.tyreCompoundChange then
+	if not driver.hasChangedTyreCompound then
 		table.removeItem(compoundsAvailable, driver.car.compoundIndex)
 		compoundNext = compoundsAvailable[math.random(1, #compoundsAvailable)]
 	else
@@ -68,14 +68,14 @@ local function triggerPitStopRequest(driver, trigger)
 	if ac.getPatchVersionCode() >= 2278 then
 		physics.setAIPitStopRequest(driver.index, trigger)
 	else
-		if trigger and not driver.aiPitting then
+		if trigger and not driver.isAIPitting then
 			driver.aiPrePitFuel = driver.car.fuel
 			physics.setCarFuel(driver.index, 0.1)
-			driver.aiPitCall = true
+			driver.isAIPitCall = true
 		end
 	end
 
-	driver.aiPitting = trigger
+	driver.isAIPitting = trigger
 	if trigger then
 		driver.tyreCompoundNext = getNextTyreCompound(driver)
 	end
@@ -91,7 +91,7 @@ local function pitStrategyCall(driver, forced)
 	local lapsRemaining = lapsTotal - driver.lapsCompleted
 
 	if not forced then
-		if lapsRemaining <= 7 or (driver.carAheadDelta < 1 and carAhead.aiPitting) then
+		if lapsRemaining <= 7 or (driver.carAheadDelta < 1 and carAhead.isAIPitting) then
 			trigger = false
 		end
 	end
@@ -101,9 +101,9 @@ end
 --- Occurs when a driver is in the pit
 ---@param driver Driver
 local function pitstop(raceRules, driver)
-	if driver.aiPitting then
-		if not driver.tyreCompoundChange and driver.tyreCompoundNext ~= driver.tyreCompoundStart then
-			driver.tyreCompoundChange = true
+	if driver.isAIPitting then
+		if not driver.hasChangedTyreCompound and driver.tyreCompoundNext ~= driver.tyreCompoundStart then
+			driver.hasChangedTyreCompound = true
 		end
 
 		driver.tyreStints[#driver.tyreStints] = {
@@ -127,13 +127,13 @@ local function pitstop(raceRules, driver)
 		physics.setCarFuel(driver.index, driver.aiPrePitFuel)
 	end
 
-	driver.aiPitting = false
+	driver.isAIPitting = false
 end
 
 --- Determines when an AI driver should pit for new tyres
 --- @param driver Driver
 function ai.pitNewTyres(raceRules, driver)
-	if not driver.car.isInPitlane and not driver.aiPitting then
+	if not driver.car.isInPitlane and not driver.isAIPitting then
 		if singleTyreWearBelowLimit(driver) then
 			pitStrategyCall(driver, true)
 		elseif avgTyreWearBelowLimit(driver) then
@@ -144,9 +144,9 @@ function ai.pitNewTyres(raceRules, driver)
 			pitstop(raceRules, driver)
 		end
 
-		if driver.aiPitCall then
+		if driver.isAIPitCall then
 			physics.setCarFuel(driver.index, driver.aiPrePitFuel)
-			driver.aiPitCall = false
+			driver.isAIPitCall = false
 		end
 	end
 end
@@ -158,7 +158,7 @@ local function moveOffRacingLine(driver)
 	local splineSideRight = ac.getTrackAISplineSides(driverAhead.splinePosition).y
 	local offset = splineSideLeft > splineSideLeft and -3 or 3
 
-	if not driverAhead.flyingLap then
+	if not driverAhead.isOnFlyingLap then
 		if delta < 2 and delta > 0.1 then
 			if driverAhead.car.isInPitlane then
 				physics.setAITopSpeed(driverAhead.index, 0)
@@ -167,16 +167,16 @@ local function moveOffRacingLine(driver)
 					physics.setAISplineOffset(driverAhead.index, math.lerp(0, offset, driverAhead.aiSplineOffset))
 					physics.setAISplineOffset(driver.index, math.lerp(0, -offset, driver.aiSplineOffset))
 					physics.setAITopSpeed(driverAhead.index, 200)
-					driverAhead.aiMoveAside = true
-					driverAhead.aiSpeedUp = false
+					driverAhead.isAIMoveAside = true
+					driverAhead.isAISpeedUp = false
 				else
 					driverAhead.aiSplineOffset = math.lerp(offset, 0, driverAhead.aiSplineOffset)
 					driver.aiSplineOffset = math.lerp(-offset, 0, driver.aiSplineOffset)
 					physics.setAISplineOffset(driverAhead.index, driverAhead.aiSplineOffset)
 					physics.setAISplineOffset(driver.index, driver.aiSplineOffset)
 					physics.setAITopSpeed(driverAhead.index, 1e9)
-					driverAhead.aiMoveAside = false
-					driverAhead.aiSpeedUp = true
+					driverAhead.isAIMoveAside = false
+					driverAhead.isAISpeedUp = true
 				end
 			end
 		else
@@ -184,8 +184,8 @@ local function moveOffRacingLine(driver)
 			driver.aiSplineOffset = math.lerp(-offset, 0, driver.aiSplineOffset)
 			physics.setAISplineOffset(driverAhead.index, driverAhead.aiSplineOffset)
 			physics.setAISplineOffset(driver.index, driver.aiSplineOffset)
-			driverAhead.aiMoveAside = false
-			driverAhead.aiSpeedUp = false
+			driverAhead.isAIMoveAside = false
+			driverAhead.isAISpeedUp = false
 		end
 	end
 end
@@ -197,11 +197,11 @@ function ai.qualifying(driver)
 			local qualiRunFuel = driver.fuelPerLap * 3.5
 			physics.setCarFuel(driver.index, qualiRunFuel)
 		end
-		driver.inLap = false
-		driver.flyingLap = false
-		driver.outLap = true
+		driver.isOnInLap = false
+		driver.isOnFlyingLap = false
+		driver.isOnOutlap = true
 	else
-		if driver.flyingLap then
+		if driver.isOnFlyingLap then
 			moveOffRacingLine(driver)
 			if ac.getTrackUpcomingTurn(driver.index).x > 200 then
 				physics.setAIAggression(driver.index, 1)
@@ -209,14 +209,14 @@ function ai.qualifying(driver)
 				physics.setAIAggression(driver.index, 0.25)
 			end
 
-			if driver.car.lapCount >= driver.inLapCount then
-				driver.outLap = false
-				driver.flyingLap = false
-				driver.inLap = true
+			if driver.car.lapCount >= driver.inLap then
+				driver.isOnOutlap = false
+				driver.isOnFlyingLap = false
+				driver.isOnInLap = true
 			end
-		elseif driver.outLap then
+		elseif driver.isOnOutlap then
 			if driver.car.splinePosition <= 0.8 then
-				if not driver.aiMoveAside and not driver.aiSpeedUp then
+				if not driver.isAIMoveAside and not driver.isAISpeedUp then
 					physics.setAITopSpeed(driver.index, 250)
 					physics.setAILevel(driver.index, 0.8)
 					physics.setAIAggression(driver.index, 1)
@@ -225,7 +225,7 @@ function ai.qualifying(driver)
 					if driver.carAheadDelta < 5 then
 						physics.setAITopSpeed(driver.index, 200)
 					end
-				elseif driver.aiSpeedUp then
+				elseif driver.isAISpeedUp then
 					moveOffRacingLine(driver)
 				end
 			else
@@ -233,16 +233,16 @@ function ai.qualifying(driver)
 				physics.setAILevel(driver.index, 1)
 				physics.setAIAggression(driver.index, 1)
 				physics.allowCarDRS(driver.index, false)
-				driver.outLap = false
-				driver.flyingLap = true
-				driver.inLapCount = driver.car.lapCount + 2
+				driver.isOnOutlap = false
+				driver.isOnFlyingLap = true
+				driver.inLap = driver.car.lapCount + 2
 			end
-		elseif driver.inLap then
-			if not driver.aiMoveAside and not driver.aiSpeedUp then
+		elseif driver.isOnInLap then
+			if not driver.isAIMoveAside and not driver.isAISpeedUp then
 				physics.setAITopSpeed(driver.index, 200)
 				physics.setAILevel(driver.index, 0.65)
 				physics.setAIAggression(driver.index, 0)
-			elseif driver.aiSpeedUp then
+			elseif driver.isAISpeedUp then
 				moveOffRacingLine(driver)
 			end
 		end

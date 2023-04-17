@@ -12,33 +12,33 @@ function Driver:initialize(carIndex)
 	self.aiLevel = 1
 	self.aiAggression = 0
 	self.aiPrePitFuel = 0
-	self.aiPitCall = false
-	self.aiPitting = false
+	self.isAIPitCall = false
+	self.isAIPitting = false
 	self.aiSplineOffset = 0
-	self.aiMoveAside = false
-	self.aiSpeedUp = false
+	self.isAIMoveAside = false
+	self.isAISpeedUp = false
 	self.aiMgukDelivery = 0
 	self.aiMgukRecovery = 0
 	self.aiBaseBrakeHint = 1
 	self.aiBrakeHint = 1
 
-	self.outLap = false
-	self.flyingLap = false
-	self.inLap = false
-	self.inLapCount = 0
+	self.isOnOutlap = false
+	self.isOnFlyingLap = false
+	self.isOnInLap = false
+	self.inLap = 0
 
 	self.pitstopCount = 0
 	self.pitstopTime = 0
 	self.pitlane = false
 	self.pitlaneTime = 0
-	self.pitstop = false
-	self.pitted = false
+	self.isPitStopComplete= false
+	self.hasPitted = false
 	self.lapPitted = 0
 	self.pittedLaps = {}
 	self.tyreLaps = 0
 	self.tyreCompoundStart = car.compoundIndex
 	self.tyreCompoundNext = car.compoundIndex
-	self.tyreCompoundChange = false
+	self.hasChangedTyreCompound = false
 	self.tyreCompoundsAvailable = { 0 }
 	self.tyreStints = {}
 	self.tyreCompoundMaterialTarget = ""
@@ -53,20 +53,17 @@ function Driver:initialize(carIndex)
 	self.miniSectors = {}
 	self.currentMiniSector = 0
 
-	self.drsActivationZone = car.drsAvailable
+	self.isInDrsActivationZone = car.drsAvailable
 	self.drsZoneNextId = 0
 	self.drsZoneId = 1
 	self.drsZonePrevId = 0
-	self.drsCheck = false
-	self.drsAvailable = false
-	self.drsDeployable = false
+	self.isDrsAvailable = false
 	self.drsDetection = {}
 
 	self.drsBeepFx = false
 	self.drsFlapFx = false
 
 	self.timePenalty = 0
-	self.illegalOvertake = false
 	self.returnRacePosition = -1
 	self.returnPostionTimer = -1
 
@@ -89,18 +86,18 @@ end
 ---@param driver Driver
 ---@return number
 local function getTyreLapCount(driver)
-	return (driver.car.isInPitlane and not driver.pitted) and driver.tyreLaps
+	return (driver.car.isInPitlane and not driver.hasPitted) and driver.tyreLaps
 		or (driver.car.lapCount - driver.lapPitted)
 end
 
 local function getPitstopCount(driver)
-	if driver.car.isInPit and not driver.pitted then
-		driver.pitted = true
+	if driver.car.isInPit and not driver.hasPitted then
+		driver.hasPitted = true
 		driver.aiTyreAvgRandom = utils.randomizer(driver.index, RARECONFIG.data.AI.AI_AVG_TYRE_LIFE_RANGE)
 		driver.aiTyreSingleRandom = utils.randomizer(driver.index, RARECONFIG.data.AI.AI_SINGLE_TYRE_LIFE_RANGE)
 		return driver.pitstopCount + 1
-	elseif not driver.car.isInPitlane and driver.pitted then
-		driver.pitted = false
+	elseif not driver.car.isInPitlane and driver.hasPitted then
+		driver.hasPitted = false
 	end
 
 	return driver.pitstopCount
@@ -122,14 +119,14 @@ end
 
 local function getPitstopTime(dt, driver)
 	if driver.car.isInPit then
-		if not driver.pitstop then
-			driver.pitstop = true
+		if not driver.isPitStopCompletethen
+			driver.isPitStopComplete= true
 			return 0
 		else
 			return driver.pitstopTime + dt
 		end
 	else
-		driver.pitstop = false
+		driver.isPitStopComplete= false
 		return driver.pitstopTime
 	end
 end

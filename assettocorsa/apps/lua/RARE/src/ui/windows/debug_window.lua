@@ -52,7 +52,7 @@ local function tyresTreeNode()
 		)
 		utils.inLineBulletText("Stints", stringify(driver.tyreStints), space)
 
-		utils.inLineBulletText("Compound Change", utils.upperBool(driver.tyreCompoundChange), space)
+		utils.inLineBulletText("Compound Change", utils.upperBool(driver.hasChangedTyreCompound), space)
 		utils.inLineBulletText(
 			"Compounds Available",
 			"H:"
@@ -84,7 +84,7 @@ local function tyresTreeNode()
 
 		utils.inLineBulletText("Tyre Life Average", math.round(100 - (avg_tyre_wear * 100), 1), space)
 		if driver.car.isAIControlled then
-			utils.inLineBulletText("Pitting New Tyres", utils.upperBool(driver.aiPitting), space)
+			utils.inLineBulletText("Pitting New Tyres", utils.upperBool(driver.isAIPitting), space)
 		end
 		utils.inLineBulletText("Tyre Life [FL]", math.round(100 - (driver.car.wheels[0].tyreWear * 100), 1), space)
 		utils.inLineBulletText("Tyre Life [RL]", math.round(100 - (driver.car.wheels[2].tyreWear * 100), 1), space)
@@ -159,8 +159,8 @@ local function drsTreeNode()
 					),
 					space
 				)
-				utils.inLineBulletText("Available", utils.upperBool(driver.drsAvailable), space)
-				utils.inLineBulletText("Deploy Zone", utils.upperBool(driver.car.drsAvailable), space)
+				utils.inLineBulletText("Available", utils.upperBool(driver.isDrsAvailable), space)
+				utils.inLineBulletText("Deploy Zone", utils.upperBool(driver.isInDrsActivationZone), space)
 				utils.inLineBulletText("Active", utils.upperBool(driver.car.drsActive), space)
 				utils.inLineBulletText("Zone Last ID", driver.drsZonePrevId, space)
 				utils.inLineBulletText("Zone ID", driver.drsZoneId, space)
@@ -272,9 +272,9 @@ local function driverTreeNode()
 			)
 		end
 		if sim.raceSessionType == ac.SessionType.Qualify then
-			utils.inLineBulletText("Out Lap", utils.upperBool(driver.outLap), space)
-			utils.inLineBulletText("Flying Lap", utils.upperBool(driver.flyingLap), space)
-			utils.inLineBulletText("In Lap", utils.upperBool(driver.inLap), space)
+			utils.inLineBulletText("Out Lap", utils.upperBool(driver.isOnOutlap), space)
+			utils.inLineBulletText("Flying Lap", utils.upperBool(driver.isOnFlyingLap), space)
+			utils.inLineBulletText("In Lap", utils.upperBool(driver.isOnInLap), space)
 		end
 		utils.inLineBulletText("Last Lap Time", ac.lapTimeToString(driver.car.previousLapTimeMs), space)
 		utils.inLineBulletText("Best Lap Time", ac.lapTimeToString(driver.car.bestLapTimeMs), space)

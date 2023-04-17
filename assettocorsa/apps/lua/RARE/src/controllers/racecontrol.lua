@@ -163,7 +163,7 @@ local function raceSession(lastUpdate, racecontrol, config, driver)
 			end
 		end
 	else
-		driver.drsAvailable = true
+		driver.isDrsAvailable = true
 	end
 
 	if driver.car.isAIControlled then

@@ -94,7 +94,12 @@ local function setDriverDRS(sim, driver, allowed)
 	if driver.car.isAIControlled then
 		if not allowed then
 			physics.setCarDRS(driver.index, false)
-		elseif allowed and driver.car.speedKmh > 100 and getEndLineDistanceM(driver) > 175 and not driver.aiPitCall then
+		elseif
+			allowed
+			and driver.car.speedKmh > 100
+			and getEndLineDistanceM(driver) > 175
+			and not driver.isAIPitCall
+		then
 			physics.setCarDRS(driver.index, true)
 		end
 	elseif not allowed then
@@ -199,8 +204,8 @@ end
 --- @param drsEnabled boolean
 function drs.controller(rc, driver, drsEnabled)
 	-- setDriverDrsZones(driver)
-	driver.drsAvailable = setDrsAvailable(driver, drsEnabled, rc.drsEnabledLap)
-	setDriverDRS(rc.sim, driver, drsEnabled and driver.drsAvailable or false)
+	driver.isDrsAvailable = setDrsAvailable(driver, drsEnabled, rc.drsEnabledLap)
+	setDriverDRS(rc.sim, driver, drsEnabled and driver.isDrsAvailable or false)
 end
 
 return drs

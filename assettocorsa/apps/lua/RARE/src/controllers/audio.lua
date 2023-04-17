@@ -14,17 +14,17 @@ DRS_FLAP:setVolume(acMainVolume * RARECONFIG.data.AUDIO.MASTER / 100 * RARECONFI
 local function formula1(sim, driver)
 	if driver.car.focusedOnInterior and sim.isWindowForeground then
 		if sim.raceSessionType == ac.SessionType.Race then
-			if driver.drsBeepFx and driver.car.drsAvailable and driver.drsAvailable then
+			if driver.drsBeepFx and driver.isInDrsActivationZone and driver.isDrsAvailable then
 				driver.drsBeepFx = false
 				DRS_BEEP:play()
-			elseif not driver.car.drsAvailable and driver.drsAvailable then
+			elseif not driver.isInDrsActivationZone and driver.isDrsAvailable then
 				driver.drsBeepFx = true
 			end
 		else
-			if driver.drsBeepFx and driver.car.drsAvailable then
+			if driver.drsBeepFx and driver.isInDrsActivationZone then
 				driver.drsBeepFx = false
 				DRS_BEEP:play()
-			elseif not driver.car.drsAvailable then
+			elseif not driver.isInDrsActivationZone then
 				driver.drsBeepFx = true
 			end
 		end
