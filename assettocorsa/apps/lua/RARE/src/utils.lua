@@ -289,12 +289,10 @@ function utils.createRareTrackConfig()
 	io.copyFile(currentTrackLayoutDir .. "\\map.png", rareTrackLayoutDir .. "\\map.png")
 
 	io.createDir(rareTrackUIDir)
+	io.deleteFile(rareTrackUIDir .. "\\outline.png")
 	io.scanDir(currentTrackUIDir, function(fileName)
 		io.copyFile(currentTrackUIDir .. "\\" .. fileName, rareTrackUIDir .. "\\" .. fileName)
 	end)
-
-	io.deleteFile(rareTrackUIDir .. "\\outline.png")
-	io.copyFile(ac.getFolder(ac.FolderID.ACApps) .. "\\lua\\rare\\icon.png", rareTrackUIDir .. "\\outline.png")
 
 	editUiFIle(rareTrackUIDir .. "\\ui_track.json")
 end
