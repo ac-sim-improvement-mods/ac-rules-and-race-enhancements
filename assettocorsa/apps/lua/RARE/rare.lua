@@ -13,7 +13,7 @@ require("src/ui/windows/debug_window")
 require("src/ui/windows/settings_window")
 require("src/ui/windows/notifications")
 local audio = nil
-local rc = require("src/controllers/rc")
+local rc = require("src/controllers/racecontrol")
 local cc = require("src/controllers/compounds")
 
 FIRST_LAUNCH = true
