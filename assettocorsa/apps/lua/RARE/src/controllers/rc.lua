@@ -1,5 +1,6 @@
 ---@diagnostic disable: return-type-mismatch
-local connect = require("rare/connection")
+package.add(ac.FolderID.ExtLua)
+local connect = require("connection")
 local drs = require("src/controllers/drs")
 local vsc = require("src/controllers/vsc")
 local ai = require("src/controllers/ai")
@@ -8,18 +9,6 @@ local notifications = require("src/ui/notifications")
 local rc = {}
 
 DRIVERS = {}
-
-function readOnly(t)
-	local proxy = {}
-	local mt = {
-		__index = t,
-		__newindex = function(t, k, v)
-			error("attempt to update a read-only value", 2)
-		end,
-	}
-	setmetatable(proxy, mt)
-	return proxy
-end
 
 ---@alias rc.WeekendSessions
 ---| `rc.WeekendSessions.FP1` @Value: 0.
