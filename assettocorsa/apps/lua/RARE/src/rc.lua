@@ -51,15 +51,15 @@ local function getLeaderCompletedLaps(sim)
 	end
 end
 
+local drsActivationLap = 0
 ---Returns whether DRS is enabled or not
 ---@param config RARECONFIG.data
 ---@return drsEnabled boolean
-local function isDrsEnabled(config, leaderCompletedLaps)
-	local drsActivationLap = config.RULES.DRS_ACTIVATION_LAP
-	if leaderCompletedLaps + 1 >= drsActivationLap then
-		return true, drsActivationLap
+local function isDrsEnabled(config, leaderCompletedLaps, wetTrack)
+	if leaderCompletedLaps + 1 >= drsActivationLap and not wetTrack then
+		return true
 	else
-		return false, drsActivationLap
+		return false
 	end
 end
 
@@ -67,11 +67,10 @@ end
 ---@param config RARECONFIG.data
 ---@return wetTrack boolean
 local function isTrackWet(config, sim)
-	local track_wetness = sim.rainWetness
-	local track_puddles = sim.rainWater
-	local total_wetness = (track_wetness + (track_puddles * 10)) * 1000
+	local isRaining = math.clamp(math.floor(sim.rainIntensity / 0.003), 0, 1) == 1
+	local totalWetness = ((sim.rainWetness * 10000 * 3.75) + (sim.rainWater * 100 * 12.5)) * (isRaining and 1 or 0)
 
-	if total_wetness >= 100 then
+	if totalWetness > 40 then
 		return true
 	else
 		return false
@@ -169,8 +168,9 @@ local function raceSession(lastUpdate, racecontrol, config, driver)
 				notifications.popup("DRS DISABLED - WET TRACK")
 			end
 
-			if lastUpdate.wetTrack and not racecontrol.wetTrack then
+			if lastUpdate.wetTrack and not racecontrol.wetTrack and not racecontrol.drsEnabled then
 				notifications.popup("DRS ENABLED IN 2 LAPS")
+				drsActivationLap = racecontrol.leaderCompletedLaps + 3
 			end
 		end
 	else
@@ -206,12 +206,18 @@ local function update(sim, drivers)
 	local config = RARECONFIG.data
 	local carsOnTrackCount = getTrackOrder(drivers)
 	local leaderCompletedLaps = getLeaderCompletedLaps(sim)
-	local drsEnabled, drsEnabledLap = isDrsEnabled(config, leaderCompletedLaps)
 	local wetTrack = isTrackWet(config, sim)
+	local drsEnabled = isDrsEnabled(config, leaderCompletedLaps, wetTrack)
+	local drsEnabledLap = drsActivationLap
 	local session = nil
 
 	if not sim.isOnlineRace then
 		session = ac.getSession(sim.currentSessionIndex)
+	end
+
+	if not sim.isSessionStarted then
+		drsActivationLap = config.RULES.DRS_ACTIVATION_LAP
+		drsEnabledLap = drsEnabledLap
 	end
 
 	return readOnly({
