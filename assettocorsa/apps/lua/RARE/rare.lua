@@ -12,7 +12,7 @@ require("src/init")
 require("src/ui/windows/debug_window")
 require("src/ui/windows/settings_window")
 require("src/ui/windows/notifications")
-local audio = nil
+local sfx = nil
 local rc = require("src/controllers/racecontrol")
 local cc = require("src/controllers/compounds")
 
@@ -63,13 +63,13 @@ function script.update(dt)
 	if INITIALIZED then
 		if sim.isLive then
 			racecontrol = rc.getRaceControl(dt, sim)
-			audio.update(sim)
+			sfx.update(sim)
 			cc.update(sim)
 		end
 	else
 		if sim.isInMainMenu or sim.isSessionStarted then
 			INITIALIZED = initialize(sim)
-			audio = require("src/controllers/audio")
+			sfx = require("src/controllers/audio")
 		end
 	end
 end
