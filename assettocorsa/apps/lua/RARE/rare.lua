@@ -1,11 +1,4 @@
-SCRIPT_NAME = "Rules and Race Enhancements"
-SCRIPT_SHORT_NAME = "RARE"
-SCRIPT_VERSION = "1.1.5.0"
-SCRIPT_VERSION_CODE = 11500
-SCRIPT_BUILD_DATE = "2023-04-17"
-CSP_MIN_VERSION_CODE = 2144
-CSP_MIN_VERSION = "1.79"
-
+require("app")
 require("src/helpers/ac_ext")
 require("src/helpers/utils")
 require("src/init")
