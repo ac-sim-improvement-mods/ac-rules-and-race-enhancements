@@ -615,11 +615,11 @@ function ai.rollingStart(driver, connection, speed, sideDelta, splineDelta, turn
 
 	driver.aiSplineOffset = 0
 	if driver.car.racePosition % 2 == 0 then
-		driver.aiSplineOffset = -1
+		driver.aiSplineOffset = 2
 	else
-		driver.aiSplineOffset = 1
+		driver.aiSplineOffset = -2
 	end
-	physics.setAISplineOffset(driver.index, driver.aiSplineOffset)
+	physics.setAISplineAbsoluteOffset(driver.index, driver.aiSplineOffset, true)
 end
 
 function ai.runFormationLap(driver, connection)
@@ -629,7 +629,7 @@ function ai.runFormationLap(driver, connection)
 	local turnDistance = ac.getTrackUpcomingTurn(driver.index).x
 
 	if true then
-		ai.rollingStart(driver, connection, 100, sideDelta, splineDelta, turnDistance)
+		ai.rollingStart(driver, connection, 80, sideDelta, splineDelta, turnDistance)
 	else
 		ai.standingStart(driver, connection, 180, sideDelta, splineDelta, turnDistance)
 	end
