@@ -4,7 +4,7 @@ require("src/helpers/utils")
 require("src/init")
 require("src/ui/windows/debug_window")
 require("src/ui/windows/settings_window")
-require("src/ui/windows/notifications")
+require("src/ui/windows/notification_window")
 local sfx = nil
 local rc = require("src/controllers/racecontrol")
 local cc = require("src/controllers/compounds")

@@ -31,7 +31,7 @@ function Driver:initialize(carIndex)
 	self.pitstopTime = 0
 	self.pitlane = false
 	self.pitlaneTime = 0
-	self.isPitStopComplete= false
+	self.isPitStopComplete = false
 	self.hasPitted = false
 	self.lapPitted = 0
 	self.pittedLaps = {}
@@ -119,14 +119,14 @@ end
 
 local function getPitstopTime(dt, driver)
 	if driver.car.isInPit then
-		if not driver.isPitStopCompletethen
-			driver.isPitStopComplete= true
+		if not driver.isPitStopComplete then
+			driver.isPitStopComplete = true
 			return 0
 		else
 			return driver.pitstopTime + dt
 		end
 	else
-		driver.isPitStopComplete= false
+		driver.isPitStopComplete = false
 		return driver.pitstopTime
 	end
 end

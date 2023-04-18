@@ -1,10 +1,9 @@
 ---@diagnostic disable: return-type-mismatch
-package.add(ac.FolderID.ExtLua)
-local connect = require("connection")
+local connect = require("rare/connection")
 local drs = require("src/controllers/drs")
 local vsc = require("src/controllers/vsc")
 local ai = require("src/controllers/ai")
-local notifications = require("src/ui/notifications")
+local notifications = require("src/ui/windows/notification_window")
 
 local rc = {}
 
