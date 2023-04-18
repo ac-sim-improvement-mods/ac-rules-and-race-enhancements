@@ -6,7 +6,7 @@ require("src/ui/windows/debug_window")
 require("src/ui/windows/settings_window")
 require("src/ui/windows/notification_window")
 require("src/classes/audio")
-local rc = require("src/controllers/racecontrol")
+local rc = require("src/controllers/race_control")
 local cc = require("src/controllers/compounds")
 
 FIRST_LAUNCH = true
