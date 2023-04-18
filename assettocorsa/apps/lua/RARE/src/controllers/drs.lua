@@ -85,7 +85,7 @@ end
 ---@return boolean
 function inDrsRange(driver1)
 	local delta = driver1.carAheadDelta
-	local deltaLimit = RARE_CONFIG.data.RULES.DRS_GAP_DELTA / 1000
+	local deltaLimit = RARE_CONFIG.RULES.DRS_GAP_DELTA / 1000
 	return (delta <= deltaLimit and delta > 0.0) and true or false
 end
 

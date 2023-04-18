@@ -21,7 +21,7 @@ function math.average(t)
 	return sum / #t
 end
 
-function math.randomizer(index, 	range)
+function math.randomizer(index, range)
 	math.randomseed(os.clock() + index)
 	math.random()
 	return math.random(-range, range)

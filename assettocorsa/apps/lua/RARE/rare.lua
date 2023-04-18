@@ -1,11 +1,11 @@
 require("version")
+require("src/helpers/rare_helper")
 require("src/helpers/ac_ext")
-require("src/helpers/utils")
 require("src/init")
 require("src/ui/windows/debug_window")
 require("src/ui/windows/settings_window")
 require("src/ui/windows/notification_window")
-local sfx = nil
+require("src/classes/audio")
 local rc = require("src/controllers/racecontrol")
 local cc = require("src/controllers/compounds")
 
@@ -56,13 +56,12 @@ function script.update(dt)
 	if INITIALIZED then
 		if sim.isLive then
 			racecontrol = rc.getRaceControl(dt, sim)
-			sfx.update(sim)
+			SFX_DRIVER:update(sim)
 			cc.update(sim)
 		end
 	else
 		if sim.isInMainMenu or sim.isSessionStarted then
 			INITIALIZED = initialize(sim)
-			sfx = require("src/classes/audio")
 		end
 	end
 end
@@ -73,7 +72,7 @@ function script.windowMain(dt)
 	if INITIALIZED then
 		ui.transparentWindow(
 			"notifications",
-			vec2(RARE_CONFIG.data.NOTIFICATIONS.X_POS, RARE_CONFIG.data.NOTIFICATIONS.Y_POS),
+			vec2(RARE_CONFIG.NOTIFICATIONS.X_POS, RARE_CONFIG.NOTIFICATIONS.Y_POS),
 			vec2(1200, 500),
 			function()
 				notificationHandler(dt)

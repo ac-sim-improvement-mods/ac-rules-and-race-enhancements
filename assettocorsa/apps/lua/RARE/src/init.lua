@@ -1,7 +1,7 @@
 require("src/classes/driver")
 require("src/classes/settings")
 require("src/classes/drs_zones")
-local utils = require("src/helpers/utils")
+require("src/classes/audio")
 
 local function setAIFuelTankMax(sim, driver)
 	local fuelcons = ac.INIConfig.carData(driver.index, "fuel_cons.ini"):get("FUEL_EVAL", "KM_PER_LITER", 0.0)
@@ -100,7 +100,7 @@ local function createDrivers(sim)
 		end
 
 		if driver.car.isAIControlled then
-			if RARE_CONFIG.data.AI.AI_TANK_FILL == 1 then
+			if RARE_CONFIG.AI.AI_TANK_FILL == 1 then
 				setAIFuelTankMax(sim, driver)
 			end
 			setAITyreCompound(driver, driver.tyreCompoundsAvailable)
@@ -111,8 +111,8 @@ local function createDrivers(sim)
 				getAIAlternateLevel(driver, driverIni)
 			end
 
-			if RARE_CONFIG.data.AI.AI_RELATIVE_SCALING == 1 then
-				driver.aiLevel = driver.aiLevel * RARE_CONFIG.data.AI.AI_RELATIVE_LEVEL / 100
+			if RARE_CONFIG.AI.AI_RELATIVE_SCALING == 1 then
+				driver.aiLevel = driver.aiLevel * RARE_CONFIG.AI.AI_RELATIVE_LEVEL / 100
 				driver.aiThrottleLimitBase = math.lerp(0.5, 1, 1 - ((1 - driver.aiLevel) / 0.3))
 			end
 
@@ -136,7 +136,7 @@ local function cspVersionCheck()
 	log(SCRIPT_NAME .. " version: " .. SCRIPT_VERSION_CODE)
 	log("CSP version: " .. ac.getPatchVersionCode())
 
-	if not utils.compatibleCspVersion() then
+	if not ac.compatibleCspVersion(CSP_MIN_VERSION_CODE) then
 		ui.toast(
 			ui.Icons.Warning,
 			"[RARE] Incompatible CSP version. CSP " .. CSP_MIN_VERSION .. " (" .. CSP_MIN_VERSION_CODE .. ") required!"
@@ -153,6 +153,7 @@ function initialize(sim)
 
 	cspVersionCheck()
 	RARE_CONFIG = Settings(sim)
+	log(stringify(RARE_CONFIG))
 	DRS_ZONES = DrsZones()
 	SFX_DRIVER = Audio()
 	initDataDir()

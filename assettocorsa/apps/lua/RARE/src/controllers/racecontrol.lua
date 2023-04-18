@@ -179,7 +179,7 @@ end
 --- @param config RARE_CONFIG.data
 --- @param driver Driver
 local function runSession(lastUpdate, racecontrol, sessionType, driver)
-	local config = RARE_CONFIG.data
+	local config = RARE_CONFIG
 
 	if sessionType == ac.SessionType.Race then
 		raceSession(lastUpdate, racecontrol, config, driver)

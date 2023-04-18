@@ -2,7 +2,16 @@ require("src/classes/mapped_config")
 
 Settings = class("Settings")
 
-local function loadSettings(sim)
+function Settings:initialize(sim) -- constructor
+	local settings = Settings:reload(sim)
+	self.RULES = settings.data.RULES
+	self.AI = settings.data.AI
+	self.AUDIO = settings.data.AUDIO
+	self.NOTIFICATIONS = settings.data.NOTIFICATIONS
+	self.MISC = settings.data.MISC
+end
+
+function Settings:reload(sim)
 	local settingsDir = ac.dirname() .. "/settings"
 	local settingsFile = settingsDir .. "/settings.ini"
 
@@ -52,13 +61,8 @@ local function loadSettings(sim)
 			PHYSICS_REBOOT = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
 		},
 	})
+
+	log(settings.data.AUDIO.DRS_BEEP)
+	log("Loaded settings file")
 	return settings
-end
-
-function Settings:initialize(sim) -- constructor
-	return loadSettings(sim)
-end
-
-function Settings:reload(sim)
-	loadSettings(sim)
 end
