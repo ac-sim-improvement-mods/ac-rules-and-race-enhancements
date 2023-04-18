@@ -81,12 +81,12 @@ local function getAIAlternateLevel(driver, driverIni)
 end
 
 local function createDrivers(sim)
-	local driverCount = ac.getSim().carsCount
+	local driverCount = sim.carsCount
 	local driverIni =
 		ac.INIConfig.load(ac.getFolder(ac.FolderID.ACApps) .. "/lua/RARE/data/drivers.ini", ac.INIFormat.Default)
 
 	for i = 0, driverCount - 1 do
-		DRIVERS[i] = Driver:initialize(i)
+		DRIVERS[i] = Driver(i)
 		local driver = DRIVERS[i]
 
 		driver.tyreCompoundsAvailable = getTrackTyreCompounds(driver)

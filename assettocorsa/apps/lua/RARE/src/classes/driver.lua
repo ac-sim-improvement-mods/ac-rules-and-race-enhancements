@@ -1,7 +1,6 @@
 local utils = require("src/helpers/utils")
 
 Driver = class("Driver")
-
 function Driver:initialize(carIndex)
 	self.index = carIndex
 	self.car = ac.getCar(carIndex)
@@ -52,6 +51,7 @@ function Driver:initialize(carIndex)
 	self.carAheadDelta = -1
 	self.miniSectors = {}
 	self.currentMiniSector = 0
+	self.lapsCompleted = self.car.lapCount
 
 	self.isInDrsActivationZone = self.car.drsAvailable
 	self.drsZoneNextId = 0

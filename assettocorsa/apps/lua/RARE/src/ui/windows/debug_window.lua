@@ -323,9 +323,24 @@ local function controllerScriptInputsTreeNode(driver)
 	end)
 end
 
+local function debugHeader()
+	utils.inLineBulletText("CSP Version", ac.getPatchVersion(), space)
+	utils.inLineBulletText("CSP Version Code", ac.getPatchVersionCode(), space)
+	utils.inLineBulletText("Current Date", os.date("%Y-%m-%d"), space)
+	ui.nextColumn()
+	utils.inLineBulletText(SCRIPT_SHORT_NAME .. " Version", SCRIPT_VERSION, space)
+	utils.inLineBulletText(SCRIPT_SHORT_NAME .. " Version Code", SCRIPT_VERSION_CODE, space)
+	utils.inLineBulletText(SCRIPT_SHORT_NAME .. " Version Release Date", SCRIPT_BUILD_DATE, space)
+	ui.newLine()
+	ui.nextColumn()
+end
+
 function debug_window(sim, rc, error)
-	local driver = DRIVERS[sim.focusedCar]
 	ui.pushFont(ui.Font.Small)
+
+	local driver = DRIVERS[sim.focusedCar]
+	ac.debug("name", sim.focusedCar)
+	ac.debug("test", DRIVERS[0].name)
 
 	if error then
 		ui.textColored(error, rgbm(1, 0, 0, 1))
@@ -338,51 +353,38 @@ function debug_window(sim, rc, error)
 
 	ui.columns(2, true, "infocol")
 
-	utils.inLineBulletText("CSP Version", ac.getPatchVersion(), space)
-	utils.inLineBulletText("CSP Version Code", ac.getPatchVersionCode(), space)
-	utils.inLineBulletText("Current Date", os.date("%Y-%m-%d"), space)
-	ui.nextColumn()
-	utils.inLineBulletText(SCRIPT_SHORT_NAME .. " Version", SCRIPT_VERSION, space)
-	utils.inLineBulletText(SCRIPT_SHORT_NAME .. " Version Code", SCRIPT_VERSION_CODE, space)
-	utils.inLineBulletText(SCRIPT_SHORT_NAME .. " Version Release Date", SCRIPT_BUILD_DATE, space)
-	ui.newLine()
-	ui.nextColumn()
+	debugHeader()
 
 	ui.columns(2, true, "debugcol2")
 
 	if driver.car.isAIControlled then
 		aiTreeNode(driver)
 	end
-
 	pitStopsTreeNode(driver)
 	tyresTreeNode(driver)
 	iceTreeNode(driver)
-
 	if driver.car.kersPresent then
 		hybridSystemsTreeNode(driver)
 	end
-
 	if RARE_CONFIG.data.RULES.DRS_RULES == 1 then
 		drsTreeNode(sim, rc, driver)
 	end
-
 	damageTreeNode(driver)
 
 	ui.nextColumn()
 
 	sessionTreeNode(sim, rc, driver)
-
 	if ac.getPatchVersionCode() >= 2278 then
 		sessionModifiersTreeNode(sim)
 	end
-
 	if RARE_CONFIG.data.RULES.VSC_RULES == 1 then
 		vscTreeNode()
 	end
-
 	carInfoTreeNode(driver)
 	driverTreeNode(sim, rc, driver)
 	weatherTreeNode(sim, rc)
 	inputsTreeNode(driver)
 	controllerScriptInputsTreeNode(driver)
+
+	ui.popFont()
 end

@@ -234,6 +234,8 @@ function rc.getRaceControl(dt, sim)
 		local driver = drivers[i]
 		driver:update(dt, sim)
 		DRIVERS[i] = runSession(lastUpdate, racecontrol, sim.raceSessionType, driver)
+		ac.log(DRIVERS[i].name)
+
 		connect.storeDriverData(driver)
 	end
 

@@ -1,3 +1,5 @@
+DRS_ZONES = {}
+
 DrsZones = class("DrsZones")
 
 function DrsZones:initialize()

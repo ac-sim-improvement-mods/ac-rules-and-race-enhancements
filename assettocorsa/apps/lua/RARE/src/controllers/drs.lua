@@ -1,7 +1,5 @@
 local drs = {}
 
-DRS_ZONES = {}
-
 --- Checks if driver is before the detection line, not in the pits,
 --- not in a drs zone, and within 1 second of the car ahead on track
 ---@param driver Driver
@@ -57,31 +55,6 @@ local function setDrsAvailable(driver, drsEnabled, drsEnabledLap)
 	else
 		return false
 	end
-end
-
---- Converts session type number to the corresponding session type string
----@param driver Driver
-local function setDriverDrsZones(driver)
-	local startLines = DRS_ZONES.startLines
-	local endLines = DRS_ZONES.endLines
-	local closestDetection = 0
-	local drsZoneNext = 0
-	local drsZone = 0
-	local drsZonePrev = 0
-
-	--- Get next detection line
-	for i = 0, #startLines do
-		if driver.car.splinePosition >= startLines[i] and driver.car.splinePosition < endLines[i] then
-			drsZone = i
-		end
-	end
-
-	drsZone = drsZoneNext == 0 and #startLines or drsZoneNext - 1
-	drsZonePrev = drsZone == 0 and #startLines or drsZone - 1
-
-	driver.drsZoneNextId = drsZoneNext
-	driver.drsZoneId = drsZone
-	driver.drsZonePrevId = drsZonePrev
 end
 
 --- Locks the specified driver's DRS
