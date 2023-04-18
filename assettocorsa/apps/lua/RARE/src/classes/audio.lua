@@ -1,5 +1,13 @@
 local audio = {}
 
+SFX_Driver = nil
+
+Audio = class("Audio")
+
+function Audio:initialize()
+
+end
+
 local acMainVolume = ac.getAudioVolume(ac.AudioChannel.Main)
 
 DRS_FLAP = ui.MediaPlayer()
