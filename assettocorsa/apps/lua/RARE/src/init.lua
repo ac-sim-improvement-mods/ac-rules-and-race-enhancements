@@ -1,5 +1,6 @@
 require("src/classes/driver")
 require("src/classes/settings")
+require("src/classes/drs_zones")
 local utils = require("src/helpers/utils")
 
 local function setAIFuelTankMax(sim, driver)
@@ -99,7 +100,7 @@ local function createDrivers(sim)
 		end
 
 		if driver.car.isAIControlled then
-			if RARECONFIG.data.AI.AI_TANK_FILL == 1 then
+			if RARE_CONFIG.data.AI.AI_TANK_FILL == 1 then
 				setAIFuelTankMax(sim, driver)
 			end
 			setAITyreCompound(driver, driver.tyreCompoundsAvailable)
@@ -110,8 +111,8 @@ local function createDrivers(sim)
 				getAIAlternateLevel(driver, driverIni)
 			end
 
-			if RARECONFIG.data.AI.AI_RELATIVE_SCALING == 1 then
-				driver.aiLevel = driver.aiLevel * RARECONFIG.data.AI.AI_RELATIVE_LEVEL / 100
+			if RARE_CONFIG.data.AI.AI_RELATIVE_SCALING == 1 then
+				driver.aiLevel = driver.aiLevel * RARE_CONFIG.data.AI.AI_RELATIVE_LEVEL / 100
 				driver.aiThrottleLimitBase = math.lerp(0.5, 1, 1 - ((1 - driver.aiLevel) / 0.3))
 			end
 
@@ -145,24 +146,13 @@ local function cspVersionCheck()
 	end
 end
 
-local function loadDRSZones()
-	-- Get DRS Zones from track data folder
-	try(function()
-		DRS_ZONES = DrsZones("drs_zones.ini")
-		return true
-	end, function(err)
-		log("[WARN]" .. err)
-		log("[WARN] Failed to load DRS Zones!")
-	end, function() end)
-end
-
 --- Initialize RARE and returns initialized state
 --- @return boolean
 function initialize(sim)
 	log(FIRST_LAUNCH and "First initialization" or "Reinitializing")
 
 	cspVersionCheck()
-	RARECONFIG = Settings:initialize()
+	RARE_CONFIG = Settings:initialize(sim)
 	DRS_ZONES = DrsZones:initialize()
 	initDataDir()
 	createDrivers(sim)

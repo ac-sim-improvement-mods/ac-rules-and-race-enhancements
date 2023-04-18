@@ -71,13 +71,13 @@ local function tyresTreeNode()
 
 		utils.inLineBulletText(
 			"Tyre Life Avg Limit",
-			RARECONFIG.data.AI.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom .. " %",
+			RARE_CONFIG.data.AI.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom .. " %",
 			space,
 			driver
 		)
 		utils.inLineBulletText(
 			"Tyre Life Single Limit",
-			RARECONFIG.data.AI.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom .. " %",
+			RARE_CONFIG.data.AI.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom .. " %",
 			space,
 			driver
 		)
@@ -155,7 +155,7 @@ local function drsTreeNode()
 				utils.inLineBulletText(
 					"In Gap",
 					utils.upperBool(
-						(delta <= RARECONFIG.data.RULES.DRS_GAP_DELTA / 1000 and delta > 0.0) and true or false
+						(delta <= RARE_CONFIG.data.RULES.DRS_GAP_DELTA / 1000 and delta > 0.0) and true or false
 					),
 					space
 				)
@@ -362,7 +362,7 @@ function debug_window(sim, rc, error)
 		hybridSystemsTreeNode()
 	end
 
-	if RARECONFIG.data.RULES.DRS_RULES == 1 then
+	if RARE_CONFIG.data.RULES.DRS_RULES == 1 then
 		drsTreeNode()
 	end
 
@@ -376,7 +376,7 @@ function debug_window(sim, rc, error)
 		sessionModifiersTreeNode()
 	end
 
-	if RARECONFIG.data.RULES.VSC_RULES == 1 then
+	if RARE_CONFIG.data.RULES.VSC_RULES == 1 then
 		vscTreeNode()
 	end
 

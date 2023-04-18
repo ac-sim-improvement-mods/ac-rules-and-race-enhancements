@@ -86,7 +86,7 @@ local function drawRaceControl(text)
 	ui.endScale(0.60)
 
 	ui.popDWriteFont()
-	ui.endScale(RARECONFIG.data.NOTIFICATIONS.SCALE)
+	ui.endScale(RARE_CONFIG.data.NOTIFICATIONS.SCALE)
 end
 
 local function drawNotification()
@@ -97,7 +97,7 @@ local fadingTimer = ui.FadingElement(drawNotification, false)
 
 function notifications.popup(text, timer)
 	if not timer then
-		timer = RARECONFIG.data.NOTIFICATIONS.DURATION
+		timer = RARE_CONFIG.data.NOTIFICATIONS.DURATION
 	end
 
 	notificationTimer = timer

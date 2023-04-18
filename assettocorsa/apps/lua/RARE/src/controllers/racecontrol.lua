@@ -1,9 +1,11 @@
 ---@diagnostic disable: return-type-mismatch
-local connect = require("rare/connection")
+package.add("../../../extension/lua/rare")
+local connect = require("connection")
 local drs = require("src/controllers/drs")
 local vsc = require("src/controllers/vsc")
 local ai = require("src/controllers/ai")
 local notifications = require("src/ui/windows/notification_window")
+require("src/helpers/helper")
 
 local rc = {}
 
@@ -41,7 +43,7 @@ end
 
 local drsActivationLap = 0
 ---Returns whether DRS is enabled or not
----@param config RARECONFIG.data
+---@param config RARE_CONFIG.data
 ---@return drsEnabled boolean
 local function isDrsEnabled(config, leaderCompletedLaps, wetTrack)
 	if leaderCompletedLaps + 1 >= drsActivationLap and not wetTrack then
@@ -52,7 +54,7 @@ local function isDrsEnabled(config, leaderCompletedLaps, wetTrack)
 end
 
 ---Returns whether the track is too wet for DRS enabled or not
----@param config RARECONFIG.data
+---@param config RARE_CONFIG.data
 ---@return wetTrack boolean
 local function isTrackWet(config, sim)
 	local isRaining = math.clamp(math.floor(sim.rainIntensity / 0.003), 0, 1) == 1
@@ -112,7 +114,7 @@ local function setAIFuelTankMax(sim, driver)
 end
 
 --- Race Control for qualify sessions
---- @param config RARECONFIG.data
+--- @param config RARE_CONFIG.data
 --- @param driver Driver
 local function qualifySession(racecontrol, config, driver)
 	if racecontrol.sim.sessionTimeLeft <= 0 then
@@ -122,12 +124,12 @@ local function qualifySession(racecontrol, config, driver)
 end
 
 --- Race Control for practice sessions
---- @param config RARECONFIG.data
+--- @param config RARE_CONFIG.data
 --- @param driver Driver
 local function practiceSession(racecontrol, config, driver) end
 
 --- Race Control for race sessions
---- @param config RARECONFIG.data
+--- @param config RARE_CONFIG.data
 --- @param driver Driver
 local function raceSession(lastUpdate, racecontrol, config, driver)
 	local raceRules = config.RULES
@@ -174,10 +176,10 @@ end
 
 --- Switch for runnimg the different kinds of sessioms
 --- @param sessionType ac.SessionTypes
---- @param config RARECONFIG.data
+--- @param config RARE_CONFIG.data
 --- @param driver Driver
 local function runSession(lastUpdate, racecontrol, sessionType, driver)
-	local config = RARECONFIG.data
+	local config = RARE_CONFIG.data
 
 	if sessionType == ac.SessionType.Race then
 		raceSession(lastUpdate, racecontrol, config, driver)
@@ -191,7 +193,7 @@ local function runSession(lastUpdate, racecontrol, sessionType, driver)
 end
 
 local function update(sim, drivers)
-	local config = RARECONFIG.data
+	local config = RARE_CONFIG.data
 	local carsOnTrackCount = getTrackOrder(drivers)
 	local leaderCompletedLaps = getLeaderCompletedLaps(sim)
 	local wetTrack = isTrackWet(config, sim)

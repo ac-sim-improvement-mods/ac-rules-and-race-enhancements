@@ -31,18 +31,18 @@ function utils.inLineBulletText(label, text, space)
 	elseif label == "Delta" then
 		if text == "---" then
 			ui.textColored("---", rgbm(1, 1, 1, 1))
-		elseif text <= RARECONFIG.data.RULES.DRS_GAP_DELTA / 1000 and text > 0 then
+		elseif text <= RARE_CONFIG.data.RULES.DRS_GAP_DELTA / 1000 and text > 0 then
 			ui.textColored(text, rgbm(0, 1, 0, 1))
 		else
 			ui.textColored(text, rgbm(1, 0, 0, 1))
 		end
 	elseif string.find(label, "Tyre Life") and not string.find(label, "Limit") then
 		if
-			text < RARECONFIG.data.AI.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom
-			or (string.find(label, "Average") and text < RARECONFIG.data.AI.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom)
+			text < RARE_CONFIG.data.AI.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom
+			or (string.find(label, "Average") and text < RARE_CONFIG.data.AI.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom)
 		then
 			ui.textColored(text .. " %", rgbm(1, 0, 0, 1))
-		elseif text < RARECONFIG.data.AI.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom then
+		elseif text < RARE_CONFIG.data.AI.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom then
 			ui.textColored(text .. " %", rgbm(1, 1, 0, 1))
 		else
 			ui.textColored(text .. " %", rgbm(1, 1, 1, 1))

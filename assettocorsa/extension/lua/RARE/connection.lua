@@ -4,8 +4,8 @@ local RareData = ac.connect({
 	ac.StructItem.key("RareData"),
 	connected = ac.StructItem.boolean(),
 	scriptVersionId = ac.StructItem.int16(),
-	drsEnabled = ac.StructItem.boolean(),
-	drsAvailable = ac.StructItem.array(ac.StructItem.boolean(), 32),
+	isDrsEnabled = ac.StructItem.boolean(),
+	isDrsAvailable = ac.StructItem.array(ac.StructItem.boolean(), 32),
 	carAhead = ac.StructItem.array(ac.StructItem.int16(), 32),
 	carAheadDelta = ac.StructItem.array(ac.StructItem.float(), 32),
 }, true, ac.SharedNamespace.Shared)
@@ -21,7 +21,7 @@ local RareDataAIDefaults = ac.connect({
 function connection.storeRaceControlData(rc)
 	RareData.connected = true
 	RareData.scriptVersionId = SCRIPT_VERSION_CODE
-	RareData.drsEnabled = rc.drsEnabled
+	RareData.isDrsEnabled = rc.drsEnabled
 end
 
 --- Stores driver data
@@ -53,8 +53,8 @@ end
 
 --- Returns boolean DRS Enabled state
 ---@return drsEnabled boolean
-function connection.drsEnabled()
-	return RareData.drsEnabled
+function connection.isDrsEnabled()
+	return RareData.isDrsEnabled
 end
 
 --- Returns DRS Available state for a specific car index

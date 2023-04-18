@@ -12,7 +12,7 @@ local cc = require("src/controllers/compounds")
 FIRST_LAUNCH = true
 INITIALIZED = false
 RESTARTED = false
-RARECONFIG = nil
+RARE_CONFIG = nil
 
 local sim = ac.getSim()
 local racecontrol = nil
@@ -73,7 +73,7 @@ function script.windowMain(dt)
 	if INITIALIZED then
 		ui.transparentWindow(
 			"notifications",
-			vec2(RARECONFIG.data.NOTIFICATIONS.X_POS, RARECONFIG.data.NOTIFICATIONS.Y_POS),
+			vec2(RARE_CONFIG.data.NOTIFICATIONS.X_POS, RARE_CONFIG.data.NOTIFICATIONS.Y_POS),
 			vec2(1200, 500),
 			function()
 				notificationHandler(dt)
