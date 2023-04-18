@@ -163,7 +163,7 @@ function initialize(sim)
 
 	cspVersionCheck()
 	RARECONFIG = Settings:initialize()
-	loadDRSZones()
+	DRS_ZONES = DrsZones:initialize()
 	initDataDir()
 	createDrivers(sim)
 

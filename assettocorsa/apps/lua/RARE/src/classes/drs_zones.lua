@@ -1,7 +1,6 @@
----@class DRS_Points
----@param fileName string
----@return DRS_Points
-DrsZones = class("DRS_Points", function()
+DrsZones = class("DrsZones")
+
+function DrsZones:initialize()
 	local drsIni = ac.INIConfig.trackData("drs_zones.ini")
 	local detectionLines = {}
 	local startLines = {}
@@ -29,10 +28,10 @@ DrsZones = class("DRS_Points", function()
 		zoneCount = index
 	end
 
-	return {
-		detectionLines = detectionLines,
-		startLines = startLines,
-		endLines = endLines,
-		count = zoneCount,
-	}
-end, class.NoInitialize)
+	self.detectionLines = detectionLines
+	self.startLines = startLines
+	self.endLines = endLines
+	self.count = zoneCount
+
+	return self
+end
