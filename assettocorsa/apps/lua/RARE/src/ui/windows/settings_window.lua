@@ -1,3 +1,4 @@
+local controls = require("src/ui/controls/slider")
 local inject = require("src/controllers/injection")
 local notifications = require("src/ui/windows/notification_window")
 local injected = physics.allowed()
@@ -17,7 +18,7 @@ local function rulesTab(sim)
 		end
 
 		ui.header("DRS")
-		utils.slider(
+		controls.slider(
 			RARE_CONFIG,
 			"RULES",
 			"DRS_RULES",
@@ -25,15 +26,15 @@ local function rulesTab(sim)
 			1,
 			1,
 			true,
-			RARE_CONFIG.RULES.DRS_RULES == 1 and "DRS Rules: ENABLED" or "DRS Rules: DISABLED",
+			RARE_CONFIG.data.RULES.DRS_RULES == 1 and "DRS Rules: ENABLED" or "DRS Rules: DISABLED",
 			"Enable DRS being controlled by the app",
 			function(v)
 				return math.round(v, 0)
 			end
 		)
 
-		if RARE_CONFIG.RULES.DRS_RULES == 1 then
-			DRS_ENABLED_LAP = utils.slider(
+		if RARE_CONFIG.data.RULES.DRS_RULES == 1 then
+			DRS_ENABLED_LAP = controls.slider(
 				RARE_CONFIG,
 				"RULES",
 				"DRS_ACTIVATION_LAP",
@@ -47,7 +48,7 @@ local function rulesTab(sim)
 					return v
 				end
 			)
-			utils.slider(
+			controls.slider(
 				RARE_CONFIG,
 				"RULES",
 				"DRS_GAP_DELTA",
@@ -64,7 +65,7 @@ local function rulesTab(sim)
 
 			ui.newLine(1)
 
-			utils.slider(
+			controls.slider(
 				RARE_CONFIG,
 				"RULES",
 				"DRS_WET_DISABLE",
@@ -72,7 +73,7 @@ local function rulesTab(sim)
 				1,
 				1,
 				true,
-				RARE_CONFIG.RULES.DRS_WET_DISABLE == 1 and "Disable DRS When Wet: ENABLED"
+				RARE_CONFIG.data.RULES.DRS_WET_DISABLE == 1 and "Disable DRS When Wet: ENABLED"
 					or "Disable DRS When Wet: DISABLED",
 				"Disable DRS activation if track wetness gets above the limit below",
 				function(v)
@@ -83,21 +84,21 @@ local function rulesTab(sim)
 		ui.newLine(1)
 
 		-- ui.header("VSC:")
-		-- utils.slider(RARE_CONFIG, 'RULES', 'VSC_RULES', 0, 1, 1, true, RARE_CONFIG.RULES.VSC_RULES == 1 and "VSC Rules: ENABLED" or "VSC Rules: DISABLED",
+		-- controls.slider(RARE_CONFIG, 'RULES', 'VSC_RULES', 0, 1, 1, true, RARE_CONFIG.data.RULES.VSC_RULES == 1 and "VSC Rules: ENABLED" or "VSC Rules: DISABLED",
 		-- 'Enable a Virtual Safety Car to be deployed',
 		-- function (v) return math.round(v, 0) end)
-		-- if RARE_CONFIG.RULES.VSC_RULES == 1 then
-		--     utils.slider(RARE_CONFIG, 'RULES', 'VSC_INIT_TIME', 0, 300, 1, false, 'Call After Yellow Flag For: %.0f s',
+		-- if RARE_CONFIG.data.RULES.VSC_RULES == 1 then
+		--     controls.slider(RARE_CONFIG, 'RULES', 'VSC_INIT_TIME', 0, 300, 1, false, 'Call After Yellow Flag For: %.0f s',
 		--     'Time a yellow flag must be up before calling the VSC',
 		--     function (v) return math.round(v, 0) end)
-		--     utils.slider(RARE_CONFIG, 'RULES', 'VSC_DEPLOY_TIME', 0, 300, 1, false, 'Ends After Deployed For: %.0f s',
+		--     controls.slider(RARE_CONFIG, 'RULES', 'VSC_DEPLOY_TIME', 0, 300, 1, false, 'Ends After Deployed For: %.0f s',
 		--     'Time that the VSC is deployed before ending',
 		--     function (v) return math.round(v, 0) end)
 		-- end
 		-- ui.newLine(1)
 
 		ui.header("FUEL")
-		utils.slider(
+		controls.slider(
 			RARE_CONFIG,
 			"RULES",
 			"RACE_REFUELING",
@@ -105,7 +106,7 @@ local function rulesTab(sim)
 			1,
 			1,
 			true,
-			RARE_CONFIG.RULES.RACE_REFUELING == 1 and "Race Refueling: ENABLED" or "Race Refueling: DISABLED",
+			RARE_CONFIG.data.RULES.RACE_REFUELING == 1 and "Race Refueling: ENABLED" or "Race Refueling: DISABLED",
 			"Enable or disable refueling during a race",
 			function(v)
 				return math.round(v, 0)
@@ -115,7 +116,7 @@ local function rulesTab(sim)
 		ui.newLine(1)
 
 		ui.header("TYRE COMPOUNDS")
-		utils.slider(
+		controls.slider(
 			RARE_CONFIG,
 			"RULES",
 			"RESTRICT_COMPOUNDS",
@@ -123,14 +124,14 @@ local function rulesTab(sim)
 			1,
 			1,
 			true,
-			RARE_CONFIG.RULES.RESTRICT_COMPOUNDS == 1 and "Restrict Compound Choice: ENABLED"
+			RARE_CONFIG.data.RULES.RESTRICT_COMPOUNDS == 1 and "Restrict Compound Choice: ENABLED"
 				or "Restrict Compound Choice: DISABLED",
 			"Enable or disable restricting compound choice to user defined set\nRequires configration in order to work",
 			function(v)
 				return math.round(v, 0)
 			end
 		)
-		utils.slider(
+		controls.slider(
 			RARE_CONFIG,
 			"RULES",
 			"CORRECT_COMPOUNDS_COLORS",
@@ -138,7 +139,7 @@ local function rulesTab(sim)
 			1,
 			1,
 			true,
-			RARE_CONFIG.RULES.CORRECT_COMPOUNDS_COLORS == 1 and "HMS Compound Colors: ENABLED"
+			RARE_CONFIG.data.RULES.CORRECT_COMPOUNDS_COLORS == 1 and "HMS Compound Colors: ENABLED"
 				or "HMS Compound Colors: DISABLED",
 			"Enable or disable changing the compound colors to reflect the Hard (white) Medium (yellow) and Soft (red) compound\nRequires configration in order to work",
 			function(v)
@@ -158,7 +159,7 @@ local function rulesTab(sim)
 		--         PHYSICS_REBOOT = ac.INIConfig.OptionalNumber
 		--     }})
 		--     log("[Loaded] Applied config")
-		--     DRS_ENABLED_LAP = RARE_CONFIG.RULES.DRS_ACTIVATION_LAP
+		--     DRS_ENABLED_LAP = RARE_CONFIG.data.RULES.DRS_ACTIVATION_LAP
 		-- end
 		ui.newLine(1)
 	end)
@@ -177,7 +178,7 @@ local function aiTab(sim)
 		end
 
 		ui.header("LEVEL")
-		utils.slider(
+		controls.slider(
 			RARE_CONFIG,
 			"AI",
 			"AI_ALTERNATE_LEVEL",
@@ -185,7 +186,7 @@ local function aiTab(sim)
 			1,
 			1,
 			true,
-			RARE_CONFIG.AI.AI_ALTERNATE_LEVEL == 1 and "Alternate AI Strength: ENABLED"
+			RARE_CONFIG.data.AI.AI_ALTERNATE_LEVEL == 1 and "Alternate AI Strength: ENABLED"
 				or "Alternate AI Strength: DISABLED",
 			"Changes the default AI level to be more competitive",
 			function(v)
@@ -195,7 +196,7 @@ local function aiTab(sim)
 
 		ui.newLine(1)
 
-		utils.slider(
+		controls.slider(
 			RARE_CONFIG,
 			"AI",
 			"AI_RELATIVE_SCALING",
@@ -203,7 +204,7 @@ local function aiTab(sim)
 			1,
 			1,
 			true,
-			RARE_CONFIG.AI.AI_RELATIVE_SCALING == 1 and "Relative AI Scaling: ENABLED"
+			RARE_CONFIG.data.AI.AI_RELATIVE_SCALING == 1 and "Relative AI Scaling: ENABLED"
 				or "Relative AI Scaling: DISABLED",
 			"Enables relative AI scaling",
 			function(v)
@@ -211,7 +212,7 @@ local function aiTab(sim)
 			end
 		)
 
-		utils.slider(
+		controls.slider(
 			RARE_CONFIG,
 			"AI",
 			"AI_RELATIVE_LEVEL",
@@ -219,7 +220,7 @@ local function aiTab(sim)
 			100,
 			1,
 			true,
-			RARE_CONFIG.AI.AI_RELATIVE_LEVEL == 1 and "Relative AI Level %.0f%%" or "Relative AI Level %.0f%%",
+			RARE_CONFIG.data.AI.AI_RELATIVE_LEVEL == 1 and "Relative AI Level %.0f%%" or "Relative AI Level %.0f%%",
 			"Relative AI level, for easier scaling with BoP'd grids",
 			function(v)
 				FIRST_LAUNCH = false
@@ -231,7 +232,7 @@ local function aiTab(sim)
 		ui.newLine(1)
 
 		ui.header("TYRES")
-		utils.slider(
+		controls.slider(
 			RARE_CONFIG,
 			"AI",
 			"AI_FORCE_PIT_TYRES",
@@ -239,7 +240,8 @@ local function aiTab(sim)
 			1,
 			1,
 			true,
-			RARE_CONFIG.AI.AI_FORCE_PIT_TYRES == 1 and "Pit When Tyres Worn: ENABLED" or "Pit When Tyres Worn: DISABLED",
+			RARE_CONFIG.data.AI.AI_FORCE_PIT_TYRES == 1 and "Pit When Tyres Worn: ENABLED"
+				or "Pit When Tyres Worn: DISABLED",
 			"Force AI to pit for new tyres when their average tyre life is below AI TYRE LIFE",
 			function(v)
 				return math.round(v, 0)
@@ -249,8 +251,8 @@ local function aiTab(sim)
 		ui.newLine(1)
 
 		local driver = DRIVERS[sim.focusedCar]
-		if RARE_CONFIG.AI.AI_FORCE_PIT_TYRES == 1 then
-			utils.slider(
+		if RARE_CONFIG.data.AI.AI_FORCE_PIT_TYRES == 1 then
+			controls.slider(
 				RARE_CONFIG,
 				"AI",
 				"AI_AVG_TYRE_LIFE",
@@ -261,13 +263,13 @@ local function aiTab(sim)
 				"Pit Below Avg Tyre Life: %.2f%%",
 				"AI will pit after average tyre life % is below this value",
 				function(v)
-					RARE_CONFIG.AI.AI_SINGLE_TYRE_LIFE =
-						math.clamp(RARE_CONFIG.AI.AI_SINGLE_TYRE_LIFE, 0, math.floor(v / 0.5 + 0.5) * 0.5)
+					RARE_CONFIG.data.AI.AI_SINGLE_TYRE_LIFE =
+						math.clamp(RARE_CONFIG.data.AI.AI_SINGLE_TYRE_LIFE, 0, math.floor(v / 0.5 + 0.5) * 0.5)
 					return math.floor(v / 0.5 + 0.5) * 0.5
 				end
 			)
 
-			utils.slider(
+			controls.slider(
 				RARE_CONFIG,
 				"AI",
 				"AI_AVG_TYRE_LIFE_RANGE",
@@ -284,12 +286,12 @@ local function aiTab(sim)
 
 			ui.newLine(1)
 
-			utils.slider(
+			controls.slider(
 				RARE_CONFIG,
 				"AI",
 				"AI_SINGLE_TYRE_LIFE",
 				0,
-				RARE_CONFIG.AI.AI_AVG_TYRE_LIFE,
+				RARE_CONFIG.data.AI.AI_AVG_TYRE_LIFE,
 				1,
 				false,
 				"Pit Below Single Tyre Life: %.2f%%",
@@ -299,7 +301,7 @@ local function aiTab(sim)
 				end
 			)
 
-			utils.slider(
+			controls.slider(
 				RARE_CONFIG,
 				"AI",
 				"AI_SINGLE_TYRE_LIFE_RANGE",
@@ -317,7 +319,7 @@ local function aiTab(sim)
 			ui.newLine(1)
 
 			ui.header("FUEL")
-			utils.slider(
+			controls.slider(
 				RARE_CONFIG,
 				"AI",
 				"AI_TANK_FILL",
@@ -325,7 +327,7 @@ local function aiTab(sim)
 				1,
 				1,
 				true,
-				RARE_CONFIG.AI.AI_TANK_FILL == 1 and "Fill Fuel Tank: ENABLED" or "Fill Fuel Tank: DISABLED",
+				RARE_CONFIG.data.AI.AI_TANK_FILL == 1 and "Fill Fuel Tank: ENABLED" or "Fill Fuel Tank: DISABLED",
 				"Enable or disable refueling AI car's fuel tank with enough fuel for the whole race, given the capacity is high enough",
 				function(v)
 					return math.round(v, 0)
@@ -336,7 +338,7 @@ local function aiTab(sim)
 				ui.newLine(1)
 
 				ui.header("MISC")
-				utils.slider(
+				controls.slider(
 					RARE_CONFIG,
 					"AI",
 					"AI_MGUK_CONTROL",
@@ -344,7 +346,8 @@ local function aiTab(sim)
 					1,
 					1,
 					true,
-					RARE_CONFIG.AI.AI_MGUK_CONTROL == 1 and "AI Dynamic MGUK: ENABLED" or "AI Dynamic MGUK: DISABLED",
+					RARE_CONFIG.data.AI.AI_MGUK_CONTROL == 1 and "AI Dynamic MGUK: ENABLED"
+						or "AI Dynamic MGUK: DISABLED",
 					"Enables AI to make MGUK changes during the race",
 					function(v)
 						return math.round(v, 0)
@@ -404,7 +407,7 @@ local function audioTab()
 		ui.header("VOLUME")
 		local acVolume = ac.getAudioVolume(ac.AudioChannel.Main)
 
-		utils.slider(
+		controls.slider(
 			RARE_CONFIG,
 			"AUDIO",
 			"MASTER",
@@ -419,7 +422,7 @@ local function audioTab()
 			end
 		)
 
-		utils.slider(
+		controls.slider(
 			RARE_CONFIG,
 			"AUDIO",
 			"DRS_BEEP",
@@ -433,7 +436,7 @@ local function audioTab()
 				return math.round(v, 0)
 			end
 		)
-		DRS_BEEP:setVolume(acVolume * RARE_CONFIG.AUDIO.MASTER / 100 * RARE_CONFIG.AUDIO.DRS_BEEP / 100)
+		DRS_BEEP:setVolume(acVolume * RARE_CONFIG.data.AUDIO.MASTER / 100 * RARE_CONFIG.data.AUDIO.DRS_BEEP / 100)
 
 		ui.sameLine(0, 2)
 		if ui.button("##drsbeeptest", vec2(20, 20), ui.ButtonFlags.None) then
@@ -444,7 +447,7 @@ local function audioTab()
 			ui.setTooltip("Test DRS Beep")
 		end
 
-		utils.slider(
+		controls.slider(
 			RARE_CONFIG,
 			"AUDIO",
 			"DRS_FLAP",
@@ -458,7 +461,7 @@ local function audioTab()
 				return math.round(v, 0)
 			end
 		)
-		DRS_FLAP:setVolume(acVolume * RARE_CONFIG.AUDIO.MASTER / 100 * RARE_CONFIG.AUDIO.DRS_FLAP / 100)
+		DRS_FLAP:setVolume(acVolume * RARE_CONFIG.data.AUDIO.MASTER / 100 * RARE_CONFIG.data.AUDIO.DRS_FLAP / 100)
 
 		ui.sameLine(0, 2)
 		if ui.button("##drsflaptest", vec2(20, 20), ui.ButtonFlags.None) then
@@ -478,7 +481,7 @@ local function uiTab(sim)
 		ui.newLine(1)
 		ui.header("RACE CONTROL BANNER")
 
-		utils.slider(
+		controls.slider(
 			RARE_CONFIG,
 			"NOTIFICATIONS",
 			"X_POS",
@@ -503,7 +506,7 @@ local function uiTab(sim)
 			ui.setTooltip("Center X")
 		end
 
-		utils.slider(
+		controls.slider(
 			RARE_CONFIG,
 			"NOTIFICATIONS",
 			"Y_POS",
@@ -520,14 +523,14 @@ local function uiTab(sim)
 
 		ui.sameLine(0, 2)
 		if ui.button("##rcbannerypos", vec2(20, 20), ui.ButtonFlags.None) then
-			RARE_CONFIG.NOTIFICATIONS.Y_POS = sim.windowHeight / 2
+			RARE_CONFIG.data.NOTIFICATIONS.Y_POS = sim.windowHeight / 2
 		end
 		ui.addIcon(ui.Icons.Target, 10, 0.5, nil, 0)
 		if ui.itemHovered() then
 			ui.setTooltip("Center Y")
 		end
 
-		utils.slider(
+		controls.slider(
 			RARE_CONFIG,
 			"NOTIFICATIONS",
 			"DURATION",
@@ -542,7 +545,7 @@ local function uiTab(sim)
 			end
 		)
 
-		utils.slider(
+		controls.slider(
 			RARE_CONFIG,
 			"NOTIFICATIONS",
 			"SCALE",

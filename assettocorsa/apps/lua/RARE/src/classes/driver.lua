@@ -65,8 +65,8 @@ function Driver:initialize(carIndex)
 	self.returnRacePosition = -1
 	self.returnPostionTimer = -1
 
-	self.aiTyreAvgRandom = math.randomizer(self.index, RARE_CONFIG.AI.AI_AVG_TYRE_LIFE_RANGE)
-	self.aiTyreSingleRandom = math.randomizer(self.index, RARE_CONFIG.AI.AI_SINGLE_TYRE_LIFE_RANGE)
+	self.aiTyreAvgRandom = math.randomizer(self.index, RARE_CONFIG.data.AI.AI_AVG_TYRE_LIFE_RANGE)
+	self.aiTyreSingleRandom = math.randomizer(self.index, RARE_CONFIG.data.AI.AI_SINGLE_TYRE_LIFE_RANGE)
 
 	log("[" .. self.index .. "] " .. self.name .. " initialized")
 
@@ -91,8 +91,8 @@ end
 local function getPitstopCount(driver)
 	if driver.car.isInPit and not driver.hasPitted then
 		driver.hasPitted = true
-		driver.aiTyreAvgRandom = math.randomizer(driver.index, RARE_CONFIG.AI.AI_AVG_TYRE_LIFE_RANGE)
-		driver.aiTyreSingleRandom = math.randomizer(driver.index, RARE_CONFIG.AI.AI_SINGLE_TYRE_LIFE_RANGE)
+		driver.aiTyreAvgRandom = math.randomizer(driver.index, RARE_CONFIG.data.AI.AI_AVG_TYRE_LIFE_RANGE)
+		driver.aiTyreSingleRandom = math.randomizer(driver.index, RARE_CONFIG.data.AI.AI_SINGLE_TYRE_LIFE_RANGE)
 		return driver.pitstopCount + 1
 	elseif not driver.car.isInPitlane and driver.hasPitted then
 		driver.hasPitted = false

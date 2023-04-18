@@ -1,27 +1,16 @@
 require("src/classes/mapped_config")
 
-Settings = class("Settings")
+local settings = {}
 
-function Settings:initialize(sim) -- constructor
-	local settings = Settings:reload(sim)
-	self.RULES = settings.data.RULES
-	self.AI = settings.data.AI
-	self.AUDIO = settings.data.AUDIO
-	self.NOTIFICATIONS = settings.data.NOTIFICATIONS
-	self.MISC = settings.data.MISC
-end
-
-function Settings:reload(sim)
+function settings:load(sim)
 	local settingsDir = ac.dirname() .. "/settings"
 	local settingsFile = settingsDir .. "/settings.ini"
 
 	if not io.fileExists(settingsFile) then
 		settingsFile = settingsDir .. "/default_settings.ini"
-		ac.debug("yeeet", settingsFile)
 	end
 
-	local settings = nil
-	settings = MappedConfig(settingsFile, {
+	RARE_CONFIG = MappedConfig(settingsFile, {
 		RULES = {
 			DRS_RULES = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
 			DRS_ACTIVATION_LAP = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 3,
@@ -61,8 +50,6 @@ function Settings:reload(sim)
 			PHYSICS_REBOOT = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
 		},
 	})
-
-	log(settings.data.AUDIO.DRS_BEEP)
-	log("Loaded settings file")
-	return settings
 end
+
+return settings

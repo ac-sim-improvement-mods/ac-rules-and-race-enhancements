@@ -1,3 +1,5 @@
+require("src/helpers/ui_helper")
+
 local notifications = {}
 
 local notificationTimer = 0
@@ -20,7 +22,7 @@ local function drawRaceControl(text)
 	-- Information white rect
 	ui.drawRectFilled(vec2(360, 0), vec2(360 + bannerWidth, bannerHeight), rgbm(1, 1, 1, 1))
 
-	drawText({
+	ui.drawText({
 		string = "RACE",
 		fontSize = fontSize,
 		xPos = leftAlign,
@@ -30,7 +32,7 @@ local function drawRaceControl(text)
 		color = rgbm(1, 1, 1, 1),
 	})
 
-	drawText({
+	ui.drawText({
 		string = "CONTROL",
 		fontSize = fontSize,
 		xPos = leftAlign,
@@ -40,7 +42,7 @@ local function drawRaceControl(text)
 		color = rgbm(1, 1, 1, 1),
 	})
 
-	drawText({
+	ui.drawText({
 		string = text,
 		fontSize = fontSize * 0.8125,
 		xPos = 110 + bannerWidth / 2,
@@ -61,7 +63,7 @@ local function drawRaceControl(text)
 	ui.endScale(0.60)
 
 	ui.popDWriteFont()
-	ui.endScale(RARE_CONFIG.NOTIFICATIONS.SCALE)
+	ui.endScale(RARE_CONFIG.data.NOTIFICATIONS.SCALE)
 end
 
 local function drawNotification()
@@ -72,7 +74,7 @@ local fadingTimer = ui.FadingElement(drawNotification, false)
 
 function notifications.popup(text, timer)
 	if not timer then
-		timer = RARE_CONFIG.NOTIFICATIONS.DURATION
+		timer = RARE_CONFIG.data.NOTIFICATIONS.DURATION
 	end
 
 	notificationTimer = timer

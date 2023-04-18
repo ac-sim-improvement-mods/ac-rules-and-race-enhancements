@@ -1,3 +1,6 @@
+require("src/classes/settings")
+
+local controls = {}
 
 ---@param cfg MappedConfig
 ---@param section string
@@ -7,7 +10,7 @@
 ---@param mult number
 ---@param format string
 ---@param tooltip string?
-function utils.slider(cfg, section, key, from, to, mult, isbool, format, tooltip, preprocess)
+function controls.slider(cfg, section, key, from, to, mult, isbool, format, tooltip, preprocess)
 	if not cfg.data[section] then
 		error("No such section: " .. section, 2)
 	end
@@ -54,3 +57,5 @@ function utils.slider(cfg, section, key, from, to, mult, isbool, format, tooltip
 
 	return curValue
 end
+
+return controls

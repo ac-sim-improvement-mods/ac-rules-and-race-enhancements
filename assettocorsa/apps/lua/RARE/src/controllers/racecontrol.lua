@@ -179,7 +179,7 @@ end
 --- @param config RARE_CONFIG.data
 --- @param driver Driver
 local function runSession(lastUpdate, racecontrol, sessionType, driver)
-	local config = RARE_CONFIG
+	local config = RARE_CONFIG.data
 
 	if sessionType == ac.SessionType.Race then
 		raceSession(lastUpdate, racecontrol, config, driver)
@@ -234,8 +234,6 @@ function rc.getRaceControl(dt, sim)
 		local driver = drivers[i]
 		driver:update(dt, sim)
 		DRIVERS[i] = runSession(lastUpdate, racecontrol, sim.raceSessionType, driver)
-		ac.log(DRIVERS[i].name)
-
 		connect.storeDriverData(driver)
 	end
 

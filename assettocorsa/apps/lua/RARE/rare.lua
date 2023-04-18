@@ -72,7 +72,7 @@ function script.windowMain(dt)
 	if INITIALIZED then
 		ui.transparentWindow(
 			"notifications",
-			vec2(RARE_CONFIG.NOTIFICATIONS.X_POS, RARE_CONFIG.NOTIFICATIONS.Y_POS),
+			vec2(RARE_CONFIG.data.NOTIFICATIONS.X_POS, RARE_CONFIG.data.NOTIFICATIONS.Y_POS),
 			vec2(1200, 500),
 			function()
 				notificationHandler(dt)

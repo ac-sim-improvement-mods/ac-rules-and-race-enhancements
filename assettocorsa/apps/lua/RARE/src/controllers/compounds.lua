@@ -54,13 +54,13 @@ local function restrictCompoundChoice()
 end
 
 function compounds.update(sim)
-	if RARE_CONFIG.RULES.RESTRICT_COMPOUNDS == 1 then
+	if RARE_CONFIG.data.RULES.RESTRICT_COMPOUNDS == 1 then
 		if sim.isInMainMenu then
 			restrictCompoundChoice()
 		end
 	end
 
-	if RARE_CONFIG.RULES.CORRECT_COMPOUNDS_COLORS == 1 then
+	if RARE_CONFIG.data.RULES.CORRECT_COMPOUNDS_COLORS == 1 then
 		if not sim.isSessionStarted and sim.isInMainMenu then
 			for i = 0, #DRIVERS do
 				local driver = DRIVERS[i]

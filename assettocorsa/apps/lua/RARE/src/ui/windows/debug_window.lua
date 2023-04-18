@@ -73,13 +73,13 @@ local function tyresTreeNode(driver)
 
 		ui.inLineBulletText(
 			"Tyre Life Avg Limit",
-			RARE_CONFIG.AI.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom .. " %",
+			RARE_CONFIG.data.AI.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom .. " %",
 			space,
 			driver
 		)
 		ui.inLineBulletText(
 			"Tyre Life Single Limit",
-			RARE_CONFIG.AI.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom .. " %",
+			RARE_CONFIG.data.AI.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom .. " %",
 			space,
 			driver
 		)
@@ -156,7 +156,9 @@ local function drsTreeNode(sim, rc, driver)
 				end
 				ui.inLineBulletText(
 					"In Gap",
-					ui.upperBool((delta <= RARE_CONFIG.RULES.DRS_GAP_DELTA / 1000 and delta > 0.0) and true or false),
+					ui.upperBool(
+						(delta <= RARE_CONFIG.data.RULES.DRS_GAP_DELTA / 1000 and delta > 0.0) and true or false
+					),
 					space
 				)
 				ui.inLineBulletText("Available", ui.upperBool(driver.isDrsAvailable), space)
@@ -337,8 +339,6 @@ function debug_window(sim, rc, error)
 	ui.pushFont(ui.Font.Small)
 
 	local driver = DRIVERS[sim.focusedCar]
-	ac.debug("name", sim.focusedCar)
-	ac.debug("test", DRIVERS[0].name)
 
 	if error then
 		ui.textColored(error, rgbm(1, 0, 0, 1))
@@ -364,7 +364,7 @@ function debug_window(sim, rc, error)
 	if driver.car.kersPresent then
 		hybridSystemsTreeNode(driver)
 	end
-	if RARE_CONFIG.RULES.DRS_RULES == 1 then
+	if RARE_CONFIG.data.RULES.DRS_RULES == 1 then
 		drsTreeNode(sim, rc, driver)
 	end
 	damageTreeNode(driver)
@@ -375,7 +375,7 @@ function debug_window(sim, rc, error)
 	if ac.getPatchVersionCode() >= 2278 then
 		sessionModifiersTreeNode(sim)
 	end
-	if RARE_CONFIG.RULES.VSC_RULES == 1 then
+	if RARE_CONFIG.data.RULES.VSC_RULES == 1 then
 		vscTreeNode()
 	end
 	carInfoTreeNode(driver)
