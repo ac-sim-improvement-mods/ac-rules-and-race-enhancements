@@ -26,3 +26,9 @@ function math.randomizer(index, range)
 	math.random()
 	return math.random(-range, range)
 end
+
+--- Log messages
+--- @param message string
+function log(message)
+	ac.log("[RARE] " .. message)
+end
