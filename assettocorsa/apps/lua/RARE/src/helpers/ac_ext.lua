@@ -77,3 +77,9 @@ function ac.weatherTypeString()
 
 	return weatherTypes[sim.weatherType + 1]
 end
+
+--- Returns state of installed CSP version being compatible with this app
+--- @return boolean
+function ac.compatibleCspVersion(cspVersion)
+	return ac.getPatchVersionCode() >= cspVersion and true or false
+end
