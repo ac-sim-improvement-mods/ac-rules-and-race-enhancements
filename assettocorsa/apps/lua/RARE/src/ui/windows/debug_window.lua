@@ -1,7 +1,9 @@
 local utils = require("src/helpers/utils")
 local drs = require("src/controllers/drs")
 
-local function aiTreeNode()
+local space = 200
+
+local function aiTreeNode(driver)
 	ui.treeNode("[AI]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
 		utils.inLineBulletText(
 			"Throttle Limit",
@@ -29,7 +31,7 @@ local function aiTreeNode()
 	end)
 end
 
-local function pitStopsTreeNode()
+local function pitStopsTreeNode(driver)
 	ui.treeNode("[PIT STOPS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
 		utils.inLineBulletText("In Pit Lane", utils.upperBool(driver.car.isInPitlane), space)
 		utils.inLineBulletText("In Pits", utils.upperBool(driver.car.isInPit), space)
@@ -40,7 +42,7 @@ local function pitStopsTreeNode()
 	end)
 end
 
-local function tyresTreeNode()
+local function tyresTreeNode(driver)
 	ui.treeNode("[TYRES]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
 		local avg_tyre_wear = (
 			(
@@ -93,7 +95,7 @@ local function tyresTreeNode()
 	end)
 end
 
-local function iceTreeNode()
+local function iceTreeNode(driver)
 	ui.treeNode("[ICE]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
 		utils.inLineBulletText("Max Fuel", driver.car.maxFuel, space)
 		utils.inLineBulletText("Fuel", driver.car.fuel, space)
@@ -106,7 +108,7 @@ local function iceTreeNode()
 	end)
 end
 
-local function hybridSystemsTreeNode()
+local function hybridSystemsTreeNode(driver)
 	ui.treeNode("[HYBRID SYSTEMS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
 		local mguhMode = ""
 		if driver.car.mguhChargingBatteries then
@@ -135,7 +137,7 @@ local function hybridSystemsTreeNode()
 	end)
 end
 
-local function drsTreeNode()
+local function drsTreeNode(sim, rc, driver)
 	ui.treeNode("[DRS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
 		if driver.car.drsPresent then
 			if not driver.car.isInPitlane then
@@ -188,7 +190,7 @@ local function drsTreeNode()
 	end)
 end
 
-local function damageTreeNode()
+local function damageTreeNode(driver)
 	ui.treeNode("[DAMAGE]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
 		utils.inLineBulletText("Damage 0", driver.car.damage[0], space)
 		utils.inLineBulletText("Damage 1", driver.car.damage[1], space)
@@ -199,7 +201,7 @@ local function damageTreeNode()
 	end)
 end
 
-local function sessionTreeNode()
+local function sessionTreeNode(sim, rc, driver)
 	ui.treeNode(
 		"[" .. ac.sessionTypeString(sim) .. " SESSION]",
 		ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed,
@@ -228,7 +230,7 @@ local function sessionTreeNode()
 	)
 end
 
-local function sessionModifiersTreeNode()
+local function sessionModifiersTreeNode(sim)
 	ui.treeNode("[SESSION MODIFIERS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
 		utils.inLineBulletText("Tyre Blankets", utils.upperBool(sim.allowTyreBlankets), space)
 		utils.inLineBulletText("Mechanical Damage Rate", tostring(sim.mechanicalDamageRate * 100) .. "%", space)
@@ -237,7 +239,7 @@ local function sessionModifiersTreeNode()
 	end)
 end
 
-local function carInfoTreeNode()
+local function carInfoTreeNode(driver)
 	ui.treeNode("[CAR INFO]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
 		utils.inLineBulletText("Index", driver.car.index, space)
 		utils.inLineBulletText("Brand", ac.getCarBrand(driver.car.index), space)
@@ -257,7 +259,7 @@ local function vscTreeNode()
 	end)
 end
 
-local function driverTreeNode()
+local function driverTreeNode(sim, rc, driver)
 	ui.treeNode("[DRIVER]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
 		utils.inLineBulletText("Driver [" .. driver.index .. "]", driver.name, space)
 		utils.inLineBulletText("Team", ac.getDriverTeam(driver.car.index), space)
@@ -281,7 +283,7 @@ local function driverTreeNode()
 	end)
 end
 
-local function weatherTreeNode()
+local function weatherTreeNode(sim, rc)
 	ui.treeNode("[WEATHER]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
 		local isRaining = math.clamp(math.floor(sim.rainIntensity / 0.003), 0, 1) == 1
 		local totalWetness = ((sim.rainWetness * 10000 * 3.75) + (sim.rainWater * 100 * 12.5))
@@ -295,7 +297,7 @@ local function weatherTreeNode()
 	end)
 end
 
-local function inputsTreeNode()
+local function inputsTreeNode(driver)
 	ui.treeNode("[INPUTS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
 		utils.inLineBulletText("Gas", math.round(driver.car.gas, 5), space)
 		utils.inLineBulletText("Brake", math.round(driver.car.brake, 5), space)
@@ -304,7 +306,7 @@ local function inputsTreeNode()
 	end)
 end
 
-local function controllerScriptInputsTreeNode()
+local function controllerScriptInputsTreeNode(driver)
 	ui.treeNode("[SCRIPT CONTROLLER INPUTS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
 		utils.inLineBulletText(
 			"[0] Total Brake Balance",
@@ -323,8 +325,6 @@ end
 
 function debug_window(sim, rc, error)
 	local driver = DRIVERS[sim.focusedCar]
-	local math = math
-	local space = 200
 	ui.pushFont(ui.Font.Small)
 
 	if error then
@@ -351,38 +351,38 @@ function debug_window(sim, rc, error)
 	ui.columns(2, true, "debugcol2")
 
 	if driver.car.isAIControlled then
-		aiTreeNode()
+		aiTreeNode(driver)
 	end
 
-	pitStopsTreeNode()
-	tyresTreeNode()
-	iceTreeNode()
+	pitStopsTreeNode(driver)
+	tyresTreeNode(driver)
+	iceTreeNode(driver)
 
 	if driver.car.kersPresent then
-		hybridSystemsTreeNode()
+		hybridSystemsTreeNode(driver)
 	end
 
 	if RARE_CONFIG.data.RULES.DRS_RULES == 1 then
-		drsTreeNode()
+		drsTreeNode(sim, rc, driver)
 	end
 
-	damageTreeNode()
+	damageTreeNode(driver)
 
 	ui.nextColumn()
 
-	sessionTreeNode()
+	sessionTreeNode(sim, rc, driver)
 
 	if ac.getPatchVersionCode() >= 2278 then
-		sessionModifiersTreeNode()
+		sessionModifiersTreeNode(sim)
 	end
 
 	if RARE_CONFIG.data.RULES.VSC_RULES == 1 then
 		vscTreeNode()
 	end
 
-	carInfoTreeNode()
-	driverTreeNode()
-	weatherTreeNode()
-	inputsTreeNode()
-	controllerScriptInputsTreeNode()
+	carInfoTreeNode(driver)
+	driverTreeNode(sim, rc, driver)
+	weatherTreeNode(sim, rc)
+	inputsTreeNode(driver)
+	controllerScriptInputsTreeNode(driver)
 end
