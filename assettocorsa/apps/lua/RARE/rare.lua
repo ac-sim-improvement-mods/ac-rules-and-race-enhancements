@@ -1,4 +1,4 @@
-require("app")
+require("version")
 require("src/helpers/ac_ext")
 require("src/helpers/utils")
 require("src/init")
