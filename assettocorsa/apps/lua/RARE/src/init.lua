@@ -152,8 +152,9 @@ function initialize(sim)
 	log(FIRST_LAUNCH and "First initialization" or "Reinitializing")
 
 	cspVersionCheck()
-	RARE_CONFIG = Settings:initialize(sim)
-	DRS_ZONES = DrsZones:initialize()
+	RARE_CONFIG = Settings(sim)
+	DRS_ZONES = DrsZones()
+	SFX_DRIVER = Audio()
 	initDataDir()
 	createDrivers(sim)
 
