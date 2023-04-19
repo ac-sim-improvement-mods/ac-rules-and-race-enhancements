@@ -1,6 +1,5 @@
 ---@diagnostic disable: return-type-mismatch
-package.add("../../../extension/lua/rare")
-local connect = require("connection")
+local connect = require("app/connection")
 local drs = require("src/controllers/drs")
 local vsc = require("src/controllers/vsc")
 local ai = require("src/controllers/ai")

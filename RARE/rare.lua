@@ -1,4 +1,4 @@
-require("version")
+require("app/version")
 require("src/helpers/ac_ext")
 require("src/init")
 require("src/ui/windows/debug_window")

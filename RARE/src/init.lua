@@ -147,11 +147,24 @@ local function cspVersionCheck()
 	end
 end
 
+local function installExtensionContents()
+	local extLuaDir = ac.getFolder(ac.FolderID.ExtLua)
+	local connectionFile = io.loadFromZip(ac.dirname() .. "\\extension.zip", "connection.lua")
+
+	ac.log(extLuaDir)
+	ac.log(extLuaDir .. "\\RARE\\connection.lua")
+
+	io.createDir(extLuaDir .. "\\RARE")
+	io.deleteFile(extLuaDir .. "\\RARE\\connection.lua")
+	io.copyFile(connectionFile, extLuaDir .. "\\RARE\\connection.lua")
+end
+
 --- Initialize RARE and returns initialized state
 --- @return boolean
 function initialize(sim)
 	log(FIRST_LAUNCH and "First initialization" or "Reinitializing")
 
+	installExtensionContents()
 	cspVersionCheck()
 	settings:load(sim)
 	DRS_ZONES = DrsZones()
