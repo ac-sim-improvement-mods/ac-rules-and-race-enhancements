@@ -1,6 +1,7 @@
-$app_dir = "$PSScriptRoot\assettocorsa\apps\lua\RARE"
-$version = "$app_dir\version.lua"
+$app_dir = "$PSScriptRoot\RARE"
+$version = "$app_dir\app\version.lua"
 $build_dir = "$PSScriptRoot\build"
+$build_stage = "$build_dir\stage\RARE"
 $build_ver = ((Get-Content $version)[2] -split "`"")[1]
 $build_code = ((Get-Content $version)[3] -split "= ")[1]
 $build_code = [int]$build_code + 1
@@ -15,11 +16,11 @@ $date = Get-Date -Format "yyyy-MM-dd"
 SCRIPT_BUILD_DATE =.+", "SCRIPT_BUILD_DATE = `"$date`"" } | Set-Content $version
 (Get-Content $version) | ForEach-Object { $_ -replace "SCRIPT_VERSION_CODE =.+", "SCRIPT_VERSION_CODE = $build_code" } | Set-Content $version
 
+Copy-Item $app_dir -Destination $build_stage -Recurse -Force
 $target_file = "$build_dir\RARE_$build_ver.zip"
 if (Test-Path $target_file) {
   Remove-Item $target_file
 }
-
-Compress-Archive -Path $PSScriptRoot\assettocorsa\* -DestinationPath $target_file
+Compress-Archive -Path $build_dir\stage\RARE* -DestinationPath $target_file
 
 & "$PSScriptRoot\install.ps1"

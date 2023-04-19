@@ -1,3 +1,4 @@
-$ac_dir = "E:\Games\Steam\steamapps\common\"
+$app_dir = "$PSScriptRoot\RARE"
+$ac_app_dir = "E:\Games\Steam\steamapps\common\assettocorsa\apps\lua"
 
-Copy-Item "$PSScriptRoot\assettocorsa\" -Destination $ac_dir -Recurse -Force
+Copy-Item $app_dir -Destination $ac_app_dir -Recurse -Force
