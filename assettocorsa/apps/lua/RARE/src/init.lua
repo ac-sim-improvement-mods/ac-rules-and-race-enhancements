@@ -38,7 +38,7 @@ local function getTrackTyreCompounds(driver)
 	local trackID = ac.getTrackID()
 	local carID = ac.getCarID(driver.index)
 	local compoundsIni = ac.INIConfig.load(
-		ac.getFolder(ac.FolderID.ACApps) .. "/lua/RARE/data/tyre_compounds/" .. carID .. ".ini",
+		ac.getFolder(ac.FolderID.ACApps) .. "/lua/RARE/configs/" .. carID .. ".ini",
 		ac.INIFormat.Default
 	)
 
@@ -125,7 +125,7 @@ local function createDrivers(sim)
 	log("Created " .. driverCount .. " drivers")
 end
 
-local function initDataDir()
+local function createDataDir()
 	local rareDataDir = ac.getFolder(ac.FolderID.ACApps) .. "/lua/RARE/data"
 	if not io.dirExists(rareDataDir) then
 		io.createDir(rareDataDir)
@@ -156,7 +156,7 @@ function initialize(sim)
 	settings:load(sim)
 	DRS_ZONES = DrsZones()
 	SFX_DRIVER = Audio()
-	initDataDir()
+	createDataDir()
 	createDrivers(sim)
 
 	log(SCRIPT_SHORT_NAME .. " Initialized")
