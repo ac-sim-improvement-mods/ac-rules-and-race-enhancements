@@ -49,7 +49,6 @@ local function restrictCompoundChoice()
 	local validTyreCompoundIndex = table.containsValue(driver.tyreCompoundsAvailable, compoundIndex)
 
 	if not validTyreCompoundIndex then
-		ac.log("not valid " .. compoundIndex)
 		ac.setSetupSpinnerValue("COMPOUND", compoundIndex + (isIndexIncreasing and 1 or -1))
 	end
 
