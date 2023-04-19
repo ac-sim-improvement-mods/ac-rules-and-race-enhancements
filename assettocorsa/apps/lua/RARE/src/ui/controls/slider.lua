@@ -1,5 +1,3 @@
-require("src/classes/settings")
-
 local controls = {}
 
 ---@param cfg MappedConfig

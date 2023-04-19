@@ -1,12 +1,11 @@
 require("version")
-require("src/helpers/rare_helper")
 require("src/helpers/ac_ext")
 require("src/init")
 require("src/ui/windows/debug_window")
 require("src/ui/windows/settings_window")
 require("src/ui/windows/notification_window")
 require("src/classes/audio")
-local rc = require("src/controllers/race_control")
+local racecontrol = require("src/controllers/race_control")
 local cc = require("src/controllers/compounds")
 
 FIRST_LAUNCH = true
@@ -15,7 +14,8 @@ RESTARTED = false
 RARE_CONFIG = nil
 
 local sim = ac.getSim()
-local racecontrol = nil
+local rc = nil
+local sfx = nil
 
 ac.onSessionStart(function(sessionIndex, restarted)
 	if restarted then
@@ -54,9 +54,13 @@ function script.update(dt)
 	end
 
 	if INITIALIZED then
+		if not sfx then
+			sfx = Audio()
+		end
+
 		if sim.isLive then
-			racecontrol = rc.getRaceControl(dt, sim)
-			SFX_DRIVER:update(sim)
+			rc = racecontrol.getRaceControl(dt, sim)
+			sfx:update(sim)
 			cc.update(sim)
 		end
 	else
@@ -89,11 +93,14 @@ function script.windowDebug(dt)
 	local error = ac.getLastError()
 	ac.setWindowTitle("debug", windowTitle)
 
-	if INITIALIZED and not sim.isInMainMenu and racecontrol ~= nil then
-		debug_window(sim, racecontrol, error)
+	if INITIALIZED and not sim.isInMainMenu and rc ~= nil then
+		debug_window(sim, rc, error)
 	end
 end
 
 function script.windowSettings()
+	local scriptVersion = SCRIPT_VERSION .. " (" .. SCRIPT_VERSION_CODE .. ")"
+	ac.setWindowTitle("settings", SCRIPT_NAME .. " Settings | " .. scriptVersion)
+
 	settingsMenu(sim)
 end

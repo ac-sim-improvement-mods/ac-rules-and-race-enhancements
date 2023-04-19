@@ -41,16 +41,19 @@ local function setTyreCompoundsColor(driver, time, force)
 	end
 end
 
+local previousIndex = 0
 local function restrictCompoundChoice()
 	local driver = DRIVERS[0]
-	local compoundCount = #driver.tyreCompoundsAvailable
-	if compoundCount > 1 then
-		if driver.car.compoundIndex < tonumber(driver.tyreCompoundsAvailable[1]) then
-			ac.setSetupSpinnerValue("COMPOUND", driver.tyreCompoundsAvailable[1])
-		elseif driver.car.compoundIndex > tonumber(driver.tyreCompoundsAvailable[compoundCount]) then
-			ac.setSetupSpinnerValue("COMPOUND", driver.tyreCompoundsAvailable[compoundCount])
-		end
+	local compoundIndex = driver.car.compoundIndex
+	local isIndexIncreasing = compoundIndex > previousIndex and true or false
+	local validTyreCompoundIndex = table.containsValue(driver.tyreCompoundsAvailable, compoundIndex)
+
+	if not validTyreCompoundIndex then
+		ac.log("not valid " .. compoundIndex)
+		ac.setSetupSpinnerValue("COMPOUND", compoundIndex + (isIndexIncreasing and 1 or -1))
 	end
+
+	previousIndex = compoundIndex
 end
 
 function compounds.update(sim)

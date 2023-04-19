@@ -32,3 +32,13 @@ end
 function log(message)
 	ac.log("[RARE] " .. message)
 end
+
+function table.containsValue(tbl, x)
+	local found = false
+	for _, v in pairs(tbl) do
+		if tonumber(v) == tonumber(x) then
+			found = true
+		end
+	end
+	return found
+end

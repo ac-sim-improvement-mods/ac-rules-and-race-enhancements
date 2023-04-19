@@ -3,8 +3,6 @@ local inject = require("src/controllers/injection")
 local notifications = require("src/ui/windows/notification_window")
 local injected = physics.allowed()
 
-SPLINE_OFFSET = 0
-
 local function rulesTab(sim)
 	ui.tabItem("RULES", ui.TabItemFlags.None, function()
 		ui.newLine(1)
@@ -82,20 +80,6 @@ local function rulesTab(sim)
 			)
 		end
 		ui.newLine(1)
-
-		-- ui.header("VSC:")
-		-- controls.slider(RARE_CONFIG, 'RULES', 'VSC_RULES', 0, 1, 1, true, RARE_CONFIG.data.RULES.VSC_RULES == 1 and "VSC Rules: ENABLED" or "VSC Rules: DISABLED",
-		-- 'Enable a Virtual Safety Car to be deployed',
-		-- function (v) return math.round(v, 0) end)
-		-- if RARE_CONFIG.data.RULES.VSC_RULES == 1 then
-		--     controls.slider(RARE_CONFIG, 'RULES', 'VSC_INIT_TIME', 0, 300, 1, false, 'Call After Yellow Flag For: %.0f s',
-		--     'Time a yellow flag must be up before calling the VSC',
-		--     function (v) return math.round(v, 0) end)
-		--     controls.slider(RARE_CONFIG, 'RULES', 'VSC_DEPLOY_TIME', 0, 300, 1, false, 'Ends After Deployed For: %.0f s',
-		--     'Time that the VSC is deployed before ending',
-		--     function (v) return math.round(v, 0) end)
-		-- end
-		-- ui.newLine(1)
 
 		ui.header("FUEL")
 		controls.slider(
@@ -562,10 +546,6 @@ local function uiTab(sim)
 
 		local buttonFlags = ui.ButtonFlags.None
 
-		-- if ui.isWindowAppearing() then
-		-- 	buttonFlags = ui.ButtonFlags.Disabled
-		-- end
-
 		if ui.button("TEST BANNER", vec2(ui.windowWidth() - 77, 25), ui.ButtonFlags.None) then
 			notifications.popup("RACE CONTROL BANNER", 10)
 		end
@@ -575,9 +555,7 @@ local function uiTab(sim)
 end
 
 function settingsMenu(sim)
-	local scriptVersion = SCRIPT_VERSION .. " (" .. SCRIPT_VERSION_CODE .. ")"
 	local rareEnable = ac.isWindowOpen("rare")
-	ac.setWindowTitle("settings", SCRIPT_NAME .. " Settings | " .. scriptVersion)
 
 	if sim.isInMainMenu then
 		ui.newLine(3)
@@ -596,7 +574,6 @@ function settingsMenu(sim)
 		ui.sameLine(380, 0)
 		ui.setCursor(vec2(380, 30))
 
-		-- local enabledButtonFlags = physics.allowed() and ui.ButtonFlags.None or ui.ButtonFlags.Disabled
 		local buttonLabel = (rareEnable and injected) and "ON" or "OFF"
 		if ui.button(buttonLabel, vec2(40, 30), ui.ButtonFlags.None) then
 			if injected then
