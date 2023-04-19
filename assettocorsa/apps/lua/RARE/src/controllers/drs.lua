@@ -1,46 +1,5 @@
 local drs = {}
 
-DRS_ZONES = {}
-
----@class DRS_Points
----@param fileName string
----@return DRS_Points
-DrsZones = class("DRS_Points", function()
-	local drsIni = ac.INIConfig.trackData("drs_zones.ini")
-	local detectionLines = {}
-	local startLines = {}
-	local endLines = {}
-
-	local zoneCount = 0
-	for index, section in drsIni:iterate("ZONE") do
-		index = index - 1
-		detectionLines[index] = drsIni:get(section, "DETECTION", -1)
-		startLines[index] = drsIni:get(section, "START", -1)
-		endLines[index] = drsIni:get(section, "END", -1)
-
-		log(
-			"Loaded DRS Zone "
-				.. index
-				.. " ["
-				.. detectionLines[index]
-				.. ","
-				.. startLines[index]
-				.. ","
-				.. endLines[index]
-				.. "]"
-		)
-
-		zoneCount = index
-	end
-
-	return {
-		detectionLines = detectionLines,
-		startLines = startLines,
-		endLines = endLines,
-		count = zoneCount,
-	}
-end, class.NoInitialize)
-
 --- Checks if driver is before the detection line, not in the pits,
 --- not in a drs zone, and within 1 second of the car ahead on track
 ---@param driver Driver
@@ -98,31 +57,6 @@ local function setDrsAvailable(driver, drsEnabled, drsEnabledLap)
 	end
 end
 
---- Converts session type number to the corresponding session type string
----@param driver Driver
-local function setDriverDrsZones(driver)
-	local startLines = DRS_ZONES.startLines
-	local endLines = DRS_ZONES.endLines
-	local closestDetection = 0
-	local drsZoneNext = 0
-	local drsZone = 0
-	local drsZonePrev = 0
-
-	--- Get next detection line
-	for i = 0, #startLines do
-		if driver.car.splinePosition >= startLines[i] and driver.car.splinePosition < endLines[i] then
-			drsZone = i
-		end
-	end
-
-	drsZone = drsZoneNext == 0 and #startLines or drsZoneNext - 1
-	drsZonePrev = drsZone == 0 and #startLines or drsZone - 1
-
-	driver.drsZoneNextId = drsZoneNext
-	driver.drsZoneId = drsZone
-	driver.drsZonePrevId = drsZonePrev
-end
-
 --- Locks the specified driver's DRS
 ---@param driver Driver
 local function setDriverDRS(sim, driver, allowed)
@@ -133,7 +67,12 @@ local function setDriverDRS(sim, driver, allowed)
 	if driver.car.isAIControlled then
 		if not allowed then
 			physics.setCarDRS(driver.index, false)
-		elseif allowed and driver.car.speedKmh > 100 and getEndLineDistanceM(driver) > 175 and not driver.aiPitCall then
+		elseif
+			allowed
+			and driver.car.speedKmh > 100
+			and getEndLineDistanceM(driver) > 175
+			and not driver.isAIPitCall
+		then
 			physics.setCarDRS(driver.index, true)
 		end
 	elseif not allowed then
@@ -146,7 +85,7 @@ end
 ---@return boolean
 function inDrsRange(driver1)
 	local delta = driver1.carAheadDelta
-	local deltaLimit = RARECONFIG.data.RULES.DRS_GAP_DELTA / 1000
+	local deltaLimit = RARE_CONFIG.data.RULES.DRS_GAP_DELTA / 1000
 	return (delta <= deltaLimit and delta > 0.0) and true or false
 end
 
@@ -238,8 +177,8 @@ end
 --- @param drsEnabled boolean
 function drs.controller(rc, driver, drsEnabled)
 	-- setDriverDrsZones(driver)
-	driver.drsAvailable = setDrsAvailable(driver, drsEnabled, rc.drsEnabledLap)
-	setDriverDRS(rc.sim, driver, drsEnabled and driver.drsAvailable or false)
+	driver.isDrsAvailable = setDrsAvailable(driver, drsEnabled, rc.drsEnabledLap)
+	setDriverDRS(rc.sim, driver, drsEnabled and driver.isDrsAvailable or false)
 end
 
 return drs

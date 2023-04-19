@@ -1,7 +1,9 @@
+local sim = ac.getSim()
+
 --- Returns time delta (s) between the driver and driver ahead on track
 ---@param driver Driver
 ---@return number
-function ac.getDelta(sim, carIndex, car2Index)
+function ac.getDelta(_, carIndex, car2Index)
 	---@diagnostic disable-next-line: return-type-mismatch
 	local car = ac.getCar(carIndex)
 	local car2 = ac.getCar(car2Index)
@@ -18,7 +20,7 @@ end
 --- Converts session type number to the corresponding session type string
 ---@param sim ac.StateSim
 ---@return string
-function ac.sessionTypeString(sim)
+function ac.sessionTypeString()
 	local sessionTypes = {
 		"UNDEFINED",
 		"PRACTICE",
@@ -36,7 +38,7 @@ end
 --- Converts weather type number to the corresponding weather type string
 ---@param sim ac.StateSim
 ---@return string
-function ac.weatherTypeString(sim)
+function ac.weatherTypeString()
 	local weatherTypes = {
 		"Light Thunderstorm", ---Value: 0.
 		"Thunderstorm", ---Value: 1.
@@ -74,4 +76,10 @@ function ac.weatherTypeString(sim)
 	}
 
 	return weatherTypes[sim.weatherType + 1]
+end
+
+--- Returns state of installed CSP version being compatible with this app
+--- @return boolean
+function ac.compatibleCspVersion(cspVersion)
+	return ac.getPatchVersionCode() >= cspVersion and true or false
 end
