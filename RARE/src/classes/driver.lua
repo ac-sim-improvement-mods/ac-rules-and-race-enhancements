@@ -133,6 +133,83 @@ local function getMiniSectorGap(driver, carAheadIndex)
 	return driver.miniSectors[driver.currentMiniSector] - DRIVERS[carAheadIndex].miniSectors[driver.currentMiniSector]
 end
 
+local function setAIFuelTankMax(sim, driver)
+	local fuelcons = ac.INIConfig.carData(driver.index, "fuel_cons.ini"):get("FUEL_EVAL", "KM_PER_LITER", 0.0)
+	local fuelload = 0
+	local fuelPerLap = (sim.trackLengthM / 1000) / (fuelcons - (fuelcons * 0.1))
+
+	if sim.raceSessionType == ac.SessionType.Race then
+		fuelload = ((ac.getSession(sim.currentSessionIndex).laps + 2) * fuelPerLap)
+	elseif sim.raceSessionType == ac.SessionType.Qualify then
+		fuelload = 3.5 * fuelPerLap
+	end
+
+	physics.setCarFuel(driver.index, fuelload)
+end
+
+local function setAITyreCompound(driver, compounds)
+	math.randomseed(os.clock() * driver.index)
+	math.random()
+	for i = 0, math.random(0, math.random(3)) do
+		math.random()
+	end
+	local tyrevalue = compounds[math.random(1, #compounds)]
+	driver.tyreCompoundStart = tyrevalue
+	driver.tyreCompoundsAvailable = compounds
+
+	if ac.getPatchVersionCode() >= 2278 then
+		physics.setAITyres(driver.index, tyrevalue)
+		log("[" .. driver.index .. "] " .. driver.name .. " tyre compound set to " .. tyrevalue)
+	end
+end
+
+local function getTrackTyreCompounds(driver)
+	local trackID = ac.getTrackID()
+	local carID = ac.getCarID(driver.index)
+	local compoundsIni = ac.INIConfig.load(
+		ac.getFolder(ac.FolderID.ACApps) .. "/lua/RARE/configs/" .. carID .. ".ini",
+		ac.INIFormat.Default
+	)
+
+	driver.tyreCompoundMaterialTarget =
+		compoundsIni:get("COMPOUNDS", "COMPOUND_TARGET_MATERIAL", "Unknown Compound Material Target")
+	driver.tyreCompoundSoftTexture =
+		compoundsIni:get("COMPOUNDS", "SOFT_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
+	driver.tyreCompoundMediumTexture =
+		compoundsIni:get("COMPOUNDS", "MEDIUM_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
+	driver.tyreCompoundHardTexture =
+		compoundsIni:get("COMPOUNDS", "HARD_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
+
+	local compounds = string.split(compoundsIni:get(trackID, "COMPOUNDS", "0"), ",")
+	compoundsIni:setAndSave(trackID, "COMPOUNDS", compoundsIni:get(trackID, "COMPOUNDS", "0"))
+	table.sort(compounds, function(a, b)
+		return a < b
+	end)
+
+	log("[" .. driver.index .. "] " .. driver.name .. " has " .. #compounds .. " compounds available")
+	return compounds
+end
+
+function Driver:setAIAlternateLevel(driver, driverIni)
+	driver.aiLevel = driver.car.aiLevel
+	driver.aiBrakeHint = ac.INIConfig.carData(driver.index, "ai.ini"):get("PEDALS", "BRAKE_HINT", 1)
+	driver.aiThrottleLimitBase = math.lerp(0.5, 1, 1 - ((1 - driver.aiLevel) / 0.3))
+	driver.aiAggression = driver.car.aiAggression
+	driverIni:setAndSave("AI_" .. driver.index, "AI_LEVEL", driver.car.aiLevel)
+	driverIni:setAndSave("AI_" .. driver.index, "AI_THROTTLE_LIMIT", driver.aiThrottleLimitBase)
+	driverIni:setAndSave("AI_" .. driver.index, "AI_AGGRESSION", driver.car.aiAggression)
+end
+
+local function getAIAlternateLevel(driver, driverIni)
+	driver.aiLevel = driverIni:get("AI_" .. driver.index, "AI_LEVEL", driver.car.aiLevel)
+	driver.aiThrottleLimitBase = driverIni:get(
+		"AI_" .. driver.index,
+		"AI_THROTTLE_LIMIT",
+		math.lerp(0.5, 1, 1 - ((1 - driver.car.aiLevel) / 0.3))
+	)
+	driver.aiAggression = driverIni:get("AI_" .. driver.index, "AI_AGGRESSION", driver.car.aiAggression)
+end
+
 function Driver:update(dt, sim)
 	self.lapPitted = getLapPitted(self)
 	self.tyreLaps = getTyreLapCount(self)
