@@ -98,19 +98,7 @@ local function getTrackOrder(drivers)
 	return #trackOrder
 end
 
-local function setAIFuelTankMax(sim, driver)
-	local fuelcons = ac.INIConfig.carData(driver.index, "fuel_cons.ini"):get("FUEL_EVAL", "KM_PER_LITER", 0.0)
-	local fuelload = 0
-	local fuelPerLap = (sim.trackLengthM / 1000) / (fuelcons - (fuelcons * 0.1))
 
-	if sim.raceSessionType == ac.SessionType.Race then
-		fuelload = ((ac.getSession(sim.currentSessionIndex).laps + 2) * fuelPerLap)
-	elseif sim.raceSessionType == ac.SessionType.Qualify then
-		fuelload = 3.5 * fuelPerLap
-	end
-
-	physics.setCarFuel(driver.index, fuelload)
-end
 
 --- Race Control for qualify sessions
 --- @param config RARE_CONFIG.data

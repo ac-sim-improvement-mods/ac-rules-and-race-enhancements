@@ -6,41 +6,12 @@ local settings = require("src/controllers/settings")
 
 local function createDrivers(sim)
 	local driverCount = sim.carsCount
-	local driverIni =
-		ac.INIConfig.load(ac.getFolder(ac.FolderID.ACApps) .. "/lua/RARE/data/drivers.ini", ac.INIFormat.Default)
 
 	for i = 0, driverCount - 1 do
 		DRIVERS[i] = Driver(i)
 		local driver = DRIVERS[i]
 
-		for i = 0, #DRS_ZONES.startLines do
-			driver.drsDetection[i] = false
-		end
 
-		for i = 0, math.floor(sim.trackLengthM / 50) do
-			driver.miniSectors[i] = 0
-		end
-
-		if driver.car.isAIControlled then
-			if RARE_CONFIG.data.AI.AI_TANK_FILL == 1 then
-				setAIFuelTankMax(sim, driver)
-			end
-			setAITyreCompound(driver, driver.tyreCompoundsAvailable)
-
-			if FIRST_LAUNCH then
-				setAIAlternateLevel(driver, driverIni)
-			else
-				getAIAlternateLevel(driver, driverIni)
-			end
-
-			if RARE_CONFIG.data.AI.AI_RELATIVE_SCALING == 1 then
-				driver.aiLevel = driver.aiLevel * RARE_CONFIG.data.AI.AI_RELATIVE_LEVEL / 100
-				driver.aiThrottleLimitBase = math.lerp(0.5, 1, 1 - ((1 - driver.aiLevel) / 0.3))
-			end
-
-			physics.setAILevel(driver.index, 1)
-			physics.setAIAggression(driver.index, driver.aiAggression)
-		end
 	end
 
 	log("Created " .. driverCount .. " drivers")
