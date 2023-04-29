@@ -6,12 +6,12 @@ local notifications = require("src/ui/windows/notification_window")
 local injected = physics.allowed()
 
 local presetNames = {
-	"Formula",
+	"FORMULA",
 	"GT",
 }
 
 local presets = {
-	["Formula"] = {
+	["FORMULA"] = {
 		DRS_RULES = 1,
 		DRS_ACTIVATION_LAP = 3,
 		DRS_GAP_DELTA = 1000,
@@ -51,7 +51,7 @@ function table.match(a, b)
 end
 
 local setPreset = {
-	["Formula"] = function()
+	["FORMULA"] = function()
 		RARE_CONFIG:set("RULES", "DRS_RULES", 1, false)
 		RARE_CONFIG:set("RULES", "DRS_ACTIVATION_LAP", 3, false)
 		RARE_CONFIG:set("RULES", "DRS_GAP_DELTA", 1000, false)
