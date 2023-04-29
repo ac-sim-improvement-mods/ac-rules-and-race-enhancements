@@ -3,9 +3,9 @@ require("src/classes/mapped_config")
 local settings = {}
 
 function settings:load(sim)
-	local settingsDir = ac.dirname() .. "/settings"
-	local settingsFile = settingsDir .. "/settings.ini"
-	local settingsDefaultFile = settingsDir .. "/default_settings.ini"
+	local settingsDir = ac.dirname() .. "\\settings"
+	local settingsFile = settingsDir .. "\\settings.ini"
+	local settingsDefaultFile = settingsDir .. "\\default_settings.ini"
 
 	if not io.fileExists(settingsFile) then
 		io.copyFile(settingsDefaultFile, settingsFile)
@@ -32,7 +32,7 @@ function settings:load(sim)
 			AI_SINGLE_TYRE_LIFE_RANGE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 5,
 			AI_ALTERNATE_LEVEL = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
 			AI_RELATIVE_SCALING = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
-			AI_RELATIVE_LEVEL = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 100,
+			AI_RELATIVE_LEVEL = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 69,
 			AI_MGUK_CONTROL = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
 			AI_TANK_FILL = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 1,
 		},
