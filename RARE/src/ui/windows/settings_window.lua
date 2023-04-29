@@ -1,18 +1,19 @@
+local sim = ac.getSim()
+
 local controls = require("src/ui/controls/slider")
 local inject = require("src/controllers/injection")
 local notifications = require("src/ui/windows/notification_window")
 local injected = physics.allowed()
 
-local function rulesTab(sim)
+local function rulesTab()
 	ui.tabItem("RULES", ui.TabItemFlags.None, function()
 		ui.newLine(1)
 
-		if not sim.isInMainMenu then
-			ui.text("Can only edit RULES settings while\nin the setup menu before a session has started.")
-			return
-		elseif sim.isSessionStarted then
-			ui.text("Can only edit RULES settings while\nin the setup menu before a session has started.")
-			return
+		if sim.raceSessionType == 3 then
+			if not sim.isInMainMenu or sim.isSessionStarted then
+				ui.text("Can only edit RULES settings while\nin the setup menu before a race session has started.")
+				return
+			end
 		end
 
 		ui.header("DRS")
@@ -149,17 +150,17 @@ local function rulesTab(sim)
 	end)
 end
 
-local function aiTab(sim)
+local function aiTab()
 	ui.tabItem("AI", ui.TabItemFlags.None, function()
 		ui.newLine(1)
 
-		if not sim.isInMainMenu then
-			ui.text("Can only edit AI settings while\nin the setup menu before a session has started.")
-			return
-		elseif sim.isSessionStarted then
-			ui.text("Can only edit AI settings while\nin the setup menu before a session has started.")
-			return
-		end
+		-- if not sim.isInMainMenu then
+		-- 	ui.text("Can only edit AI settings while\nin the setup menu before a session has started.")
+		-- 	return
+		-- elseif sim.isSessionStarted then
+		-- 	ui.text("Can only edit AI settings while\nin the setup menu before a session has started.")
+		-- 	return
+		-- end
 
 		ui.header("LEVEL")
 		controls.slider(
@@ -207,8 +208,10 @@ local function aiTab(sim)
 			RARE_CONFIG.data.AI.AI_RELATIVE_LEVEL == 1 and "Relative AI Level %.0f%%" or "Relative AI Level %.0f%%",
 			"Relative AI level, for easier scaling with BoP'd grids",
 			function(v)
-				FIRST_LAUNCH = false
-				initialize(sim)
+				for i = 0, #DRIVERS do
+					DRIVERS[i]:setAIRelativeLevel()
+				end
+
 				return math.round(v, 0)
 			end
 		)
@@ -460,7 +463,7 @@ local function audioTab()
 	end)
 end
 
-local function uiTab(sim)
+local function uiTab()
 	ui.tabItem("UI", ui.TabItemFlags.None, function()
 		ui.newLine(1)
 		ui.header("RACE CONTROL BANNER")
@@ -600,10 +603,10 @@ function settingsMenu(sim)
 	end
 
 	ui.tabBar("settingstabbar", ui.TabBarFlags.None, function()
-		rulesTab(sim)
-		aiTab(sim)
+		rulesTab()
+		aiTab()
 		audioTab()
-		uiTab(sim)
+		uiTab()
 	end)
 
 	ui.setCursor(vec2(0, 601))

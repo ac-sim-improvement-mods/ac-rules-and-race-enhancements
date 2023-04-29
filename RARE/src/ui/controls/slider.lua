@@ -53,7 +53,7 @@ function controls.slider(cfg, section, key, from, to, mult, isbool, format, tool
 	end
 	cfg:set(section, key, curValue, false)
 
-	return curValue
+	return curValue, changed
 end
 
 return controls
