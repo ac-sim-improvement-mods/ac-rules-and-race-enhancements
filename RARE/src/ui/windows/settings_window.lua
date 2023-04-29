@@ -733,7 +733,7 @@ local function compoundsTab()
 		end
 
 		ui.newLine(1)
-
+		ui.popFont()
 		ui.header("TRACK SPECIFIC COMPOUNDS")
 		ui.pushFont(ui.Font.Small)
 
