@@ -18,7 +18,7 @@ function Audio:initialize()
 end
 
 local function formula1(driver)
-	if driver.car.focusedOnInterior and sim.isWindowForeground then
+	if driver.car.focusedOnInterior then
 		if sim.raceSessionType == ac.SessionType.Race then
 			if driver.drsBeepFx and driver.car.drsAvailable and driver.isDrsAvailable then
 				driver.drsBeepFx = false
