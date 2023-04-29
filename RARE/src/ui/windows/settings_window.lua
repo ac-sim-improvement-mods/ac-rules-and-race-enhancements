@@ -638,6 +638,156 @@ local function uiTab()
 	end)
 end
 
+local compoundConfigDir = ac.dirname() .. "\\configs"
+local uniqueCarIDs = {}
+
+for i = 0, sim.carsCount - 1 do
+	local carID = ac.getCarID(i)
+	if not table.contains(uniqueCarIDs, carID) then
+		table.insert(uniqueCarIDs, carID)
+	end
+end
+
+local selectedCarID = uniqueCarIDs[1]
+
+local selectedCarIDConfigFile, selectedCarConfigINI, selectedCarConfig
+
+local function updateCarConfig()
+	selectedCarIDConfigFile = compoundConfigDir .. "\\" .. selectedCarID .. ".ini"
+	selectedCarConfigINI = ac.INIConfig.load(selectedCarIDConfigFile, ac.INIFormat.Default)
+	selectedCarConfig = MappedConfig(selectedCarIDConfigFile, {
+		COMPOUNDS = {
+			COMPOUND_TARGET_MATERIAL = (ac.INIConfig.OptionalString == nil) and ac.INIConfig.OptionalString or "",
+			SOFT_COMPOUND = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
+			MEDIUM_COMPOUND = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
+			HARD_COMPOUND = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
+			INTER_COMPOUND = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
+			WET_COMPOUND = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
+			SOFT_COMPOUND_TEXTURE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or "",
+			MEDIUM_COMPOUND_TEXTURE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or "",
+			HARD_COMPOUND_TEXTURE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or "",
+			INTER_COMPOUND_TEXTURE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or "",
+			WET_COMPOUND_TEXTURE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or "",
+		},
+	})
+end
+
+updateCarConfig()
+
+if not io.fileExists(selectedCarIDConfigFile) then
+	io.save(
+		selectedCarIDConfigFile,
+		[[
+[COMPOUNDS]
+COMPOUND_TARGET_MATERIAL=RSS_T1
+SOFT_COMPOUND=1
+MEDIUM_COMPOUND=2
+HARD_COMPOUND=3
+INTER_COMPOUND=5
+WET_COMPOUND=6
+SOFT_COMPOUND_TEXTURE=C4
+MEDIUM_COMPOUND_TEXTURE=C3
+HARD_COMPOUND_TEXTURE=C2
+INTER_COMPOUND_TEXTURE=Inter
+WET_COMPOUND_TEXTURE=Wet
+	]]
+	)
+end
+
+local compoundKeys = {
+	"COMPOUND_TARGET_MATERIAL",
+	"SOFT_COMPOUND",
+	"MEDIUM_COMPOUND",
+	"HARD_COMPOUND",
+	"INTER_COMPOUND",
+	"WET_COMPOUND ",
+	"SOFT_COMPOUND_TEXTURE ",
+	"MEDIUM_COMPOUND_TEXTURE",
+	"HARD_COMPOUND_TEXTURE",
+	"INTER_COMPOUND_TEXTURE",
+	"WET_COMPOUND_TEXTURE",
+}
+
+local trackCompoundKeys = {
+	"SOFT_COMPOUND",
+	"MEDIUM_COMPOUND",
+	"HARD_COMPOUND",
+}
+
+local function compoundsTab()
+	ui.tabItem("COMPOUNDS", ui.TabItemFlags.None, function()
+		ui.pushFont(ui.Font.Small)
+
+		ui.newLine(1)
+
+		ui.header("CONFIG CAR: ")
+
+		ui.setNextItemWidth(ui.windowWidth() - 75)
+
+		local changed = false
+		ui.combo("##carIDs", selectedCarID, ui.ComboFlags.None, function()
+			for i = 1, #uniqueCarIDs do
+				if ui.selectable(uniqueCarIDs[i]) then
+					selectedCarID, changed = uniqueCarIDs[i], true
+				end
+			end
+		end)
+		if changed then
+			updateCarConfig()
+		end
+
+		ui.newLine(1)
+
+		ui.header("TRACK SPECIFIC COMPOUNDS")
+		ui.pushFont(ui.Font.Small)
+
+		ui.newLine(1)
+
+		for i = 1, #trackCompoundKeys do
+			local key = trackCompoundKeys[i]
+			local prefix = ""
+			ui.text(prefix .. key:gsub("_", " ") .. ":")
+			ui.sameLine(190)
+			ui.setNextItemWidth(206)
+
+			local value, changed = ui.inputText(
+				"##track" .. key .. "label",
+				selectedCarConfigINI:get(ac.getTrackID(), key, 0),
+				ui.InputTextFlags.None
+			)
+			if changed then
+				selectedCarConfigINI:setAndSave(ac.getTrackID(), key, value, false)
+			end
+		end
+		ui.popFont()
+		ui.newLine(1)
+
+		ui.header("COMPOUND SETTINGS")
+		ui.pushFont(ui.Font.Small)
+		ui.newLine(1)
+
+		for i = 1, #compoundKeys do
+			local key = compoundKeys[i]
+			local prefix = ""
+			if key == "SOFT_COMPOUND" or key == "MEDIUM_COMPOUND" or key == "HARD_COMPOUND" then
+				prefix = "DEFAULT "
+			end
+			ui.text(prefix .. key:gsub("_", " ") .. ":")
+			ui.sameLine(190)
+			ui.setNextItemWidth(206)
+
+			local value, changed =
+				ui.inputText("##" .. key .. "label", selectedCarConfig.data.COMPOUNDS[key], ui.InputTextFlags.None)
+			if changed then
+				selectedCarConfig:set("COMPOUNDS", key, value, false)
+			end
+		end
+		ui.newLine(1)
+
+		ui.popFont()
+	end)
+end
+
 function settingsMenu(sim)
 	local rareEnable = ac.isWindowOpen("rare")
 
@@ -685,6 +835,7 @@ function settingsMenu(sim)
 
 	ui.tabBar("settingstabbar", ui.TabBarFlags.None, function()
 		rulesTab()
+		compoundsTab()
 		aiTab()
 		audioTab()
 		uiTab()
