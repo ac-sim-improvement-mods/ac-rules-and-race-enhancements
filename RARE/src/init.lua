@@ -9,9 +9,6 @@ local function createDrivers(sim)
 
 	for i = 0, driverCount - 1 do
 		DRIVERS[i] = Driver(i)
-		local driver = DRIVERS[i]
-
-
 	end
 
 	log("Created " .. driverCount .. " drivers")
