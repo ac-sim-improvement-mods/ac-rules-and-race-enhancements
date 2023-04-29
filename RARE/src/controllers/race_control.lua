@@ -98,8 +98,6 @@ local function getTrackOrder(drivers)
 	return #trackOrder
 end
 
-
-
 --- Race Control for qualify sessions
 --- @param config RARE_CONFIG.data
 --- @param driver Driver
@@ -124,7 +122,7 @@ local function raceSession(lastUpdate, racecontrol, config, driver)
 
 	if driver.car.isAIControlled then
 		if racecontrol.sim.isInMainMenu then
-			setAIFuelTankMax(racecontrol.sim, driver)
+			driver:setFuelTankMax(racecontrol.sim, driver)
 
 			if ac.getPatchVersionCode() >= 2278 then
 				physics.setAIPitStopRequest(driver.index, false)

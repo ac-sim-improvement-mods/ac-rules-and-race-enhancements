@@ -74,7 +74,7 @@ function Driver:initialize(carIndex)
 	self.aiTyreSingleRandom = math.randomizer(self.index, RARE_CONFIG.data.AI.AI_SINGLE_TYRE_LIFE_RANGE)
 
 	local trackID = ac.getTrackID()
-	local carID = ac.getCarID(driver.index)
+	local carID = ac.getCarID(self.index)
 	local compoundsIni = ac.INIConfig.load(
 		ac.getFolder(ac.FolderID.ACApps) .. "/lua/RARE/configs/" .. carID .. ".ini",
 		ac.INIFormat.Default
@@ -87,16 +87,12 @@ function Driver:initialize(carIndex)
 		compoundsIni:get("COMPOUNDS", "MEDIUM_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
 	self.tyreCompoundHardTexture =
 		compoundsIni:get("COMPOUNDS", "HARD_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
-
-	local compounds = string.split(compoundsIni:get(trackID, "COMPOUNDS", "0"), ",")
+	self.tyreCompoundsAvailable = string.split(compoundsIni:get(trackID, "COMPOUNDS", "0"), ",")
 	compoundsIni:setAndSave(trackID, "COMPOUNDS", compoundsIni:get(trackID, "COMPOUNDS", "0"))
-	table.sort(compounds, function(a, b)
+	table.sort(self.tyreCompoundsAvailable, function(a, b)
 		return a < b
 	end)
-	self.tyreCompoundsAvailable = compounds
-	log("[" .. driver.index .. "] " .. driver.name .. " has " .. #compounds .. " compounds available")
-
-	log("[" .. self.index .. "] " .. self.name .. " initialized")
+	log("[" .. self.index .. "] " .. self.name .. " has " .. #self.tyreCompoundsAvailable .. " compounds available")
 
 	for i = 0, #DRS_ZONES.startLines do
 		self.drsDetection[i] = false
@@ -108,20 +104,14 @@ function Driver:initialize(carIndex)
 
 	if self.car.isAIControlled then
 		if RARE_CONFIG.data.AI.AI_TANK_FILL == 1 then
-			Driver:setFuelTankMax()
+			self:setFuelTankMax()
 		end
-		Driver:setAITyreCompound()
-
-		if FIRST_LAUNCH then
-			setAIAlternateLevel(driver, driverINI)
-		else
-			getAIAlternateLevel(driver, driverINI)
-		end
+		self:setAITyreCompound()
 
 		self.aiLevel = self.car.aiLevel
 		self.aiBrakeHint = ac.INIConfig.carData(self.index, "ai.ini"):get("PEDALS", "BRAKE_HINT", 1)
-		self.aiThrottleLimitBase = math.lerp(0.5, 1, 1 - ((1 - driver.aiLevel) / 0.3))
-		self.aiAggression = driver.car.aiAggression
+		self.aiThrottleLimitBase = math.lerp(0.5, 1, 1 - ((1 - self.aiLevel) / 0.3))
+		self.aiAggression = self.car.aiAggression
 		driverINI:setAndSave("AI_" .. self.index, "AI_LEVEL", self.car.aiLevel)
 		driverINI:setAndSave("AI_" .. self.index, "AI_THROTTLE_LIMIT", self.aiThrottleLimitBase)
 		driverINI:setAndSave("AI_" .. self.index, "AI_AGGRESSION", self.car.aiAggression)
@@ -132,8 +122,10 @@ function Driver:initialize(carIndex)
 		end
 
 		physics.setAILevel(self.index, 1)
-		physics.setAIAggression(self.index, driver.aiAggression)
+		physics.setAIAggression(self.index, self.aiAggression)
 	end
+
+	log("[" .. self.index .. "] " .. self.name .. " initialized")
 
 	return self
 end
@@ -153,7 +145,10 @@ local function getTyreLapCount(driver)
 		or (driver.car.lapCount - driver.lapPitted)
 end
 
-local function getPitstopCount(driver)
+--- Updates driver's pitstop count
+---@param driver Driver
+---@return number
+local function updatePistopCount(driver)
 	if driver.car.isInPit and not driver.hasPitted then
 		driver.hasPitted = true
 		driver.aiTyreAvgRandom = math.randomizer(driver.index, RARE_CONFIG.data.AI.AI_AVG_TYRE_LIFE_RANGE)
@@ -212,15 +207,14 @@ function Driver:setFuelTankMax()
 	physics.setCarFuel(self.index, fuelload)
 end
 
-function Driver:setAITyreCompound(compounds)
+function Driver:setAITyreCompound()
 	math.randomseed(os.clock() * self.index)
 	math.random()
 	for i = 0, math.random(0, math.random(3)) do
 		math.random()
 	end
-	local tyrevalue = compounds[math.random(1, #compounds)]
+	local tyrevalue = self.tyreCompoundsAvailable[math.random(1, #self.tyreCompoundsAvailable)]
 	self.tyreCompoundStart = tyrevalue
-	self.tyreCompoundsAvailable = compounds
 
 	if ac.getPatchVersionCode() >= 2278 then
 		physics.setAITyres(self.index, tyrevalue)
@@ -228,12 +222,10 @@ function Driver:setAITyreCompound(compounds)
 	end
 end
 
-function Driver:setAIAlternateLevel(driver, driverINI) end
-
 function Driver:update(dt)
 	self.lapPitted = getLapPitted(self)
 	self.tyreLaps = getTyreLapCount(self)
-	self.pitstopCount = getPitstopCount(self)
+	self.pitstopCount = updatePistopCount(self)
 	self.pitlaneTime = getPitTime(dt, self)
 	self.pitstopTime = getPitstopTime(dt, self)
 
