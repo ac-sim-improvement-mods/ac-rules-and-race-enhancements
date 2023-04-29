@@ -67,60 +67,7 @@ function Driver:initialize(carIndex)
 	self.aiTyreAvgRandom = math.randomizer(self.index, RARE_CONFIG.data.AI.AI_AVG_TYRE_LIFE_RANGE)
 	self.aiTyreSingleRandom = math.randomizer(self.index, RARE_CONFIG.data.AI.AI_SINGLE_TYRE_LIFE_RANGE)
 
-	local trackID = ac.getTrackID()
-	local carID = ac.getCarID(self.index)
-	local compoundsIni = ac.INIConfig.load(
-		ac.getFolder(ac.FolderID.ACApps) .. "/lua/RARE/configs/" .. carID .. ".ini",
-		ac.INIFormat.Default
-	)
-
-	self.tyreCompoundMaterialTarget = compoundsIni:get("COMPOUNDS", "COMPOUND_TARGET_MATERIAL", "")
-	self.tyreCompoundSoftTexture =
-		compoundsIni:get("COMPOUNDS", "SOFT_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
-	self.tyreCompoundMediumTexture =
-		compoundsIni:get("COMPOUNDS", "MEDIUM_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
-	self.tyreCompoundHardTexture =
-		compoundsIni:get("COMPOUNDS", "HARD_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
-	self.tyreCompoundInterTexture =
-		compoundsIni:get("COMPOUNDS", "INTER_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
-	self.tyreCompoundWetTexture = compoundsIni:get("COMPOUNDS", "WET_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
-
-	self.tyreCompoundSoft = compoundsIni:get(trackID, "SOFT_COMPOUND", ""):gsub('"', ""):gsub("'", "") ~= ""
-			and compoundsIni:get(trackID, "SOFT_COMPOUND", ""):gsub('"', ""):gsub("'", "")
-		or compoundsIni:get("COMPOUNDS", "SOFT_COMPOUND", "1"):gsub('"', ""):gsub("'", "")
-	self.tyreCompoundMedium = compoundsIni:get(trackID, "MEDIUM_COMPOUND", ""):gsub('"', ""):gsub("'", "") ~= ""
-			and compoundsIni:get(trackID, "MEDIUM_COMPOUND", ""):gsub('"', ""):gsub("'", "")
-		or compoundsIni:get("COMPOUNDS", "MEDIUM_COMPOUND", "2"):gsub('"', ""):gsub("'", "")
-	self.tyreCompoundHard = compoundsIni:get("COMPOUNDS", "HARD_COMPOUND", ""):gsub('"', ""):gsub("'", "") ~= ""
-			and compoundsIni:get(trackID, "HARD_COMPOUND", ""):gsub('"', ""):gsub("'", "")
-		or compoundsIni:get("COMPOUNDS", "HARD_COMPOUND", "3"):gsub('"', ""):gsub("'", "")
-	self.tyreCompoundInter = compoundsIni:get("COMPOUNDS", "INTER_COMPOUND", "5"):gsub('"', ""):gsub("'", "")
-	self.tyreCompoundWet = compoundsIni:get("COMPOUNDS", "WET_COMPOUND", "6"):gsub('"', ""):gsub("'", "")
-
-	self.tyreCompoundsAvailable = {
-		self.tyreCompoundSoft,
-		self.tyreCompoundMedium,
-		self.tyreCompoundHard,
-		self.tyreCompoundInter,
-		self.tyreCompoundWet,
-	}
-
-	self.tyreDryCompounds = {
-		self.tyreCompoundSoft,
-		self.tyreCompoundMedium,
-		self.tyreCompoundHard,
-	}
-
-	self.tyreWetCompounds = {
-		self.tyreCompoundInter,
-		self.tyreCompoundWet,
-	}
-
-	table.sort(self.tyreCompoundsAvailable, function(a, b)
-		return a < b
-	end)
-
-	log("[" .. self.index .. "] " .. self.name .. " has " .. #self.tyreCompoundsAvailable .. " compounds available")
+	self:updateTyreCompoundConfig()
 
 	for i = 0, #DRS_ZONES.startLines do
 		self.drsDetection[i] = false
@@ -131,9 +78,6 @@ function Driver:initialize(carIndex)
 	end
 
 	if self.car.isAIControlled then
-		if RARE_CONFIG.data.AI.AI_TANK_FILL == 1 then
-			self:setFuelTankRace()
-		end
 		self:setAITyreCompound()
 
 		self.aiLevel = self.car.aiLevel
@@ -148,6 +92,7 @@ function Driver:initialize(carIndex)
 
 		physics.setAILevel(self.index, 1)
 		physics.setAIAggression(self.index, self.aiAggression)
+	else
 	end
 
 	log("[" .. self.index .. "] " .. self.name .. " initialized")
@@ -218,6 +163,63 @@ local function getMiniSectorGap(driver, carAheadIndex)
 	return driver.miniSectors[driver.currentMiniSector] - DRIVERS[carAheadIndex].miniSectors[driver.currentMiniSector]
 end
 
+function Driver:updateTyreCompoundConfig()
+	local trackID = ac.getTrackID()
+	local carID = ac.getCarID(self.index)
+	local compoundsIni = ac.INIConfig.load(
+		ac.getFolder(ac.FolderID.ACApps) .. "/lua/RARE/configs/" .. carID .. ".ini",
+		ac.INIFormat.Default
+	)
+
+	self.tyreCompoundMaterialTarget = compoundsIni:get("COMPOUNDS", "COMPOUND_TARGET_MATERIAL", "")
+	self.tyreCompoundSoftTexture =
+		compoundsIni:get("COMPOUNDS", "SOFT_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
+	self.tyreCompoundMediumTexture =
+		compoundsIni:get("COMPOUNDS", "MEDIUM_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
+	self.tyreCompoundHardTexture =
+		compoundsIni:get("COMPOUNDS", "HARD_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
+	self.tyreCompoundInterTexture =
+		compoundsIni:get("COMPOUNDS", "INTER_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
+	self.tyreCompoundWetTexture = compoundsIni:get("COMPOUNDS", "WET_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
+
+	self.tyreCompoundSoft = compoundsIni:get(trackID, "SOFT_COMPOUND", ""):gsub('"', ""):gsub("'", "") ~= ""
+			and compoundsIni:get(trackID, "SOFT_COMPOUND", ""):gsub('"', ""):gsub("'", "")
+		or compoundsIni:get("COMPOUNDS", "SOFT_COMPOUND", "1"):gsub('"', ""):gsub("'", "")
+	self.tyreCompoundMedium = compoundsIni:get(trackID, "MEDIUM_COMPOUND", ""):gsub('"', ""):gsub("'", "") ~= ""
+			and compoundsIni:get(trackID, "MEDIUM_COMPOUND", ""):gsub('"', ""):gsub("'", "")
+		or compoundsIni:get("COMPOUNDS", "MEDIUM_COMPOUND", "2"):gsub('"', ""):gsub("'", "")
+	self.tyreCompoundHard = compoundsIni:get("COMPOUNDS", "HARD_COMPOUND", ""):gsub('"', ""):gsub("'", "") ~= ""
+			and compoundsIni:get(trackID, "HARD_COMPOUND", ""):gsub('"', ""):gsub("'", "")
+		or compoundsIni:get("COMPOUNDS", "HARD_COMPOUND", "3"):gsub('"', ""):gsub("'", "")
+	self.tyreCompoundInter = compoundsIni:get("COMPOUNDS", "INTER_COMPOUND", "5"):gsub('"', ""):gsub("'", "")
+	self.tyreCompoundWet = compoundsIni:get("COMPOUNDS", "WET_COMPOUND", "6"):gsub('"', ""):gsub("'", "")
+
+	self.tyreCompoundsAvailable = {
+		self.tyreCompoundSoft,
+		self.tyreCompoundMedium,
+		self.tyreCompoundHard,
+		self.tyreCompoundInter,
+		self.tyreCompoundWet,
+	}
+
+	self.tyreDryCompounds = {
+		self.tyreCompoundSoft,
+		self.tyreCompoundMedium,
+		self.tyreCompoundHard,
+	}
+
+	self.tyreWetCompounds = {
+		self.tyreCompoundInter,
+		self.tyreCompoundWet,
+	}
+
+	table.sort(self.tyreCompoundsAvailable, function(a, b)
+		return a < b
+	end)
+
+	log("[" .. self.index .. "] " .. self.name .. " has " .. #self.tyreCompoundsAvailable .. " compounds available")
+end
+
 function Driver:setFuelTankRace()
 	local fuelcons = ac.INIConfig.carData(self.index, "fuel_cons.ini"):get("FUEL_EVAL", "KM_PER_LITER", 0.0)
 	local fuelload = 0
@@ -229,7 +231,15 @@ function Driver:setFuelTankRace()
 		fuelload = 3.5 * fuelPerLap
 	end
 
-	physics.setCarFuel(self.index, fuelload)
+	if self.car.isAIControlled then
+		if RARE_CONFIG.data.AI.AI_TANK_FILL == 1 then
+			physics.setCarFuel(self.index, fuelload)
+		end
+	else
+		if RARE_CONFIG.data.DRIVER.TANK_FILL == 1 then
+			ac.setSetupSpinnerValue("FUEL", fuelload)
+		end
+	end
 end
 
 function Driver:setAITyreCompound()

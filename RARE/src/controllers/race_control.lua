@@ -128,6 +128,10 @@ local function raceSession(lastUpdate, racecontrol, config, driver)
 				physics.setAIPitStopRequest(driver.index, false)
 			end
 		end
+	else
+		if racecontrol.sim.isInMainMenu and not racecontrol.sim.isSessionStarted then
+			driver:setFuelTankRace(racecontrol.sim, driver)
+		end
 	end
 
 	if raceRules.DRS_RULES == 1 then

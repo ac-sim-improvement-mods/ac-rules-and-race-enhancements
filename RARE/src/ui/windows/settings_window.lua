@@ -5,6 +5,74 @@ local inject = require("src/controllers/injection")
 local notifications = require("src/ui/windows/notification_window")
 local injected = physics.allowed()
 
+local presetNames = {
+	"FORMULA",
+	"GT",
+}
+
+local presets = {
+	["FORMULA"] = {
+		DRS_RULES = 1,
+		DRS_ACTIVATION_LAP = 3,
+		DRS_GAP_DELTA = 1000,
+		DRS_WET_DISABLE = 1,
+		RESTRICT_COMPOUNDS = 1,
+		CORRECT_COMPOUNDS_COLORS = 1,
+		VSC_RULES = 0,
+		VSC_INIT_TIME = 300,
+		VSC_DEPLOY_TIME = 300,
+		RACE_REFUELING = 0,
+	},
+	["GT"] = {
+		RESTRICT_COMPOUNDS = 0,
+		CORRECT_COMPOUNDS_COLORS = 0,
+		VSC_RULES = 0,
+		VSC_INIT_TIME = 300,
+		VSC_DEPLOY_TIME = 300,
+		RACE_REFUELING = 1,
+		DRS_RULES = 0,
+		DRS_ACTIVATION_LAP = 0,
+		DRS_GAP_DELTA = 0,
+		DRS_WET_DISABLE = 0,
+	},
+}
+
+function table.match(a, b)
+	local match = true
+
+	for k, v in pairs(a) do
+		if v == b[k] then
+		else
+			match = false
+		end
+	end
+
+	return match
+end
+
+local setPreset = {
+	["FORMULA"] = function()
+		RARE_CONFIG:set("RULES", "DRS_RULES", 1, false)
+		RARE_CONFIG:set("RULES", "DRS_ACTIVATION_LAP", 3, false)
+		RARE_CONFIG:set("RULES", "DRS_GAP_DELTA", 1000, false)
+		RARE_CONFIG:set("RULES", "DRS_WET_DISABLE", 1, false)
+		RARE_CONFIG:set("RULES", "RACE_REFUELING", 0, false)
+		RARE_CONFIG:set("RULES", "RESTRICT_COMPOUNDS", 1, false)
+		RARE_CONFIG:set("RULES", "CORRECT_COMPOUNDS_COLORS", 1, false)
+	end,
+	["GT"] = function()
+		RARE_CONFIG:set("RULES", "DRS_RULES", 0, false)
+		RARE_CONFIG:set("RULES", "DRS_ACTIVATION_LAP", 0, false)
+		RARE_CONFIG:set("RULES", "DRS_GAP_DELTA", 0, false)
+		RARE_CONFIG:set("RULES", "DRS_WET_DISABLE", 0, false)
+		RARE_CONFIG:set("RULES", "RACE_REFUELING", 1, false)
+		RARE_CONFIG:set("RULES", "RESTRICT_COMPOUNDS", 0, false)
+		RARE_CONFIG:set("RULES", "CORRECT_COMPOUNDS_COLORS", 0, false)
+	end,
+}
+
+local selectedPreset = "CUSTOM"
+
 local function rulesTab()
 	ui.tabItem("RULES", ui.TabItemFlags.None, function()
 		ui.newLine(1)
@@ -15,6 +83,30 @@ local function rulesTab()
 				return
 			end
 		end
+
+		selectedPreset = "CUSTOM"
+		for preset in pairs(presets) do
+			if table.match(presets[preset], RARE_CONFIG.data.RULES) then
+				selectedPreset = preset
+			end
+		end
+
+		ui.header("RACE SERIES: ")
+		ui.setNextItemWidth(ui.windowWidth() - 75)
+		local changed = false
+		ui.combo("##presetNames", selectedPreset, ui.ComboFlags.None, function()
+			for i = 1, #presetNames do
+				if ui.selectable(presetNames[i]) then
+					selectedPreset, changed = presetNames[i], true
+				end
+			end
+		end)
+
+		if changed then
+			setPreset[selectedPreset]()
+		end
+
+		ui.newLine(1)
 
 		ui.header("DRS")
 		controls.slider(
@@ -124,28 +216,13 @@ local function rulesTab()
 			1,
 			1,
 			true,
-			RARE_CONFIG.data.RULES.CORRECT_COMPOUNDS_COLORS == 1 and "HMS Compound Colors: ENABLED"
-				or "HMS Compound Colors: DISABLED",
+			RARE_CONFIG.data.RULES.CORRECT_COMPOUNDS_COLORS == 1 and "Soft-Medium-Hard Compound Colors: ENABLED"
+				or "Soft-Medium-Hard Compound Colors: DISABLED",
 			"Enable or disable changing the compound colors to reflect the Hard (white) Medium (yellow) and Soft (red) compound\nRequires configration in order to work",
 			function(v)
 				return math.round(v, 0)
 			end
 		)
-
-		-- ui.newLine(5)
-
-		-- if ui.button("APPLY SETTINGS", vec2(ui.windowWidth()-40,25), ui.ButtonFlags.None) then
-		--     -- Load config file
-		--     RARE_CONFIG = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/RARE/settings.ini", {
-		--         RULES = { DRS_RULES = ac.INIConfig.OptionalNumber, DRS_ACTIVATION_LAP = ac.INIConfig.OptionalNumber,
-		--         DRS_GAP_DELTA = ac.INIConfig.OptionalNumber, DRS_WET_DISABLE = ac.INIConfig.OptionalNumber,
-		--         VSC_RULES = ac.INIConfig.OptionalNumber, VSC_INIT_TIME = ac.INIConfig.OptionalNumber, VSC_DEPLOY_TIME = ac.INIConfig.OptionalNumber,
-		--         AI_FORCE_PIT_TYRES = ac.INIConfig.OptionalNumber, AI_AVG_TYRE_LIFE = ac.INIConfig.OptionalNumber, AI_ALTERNATE_LEVEL = ac.INIConfig.OptionalNumber,
-		--         PHYSICS_REBOOT = ac.INIConfig.OptionalNumber
-		--     }})
-		--     log("[Loaded] Applied config")
-		--     DRS_ENABLED_LAP = RARE_CONFIG.data.RULES.DRS_ACTIVATION_LAP
-		-- end
 		ui.newLine(1)
 	end)
 end
@@ -557,6 +634,196 @@ local function uiTab()
 	end)
 end
 
+local compoundConfigDir = ac.dirname() .. "\\configs"
+local uniqueCarIDs = {}
+
+for i = 0, sim.carsCount - 1 do
+	local carID = ac.getCarID(i)
+	if not table.contains(uniqueCarIDs, carID) then
+		table.insert(uniqueCarIDs, carID)
+	end
+end
+
+local selectedCarID = uniqueCarIDs[1]
+
+local selectedCarIDConfigFile, selectedCarConfigINI, selectedCarConfig
+
+local function updateCarConfig()
+	selectedCarIDConfigFile = compoundConfigDir .. "\\" .. selectedCarID .. ".ini"
+	selectedCarConfigINI = ac.INIConfig.load(selectedCarIDConfigFile, ac.INIFormat.Default)
+	selectedCarConfig = MappedConfig(selectedCarIDConfigFile, {
+		COMPOUNDS = {
+			COMPOUND_TARGET_MATERIAL = (ac.INIConfig.OptionalString == nil) and ac.INIConfig.OptionalString or "",
+			SOFT_COMPOUND = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
+			MEDIUM_COMPOUND = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
+			HARD_COMPOUND = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
+			INTER_COMPOUND = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
+			WET_COMPOUND = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
+			SOFT_COMPOUND_TEXTURE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or "",
+			MEDIUM_COMPOUND_TEXTURE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or "",
+			HARD_COMPOUND_TEXTURE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or "",
+			INTER_COMPOUND_TEXTURE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or "",
+			WET_COMPOUND_TEXTURE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or "",
+		},
+	})
+end
+
+updateCarConfig()
+
+if not io.fileExists(selectedCarIDConfigFile) then
+	io.save(
+		selectedCarIDConfigFile,
+		[[
+[COMPOUNDS]
+COMPOUND_TARGET_MATERIAL=RSS_T1
+SOFT_COMPOUND=1
+MEDIUM_COMPOUND=2
+HARD_COMPOUND=3
+INTER_COMPOUND=5
+WET_COMPOUND=6
+SOFT_COMPOUND_TEXTURE=C4
+MEDIUM_COMPOUND_TEXTURE=C3
+HARD_COMPOUND_TEXTURE=C2
+INTER_COMPOUND_TEXTURE=Inter
+WET_COMPOUND_TEXTURE=Wet
+	]]
+	)
+end
+
+local compoundKeys = {
+	"COMPOUND_TARGET_MATERIAL",
+	"SOFT_COMPOUND",
+	"MEDIUM_COMPOUND",
+	"HARD_COMPOUND",
+	"INTER_COMPOUND",
+	"WET_COMPOUND ",
+	"SOFT_COMPOUND_TEXTURE ",
+	"MEDIUM_COMPOUND_TEXTURE",
+	"HARD_COMPOUND_TEXTURE",
+	"INTER_COMPOUND_TEXTURE",
+	"WET_COMPOUND_TEXTURE",
+}
+
+local trackCompoundKeys = {
+	"SOFT_COMPOUND",
+	"MEDIUM_COMPOUND",
+	"HARD_COMPOUND",
+}
+
+local function compoundsTab()
+	ui.tabItem("COMPOUNDS", ui.TabItemFlags.None, function()
+		if sim.raceSessionType == 3 then
+			if not sim.isInMainMenu or sim.isSessionStarted then
+				ui.newLine(1)
+
+				ui.text("Can only edit COMPOUND configs while\nin the setup menu before a race session has started.")
+				return
+			end
+		end
+
+		ui.pushFont(ui.Font.Small)
+
+		ui.newLine(1)
+
+		ui.header("CONFIG CAR: ")
+
+		ui.setNextItemWidth(ui.windowWidth() - 75)
+
+		local changed = false
+		ui.combo("##carIDs", selectedCarID, ui.ComboFlags.None, function()
+			for i = 1, #uniqueCarIDs do
+				if ui.selectable(uniqueCarIDs[i]) then
+					selectedCarID, changed = uniqueCarIDs[i], true
+				end
+			end
+		end)
+		if changed then
+			updateCarConfig()
+		end
+
+		ui.newLine(1)
+		ui.popFont()
+		ui.header("TRACK SPECIFIC COMPOUNDS")
+		ui.pushFont(ui.Font.Small)
+
+		ui.newLine(1)
+
+		for i = 1, #trackCompoundKeys do
+			local key = trackCompoundKeys[i]
+			local prefix = ""
+			ui.text(prefix .. key:gsub("_", " ") .. ":")
+			ui.sameLine(190)
+			ui.setNextItemWidth(206)
+
+			local value, changed = ui.inputText(
+				"##track" .. key .. "label",
+				selectedCarConfigINI:get(ac.getTrackID(), key, 0),
+				ui.InputTextFlags.None
+			)
+			if changed then
+				selectedCarConfigINI:setAndSave(ac.getTrackID(), key, value, false)
+				for i = 0, #DRIVERS do
+					DRIVERS[i]:updateTyreCompoundConfig()
+					DRIVERS[i]:setAITyreCompound()
+				end
+			end
+		end
+		ui.popFont()
+		ui.newLine(1)
+
+		ui.header("COMPOUND SETTINGS")
+		ui.pushFont(ui.Font.Small)
+		ui.newLine(1)
+
+		for i = 1, #compoundKeys do
+			local key = compoundKeys[i]
+			local prefix = ""
+			if key == "SOFT_COMPOUND" or key == "MEDIUM_COMPOUND" or key == "HARD_COMPOUND" then
+				prefix = "DEFAULT "
+			end
+			ui.text(prefix .. key:gsub("_", " ") .. ":")
+			ui.sameLine(190)
+			ui.setNextItemWidth(206)
+
+			local value, changed =
+				ui.inputText("##" .. key .. "label", selectedCarConfig.data.COMPOUNDS[key], ui.InputTextFlags.None)
+			if changed then
+				selectedCarConfig:set("COMPOUNDS", key, value, false)
+				for i = 0, #DRIVERS do
+					DRIVERS[i]:updateTyreCompoundConfig()
+					DRIVERS[i]:setAITyreCompound()
+				end
+			end
+		end
+		ui.newLine(1)
+
+		ui.popFont()
+	end)
+end
+
+local function driverTab()
+	ui.tabItem("DRIVER", ui.TabItemFlags.None, function()
+		ui.header("FUEL")
+		controls.slider(
+			RARE_CONFIG,
+			"DRIVER",
+			"TANK_FILL",
+			0,
+			1,
+			1,
+			true,
+			RARE_CONFIG.data.DRIVER.TANK_FILL == 1 and "Fill Fuel Tank: ENABLED" or "Fill Fuel Tank: DISABLED",
+			"Enable or disable refueling driver's car's fuel tank with enough fuel for the whole race, given the capacity is high enough",
+			function(v)
+				if v == 1 then
+					DRIVERS[0]:setFuelTankRace()
+				end
+				return math.round(v, 0)
+			end
+		)
+	end)
+end
+
 function settingsMenu(sim)
 	local rareEnable = ac.isWindowOpen("rare")
 
@@ -604,6 +871,8 @@ function settingsMenu(sim)
 
 	ui.tabBar("settingstabbar", ui.TabBarFlags.None, function()
 		rulesTab()
+		driverTab()
+		compoundsTab()
 		aiTab()
 		audioTab()
 		uiTab()
