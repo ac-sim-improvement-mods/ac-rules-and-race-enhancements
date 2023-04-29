@@ -91,7 +91,7 @@ local function rulesTab()
 			end
 		end
 
-		ui.header("RACE SERIES: ")
+		ui.header("RACE SERIES")
 		ui.setNextItemWidth(ui.windowWidth() - 75)
 		local changed = false
 		ui.combo("##presetNames", selectedPreset, ui.ComboFlags.None, function()
@@ -721,14 +721,12 @@ local function compoundsTab()
 			end
 		end
 
-		ui.pushFont(ui.Font.Small)
-
 		ui.newLine(1)
 
+		ui.pushFont(ui.Font.Small)
 		ui.header("CONFIG CAR: ")
 
 		ui.setNextItemWidth(ui.windowWidth() - 75)
-
 		local changed = false
 		ui.combo("##carIDs", selectedCarID, ui.ComboFlags.None, function()
 			for i = 1, #uniqueCarIDs do
@@ -803,6 +801,8 @@ end
 
 local function driverTab()
 	ui.tabItem("DRIVER", ui.TabItemFlags.None, function()
+		ui.newLine(1)
+
 		ui.header("FUEL")
 		controls.slider(
 			RARE_CONFIG,
