@@ -1,10 +1,5 @@
 local ai = {}
 
-AI_COMP_OVERRIDE = false
-AI_THROTTLE_LIMIT = 0.8
-AI_LEVEL = 0.9
-AI_AGGRESSION = 0.25
-
 --- Returns whether driver's average tyre life is below
 --- the limit or not
 ---@param driver Driver
@@ -46,7 +41,7 @@ local function singleTyreWearBelowLimit(driver)
 end
 
 local function getNextTyreCompound(driver)
-	local compoundsAvailable = driver.tyreCompoundsAvailable
+	local compoundsAvailable = driver.tyreDryCompounds
 	local compoundNext = driver.car.compoundIndex
 
 	math.randomseed(os.clock() * driver.index)
