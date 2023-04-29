@@ -49,5 +49,7 @@ function MappedConfig:set(section, key, value, hexFormat)
 			key,
 			hexFormat and string.format("0x%x", self.data[section][key]) or self.data[section][key]
 		)
+		local storeKey = "app.RARE:" .. self.filename
+		ac.store(storeKey, stringify(self.data))
 	end, 0.02, section .. key)
 end

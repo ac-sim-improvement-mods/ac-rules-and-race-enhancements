@@ -5,6 +5,74 @@ local inject = require("src/controllers/injection")
 local notifications = require("src/ui/windows/notification_window")
 local injected = physics.allowed()
 
+local presetNames = {
+	"Formula",
+	"GT",
+}
+
+local presets = {
+	["Formula"] = {
+		DRS_RULES = 1,
+		DRS_ACTIVATION_LAP = 3,
+		DRS_GAP_DELTA = 1000,
+		DRS_WET_DISABLE = 1,
+		RESTRICT_COMPOUNDS = 1,
+		CORRECT_COMPOUNDS_COLORS = 1,
+		VSC_RULES = 0,
+		VSC_INIT_TIME = 300,
+		VSC_DEPLOY_TIME = 300,
+		RACE_REFUELING = 0,
+	},
+	["GT"] = {
+		RESTRICT_COMPOUNDS = 0,
+		CORRECT_COMPOUNDS_COLORS = 0,
+		VSC_RULES = 0,
+		VSC_INIT_TIME = 300,
+		VSC_DEPLOY_TIME = 300,
+		RACE_REFUELING = 1,
+		DRS_RULES = 0,
+		DRS_ACTIVATION_LAP = 0,
+		DRS_GAP_DELTA = 0,
+		DRS_WET_DISABLE = 0,
+	},
+}
+
+function table.match(a, b)
+	local match = true
+
+	for k, v in pairs(a) do
+		if v == b[k] then
+		else
+			match = false
+		end
+	end
+
+	return match
+end
+
+local setPreset = {
+	["Formula"] = function()
+		RARE_CONFIG:set("RULES", "DRS_RULES", 1, false)
+		RARE_CONFIG:set("RULES", "DRS_ACTIVATION_LAP", 3, false)
+		RARE_CONFIG:set("RULES", "DRS_GAP_DELTA", 1000, false)
+		RARE_CONFIG:set("RULES", "DRS_WET_DISABLE", 1, false)
+		RARE_CONFIG:set("RULES", "RACE_REFUELING", 0, false)
+		RARE_CONFIG:set("RULES", "RESTRICT_COMPOUNDS", 1, false)
+		RARE_CONFIG:set("RULES", "CORRECT_COMPOUNDS_COLORS", 1, false)
+	end,
+	["GT"] = function()
+		RARE_CONFIG:set("RULES", "DRS_RULES", 0, false)
+		RARE_CONFIG:set("RULES", "DRS_ACTIVATION_LAP", 0, false)
+		RARE_CONFIG:set("RULES", "DRS_GAP_DELTA", 0, false)
+		RARE_CONFIG:set("RULES", "DRS_WET_DISABLE", 0, false)
+		RARE_CONFIG:set("RULES", "RACE_REFUELING", 1, false)
+		RARE_CONFIG:set("RULES", "RESTRICT_COMPOUNDS", 0, false)
+		RARE_CONFIG:set("RULES", "CORRECT_COMPOUNDS_COLORS", 0, false)
+	end,
+}
+
+local selectedPreset = "CUSTOM"
+
 local function rulesTab()
 	ui.tabItem("RULES", ui.TabItemFlags.None, function()
 		ui.newLine(1)
@@ -15,6 +83,34 @@ local function rulesTab()
 				return
 			end
 		end
+
+		selectedPreset = "CUSTOM"
+		ac.log("CONFIG." .. stringify(RARE_CONFIG.data.RULES))
+
+		for preset in pairs(presets) do
+			ac.log(preset .. "." .. stringify(presets[preset]))
+
+			if table.match(presets[preset], RARE_CONFIG.data.RULES) then
+				selectedPreset = preset
+			end
+		end
+
+		ui.header("RACE SERIES: ")
+		ui.setNextItemWidth(ui.windowWidth() - 75)
+		local changed = false
+		ui.combo("##presetNames", selectedPreset, ui.ComboFlags.None, function()
+			for i = 1, #presetNames do
+				if ui.selectable(presetNames[i]) then
+					selectedPreset, changed = presetNames[i], true
+				end
+			end
+		end)
+
+		if changed then
+			setPreset[selectedPreset]()
+		end
+
+		ui.newLine(1)
 
 		ui.header("DRS")
 		controls.slider(
@@ -124,28 +220,13 @@ local function rulesTab()
 			1,
 			1,
 			true,
-			RARE_CONFIG.data.RULES.CORRECT_COMPOUNDS_COLORS == 1 and "HMS Compound Colors: ENABLED"
-				or "HMS Compound Colors: DISABLED",
+			RARE_CONFIG.data.RULES.CORRECT_COMPOUNDS_COLORS == 1 and "Soft-Medium-Hard Compound Colors: ENABLED"
+				or "Soft-Medium-Hard Compound Colors: DISABLED",
 			"Enable or disable changing the compound colors to reflect the Hard (white) Medium (yellow) and Soft (red) compound\nRequires configration in order to work",
 			function(v)
 				return math.round(v, 0)
 			end
 		)
-
-		-- ui.newLine(5)
-
-		-- if ui.button("APPLY SETTINGS", vec2(ui.windowWidth()-40,25), ui.ButtonFlags.None) then
-		--     -- Load config file
-		--     RARE_CONFIG = MappedConfig(ac.getFolder(ac.FolderID.ACApps).."/lua/RARE/settings.ini", {
-		--         RULES = { DRS_RULES = ac.INIConfig.OptionalNumber, DRS_ACTIVATION_LAP = ac.INIConfig.OptionalNumber,
-		--         DRS_GAP_DELTA = ac.INIConfig.OptionalNumber, DRS_WET_DISABLE = ac.INIConfig.OptionalNumber,
-		--         VSC_RULES = ac.INIConfig.OptionalNumber, VSC_INIT_TIME = ac.INIConfig.OptionalNumber, VSC_DEPLOY_TIME = ac.INIConfig.OptionalNumber,
-		--         AI_FORCE_PIT_TYRES = ac.INIConfig.OptionalNumber, AI_AVG_TYRE_LIFE = ac.INIConfig.OptionalNumber, AI_ALTERNATE_LEVEL = ac.INIConfig.OptionalNumber,
-		--         PHYSICS_REBOOT = ac.INIConfig.OptionalNumber
-		--     }})
-		--     log("[Loaded] Applied config")
-		--     DRS_ENABLED_LAP = RARE_CONFIG.data.RULES.DRS_ACTIVATION_LAP
-		-- end
 		ui.newLine(1)
 	end)
 end
