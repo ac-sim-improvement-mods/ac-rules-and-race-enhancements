@@ -712,6 +712,15 @@ local trackCompoundKeys = {
 
 local function compoundsTab()
 	ui.tabItem("COMPOUNDS", ui.TabItemFlags.None, function()
+		if sim.raceSessionType == 3 then
+			if not sim.isInMainMenu or sim.isSessionStarted then
+				ui.newLine(1)
+
+				ui.text("Can only edit COMPOUND configs while\nin the setup menu before a race session has started.")
+				return
+			end
+		end
+
 		ui.pushFont(ui.Font.Small)
 
 		ui.newLine(1)
@@ -753,6 +762,10 @@ local function compoundsTab()
 			)
 			if changed then
 				selectedCarConfigINI:setAndSave(ac.getTrackID(), key, value, false)
+				for i = 0, #DRIVERS do
+					DRIVERS[i]:updateTyreCompoundConfig()
+					DRIVERS[i]:setAITyreCompound()
+				end
 			end
 		end
 		ui.popFont()
@@ -776,6 +789,10 @@ local function compoundsTab()
 				ui.inputText("##" .. key .. "label", selectedCarConfig.data.COMPOUNDS[key], ui.InputTextFlags.None)
 			if changed then
 				selectedCarConfig:set("COMPOUNDS", key, value, false)
+				for i = 0, #DRIVERS do
+					DRIVERS[i]:updateTyreCompoundConfig()
+					DRIVERS[i]:setAITyreCompound()
+				end
 			end
 		end
 		ui.newLine(1)
