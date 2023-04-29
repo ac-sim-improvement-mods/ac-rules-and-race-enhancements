@@ -85,11 +85,7 @@ local function rulesTab()
 		end
 
 		selectedPreset = "CUSTOM"
-		ac.log("CONFIG." .. stringify(RARE_CONFIG.data.RULES))
-
 		for preset in pairs(presets) do
-			ac.log(preset .. "." .. stringify(presets[preset]))
-
 			if table.match(presets[preset], RARE_CONFIG.data.RULES) then
 				selectedPreset = preset
 			end
@@ -788,6 +784,29 @@ local function compoundsTab()
 	end)
 end
 
+local function driverTab()
+	ui.tabItem("DRIVER", ui.TabItemFlags.None, function()
+		ui.header("FUEL")
+		controls.slider(
+			RARE_CONFIG,
+			"DRIVER",
+			"TANK_FILL",
+			0,
+			1,
+			1,
+			true,
+			RARE_CONFIG.data.DRIVER.TANK_FILL == 1 and "Fill Fuel Tank: ENABLED" or "Fill Fuel Tank: DISABLED",
+			"Enable or disable refueling driver's car's fuel tank with enough fuel for the whole race, given the capacity is high enough",
+			function(v)
+				if v == 1 then
+					DRIVERS[0]:setFuelTankRace()
+				end
+				return math.round(v, 0)
+			end
+		)
+	end)
+end
+
 function settingsMenu(sim)
 	local rareEnable = ac.isWindowOpen("rare")
 
@@ -835,6 +854,7 @@ function settingsMenu(sim)
 
 	ui.tabBar("settingstabbar", ui.TabBarFlags.None, function()
 		rulesTab()
+		driverTab()
 		compoundsTab()
 		aiTab()
 		audioTab()

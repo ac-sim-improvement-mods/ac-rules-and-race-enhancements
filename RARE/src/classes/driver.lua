@@ -131,9 +131,6 @@ function Driver:initialize(carIndex)
 	end
 
 	if self.car.isAIControlled then
-		if RARE_CONFIG.data.AI.AI_TANK_FILL == 1 then
-			self:setFuelTankRace()
-		end
 		self:setAITyreCompound()
 
 		self.aiLevel = self.car.aiLevel
@@ -148,6 +145,7 @@ function Driver:initialize(carIndex)
 
 		physics.setAILevel(self.index, 1)
 		physics.setAIAggression(self.index, self.aiAggression)
+	else
 	end
 
 	log("[" .. self.index .. "] " .. self.name .. " initialized")
@@ -229,7 +227,15 @@ function Driver:setFuelTankRace()
 		fuelload = 3.5 * fuelPerLap
 	end
 
-	physics.setCarFuel(self.index, fuelload)
+	if self.car.isAIControlled then
+		if RARE_CONFIG.data.AI.AI_TANK_FILL == 1 then
+			physics.setCarFuel(self.index, fuelload)
+		end
+	else
+		if RARE_CONFIG.data.DRIVER.TANK_FILL == 1 then
+			ac.setSetupSpinnerValue("FUEL", fuelload)
+		end
+	end
 end
 
 function Driver:setAITyreCompound()
