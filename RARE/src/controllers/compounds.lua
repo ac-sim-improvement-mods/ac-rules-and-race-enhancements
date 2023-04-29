@@ -13,12 +13,16 @@ local function setTyreCompoundsColor(driver, time, force)
 
 		local compoundHardness = ""
 
-		if tonumber(driver.tyreCompoundsAvailable[1]) == driverCompound then
+		if tonumber(driver.tyreCompoundSoft) == driverCompound then
 			compoundHardness = driver.tyreCompoundSoftTexture
-		elseif tonumber(driver.tyreCompoundsAvailable[2]) == driverCompound then
+		elseif tonumber(driver.tyreCompoundMedium) == driverCompound then
 			compoundHardness = driver.tyreCompoundMediumTexture
-		elseif tonumber(driver.tyreCompoundsAvailable[3]) == driverCompound then
+		elseif tonumber(driver.tyreCompoundHard) == driverCompound then
 			compoundHardness = driver.tyreCompoundHardTexture
+		elseif tonumber(driver.tyreCompoundInter) == driverCompound then
+			compoundHardness = driver.tyreCompoundInterTexture
+		elseif tonumber(driver.tyreCompoundWet) == driverCompound then
+			compoundHardness = driver.tyreCompoundWetTexture
 		else
 			return
 		end
@@ -49,7 +53,12 @@ local function restrictCompoundChoice()
 	local validTyreCompoundIndex = table.containsValue(driver.tyreCompoundsAvailable, compoundIndex)
 
 	if not validTyreCompoundIndex then
-		ac.setSetupSpinnerValue("COMPOUND", compoundIndex + (isIndexIncreasing and 1 or -1))
+		local nextValidTyreCompound = math.clamp(
+			tonumber(compoundIndex + (isIndexIncreasing and 1 or -1)),
+			tonumber(driver.tyreCompoundsAvailable[1]),
+			tonumber(driver.tyreCompoundsAvailable[#driver.tyreCompoundsAvailable])
+		)
+		ac.setSetupSpinnerValue("COMPOUND", nextValidTyreCompound)
 	end
 
 	previousIndex = compoundIndex
@@ -63,10 +72,17 @@ function compounds.update(sim)
 	end
 
 	if RARE_CONFIG.data.RULES.CORRECT_COMPOUNDS_COLORS == 1 then
-		if not sim.isSessionStarted and sim.isInMainMenu then
-			for i = 0, #DRIVERS do
-				local driver = DRIVERS[i]
-				setTyreCompoundsColor(driver, 15, true)
+		if sim.isInMainMenu then
+			if sim.raceSessionType == 3 and not sim.isSessionStarted then
+				for i = 0, #DRIVERS do
+					local driver = DRIVERS[i]
+					setTyreCompoundsColor(driver, 15, true)
+				end
+			else
+				for i = 0, #DRIVERS do
+					local driver = DRIVERS[i]
+					setTyreCompoundsColor(driver, 15, true)
+				end
 			end
 		else
 			for i = 0, #DRIVERS do

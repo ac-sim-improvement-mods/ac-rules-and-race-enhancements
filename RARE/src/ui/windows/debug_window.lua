@@ -55,16 +55,26 @@ local function tyresTreeNode(driver)
 		ui.inLineBulletText("Stints", stringify(driver.tyreStints), space)
 
 		ui.inLineBulletText("Compound Change", ui.upperBool(driver.hasChangedTyreCompound), space)
+
 		ui.inLineBulletText(
-			"Compounds Available",
-			"H:"
-				.. ac.getTyresName(driver.index, driver.tyreCompoundsAvailable[3])
-				.. "\nM:"
-				.. ac.getTyresName(driver.index, driver.tyreCompoundsAvailable[2])
-				.. "\nS:"
-				.. ac.getTyresName(driver.index, driver.tyreCompoundsAvailable[1]),
+			"Compounds",
+			"Soft: "
+				.. ac.getTyresName(driver.index, driver.tyreCompoundSoft)
+				.. "\n"
+				.. "Medium: "
+				.. ac.getTyresName(driver.index, driver.tyreCompoundMedium)
+				.. "\n"
+				.. "Hard: "
+				.. ac.getTyresName(driver.index, driver.tyreCompoundHard)
+				.. "\n"
+				.. "Inter: "
+				.. ac.getTyresName(driver.index, driver.tyreCompoundInter)
+				.. "\n"
+				.. "Wet: "
+				.. ac.getTyresName(driver.index, driver.tyreCompoundWet),
 			space
 		)
+
 		ui.inLineBulletText("Compound Index", driver.car.compoundIndex, space)
 		ui.inLineBulletText("Current Compound", ac.getTyresName(driver.car.index, driver.car.compoundIndex), space)
 		ui.inLineBulletText("Next Compound", ac.getTyresName(driver.index, driver.tyreCompoundNext), space)

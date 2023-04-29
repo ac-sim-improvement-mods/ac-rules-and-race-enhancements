@@ -5,9 +5,10 @@ local settings = {}
 function settings:load(sim)
 	local settingsDir = ac.dirname() .. "/settings"
 	local settingsFile = settingsDir .. "/settings.ini"
+	local settingsDefaultFile = settingsDir .. "/default_settings.ini"
 
 	if not io.fileExists(settingsFile) then
-		settingsFile = settingsDir .. "/default_settings.ini"
+		io.copyFile(settingsDefaultFile, settingsFile)
 	end
 
 	RARE_CONFIG = MappedConfig(settingsFile, {

@@ -8,9 +8,7 @@ require("src/classes/audio")
 local racecontrol = require("src/controllers/race_control")
 local cc = require("src/controllers/compounds")
 
-FIRST_LAUNCH = true
 INITIALIZED = false
-RESTARTED = false
 RARE_CONFIG = nil
 
 local sim = ac.getSim()
@@ -19,8 +17,6 @@ local sfx = nil
 
 ac.onSessionStart(function(sessionIndex, restarted)
 	if restarted then
-		RESTARTED = true
-		INITIALIZED = false
 		log("Session restarted")
 	end
 end)
