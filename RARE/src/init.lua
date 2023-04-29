@@ -57,7 +57,6 @@ function initialize(sim)
 	cspVersionCheck()
 	settings:load(sim)
 	DRS_ZONES = DrsZones()
-	SFX_DRIVER = Audio()
 	createDataDir()
 	createDrivers(sim)
 
