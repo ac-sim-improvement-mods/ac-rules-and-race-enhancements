@@ -147,42 +147,42 @@ function ai.pitNewTyres(raceRules, driver)
 end
 
 local function moveOffRacingLine(driver)
-	local delta = driver.carAheadDelta
-	local driverAhead = DRIVERS[driver.carAhead]
-	local splineSideLeft = ac.getTrackAISplineSides(driverAhead.splinePosition).x
-	local splineSideRight = ac.getTrackAISplineSides(driverAhead.splinePosition).y
-	local offset = splineSideLeft > splineSideLeft and -3 or 3
+	-- local delta = driver.carAheadDelta
+	-- local driverAhead = DRIVERS[driver.carAhead]
+	-- local splineSideLeft = ac.getTrackAISplineSides(driverAhead.splinePosition).x
+	-- local splineSideRight = ac.getTrackAISplineSides(driverAhead.splinePosition).y
+	-- local offset = splineSideLeft > splineSideLeft and -3 or 3
 
-	if not driverAhead.isOnFlyingLap then
-		if delta < 2 and delta > 0.1 then
-			if driverAhead.car.isInPitlane then
-				physics.setAITopSpeed(driverAhead.index, 0)
-			else
-				if ac.getTrackUpcomingTurn(driverAhead.index).x > 100 then
-					physics.setAISplineOffset(driverAhead.index, math.lerp(0, offset, driverAhead.aiSplineOffset))
-					physics.setAISplineOffset(driver.index, math.lerp(0, -offset, driver.aiSplineOffset))
-					physics.setAITopSpeed(driverAhead.index, 200)
-					driverAhead.isAIMoveAside = true
-					driverAhead.isAISpeedUp = false
-				else
-					driverAhead.aiSplineOffset = math.lerp(offset, 0, driverAhead.aiSplineOffset)
-					driver.aiSplineOffset = math.lerp(-offset, 0, driver.aiSplineOffset)
-					physics.setAISplineOffset(driverAhead.index, driverAhead.aiSplineOffset)
-					physics.setAISplineOffset(driver.index, driver.aiSplineOffset)
-					physics.setAITopSpeed(driverAhead.index, 1e9)
-					driverAhead.isAIMoveAside = false
-					driverAhead.isAISpeedUp = true
-				end
-			end
-		else
-			driverAhead.aiSplineOffset = math.lerp(offset, 0, driverAhead.aiSplineOffset)
-			driver.aiSplineOffset = math.lerp(-offset, 0, driver.aiSplineOffset)
-			physics.setAISplineOffset(driverAhead.index, driverAhead.aiSplineOffset)
-			physics.setAISplineOffset(driver.index, driver.aiSplineOffset)
-			driverAhead.isAIMoveAside = false
-			driverAhead.isAISpeedUp = false
-		end
-	end
+	-- if not driverAhead.isOnFlyingLap then
+	-- 	if delta < 2 and delta > 0.1 then
+	-- 		if driverAhead.car.isInPitlane then
+	-- 			physics.setAITopSpeed(driverAhead.index, 0)
+	-- 		else
+	-- 			if ac.getTrackUpcomingTurn(driverAhead.index).x > 100 then
+	-- 				physics.setAISplineOffset(driverAhead.index, math.lerp(0, offset, driverAhead.aiSplineOffset))
+	-- 				physics.setAISplineOffset(driver.index, math.lerp(0, -offset, driver.aiSplineOffset))
+	-- 				physics.setAITopSpeed(driverAhead.index, 200)
+	-- 				driverAhead.isAIMoveAside = true
+	-- 				driverAhead.isAISpeedUp = false
+	-- 			else
+	-- 				driverAhead.aiSplineOffset = math.lerp(offset, 0, driverAhead.aiSplineOffset)
+	-- 				driver.aiSplineOffset = math.lerp(-offset, 0, driver.aiSplineOffset)
+	-- 				physics.setAISplineOffset(driverAhead.index, driverAhead.aiSplineOffset)
+	-- 				physics.setAISplineOffset(driver.index, driver.aiSplineOffset)
+	-- 				physics.setAITopSpeed(driverAhead.index, 1e9)
+	-- 				driverAhead.isAIMoveAside = false
+	-- 				driverAhead.isAISpeedUp = true
+	-- 			end
+	-- 		end
+	-- 	else
+	-- 		driverAhead.aiSplineOffset = math.lerp(offset, 0, driverAhead.aiSplineOffset)
+	-- 		driver.aiSplineOffset = math.lerp(-offset, 0, driver.aiSplineOffset)
+	-- 		physics.setAISplineOffset(driverAhead.index, driverAhead.aiSplineOffset)
+	-- 		physics.setAISplineOffset(driver.index, driver.aiSplineOffset)
+	-- 		driverAhead.isAIMoveAside = false
+	-- 		driverAhead.isAISpeedUp = false
+	-- 	end
+	-- end
 end
 
 function ai.qualifying(driver)
@@ -258,16 +258,15 @@ end
 
 local function altAIBrakeHint(driver, upcomingTurn)
 	local delta = driver.carAheadDelta
-	local brakeHint = driver.aiBaseBrakeHint
+	local brakeHint = driver.aiBrakeHintBase
+	local brakeHintDive = brakeHint - (brakeHint * 0.05)
+	local brakeHintNormal = brakeHint
+	local attemptDiveOvertake = upcomingTurn.x > 150 and delta < 0.2
 
-	if upcomingTurn.x > 150 and delta < 0.15 then
-		return brakeHint + (brakeHint * 0.05)
-	elseif upcomingTurn.x > 150 and delta < 0.4 then
-		return brakeHint + (brakeHint * 0.10)
-	elseif not (upcomingTurn.x > 0) and delta < 0.75 then
-		return brakeHint
+	if attemptDiveOvertake then
+		return brakeHintDive
 	else
-		return brakeHint - (brakeHint * 0.05)
+		return brakeHintNormal
 	end
 end
 
@@ -279,20 +278,63 @@ local function altAIThrottleLimit(driver, upcomingTurn)
 	end
 end
 
+local function altAICaution(driver, upcomingTurn)
+	local delta = driver.carAheadDelta
+	local safeMoveOnStraight = upcomingTurn.x > 150 and delta <= 0.3 and delta > 0.15
+	local safeMoveSlowTurns = driver.car.speedKmh < 150 and delta <= 0.4 and delta > 0.2
+
+	if safeMoveOnStraight or safeMoveSlowTurns then
+		return 0
+	else
+		return 1
+	end
+end
+
+local function alignCarAhead(driver, upcomingTurn)
+	local delta = driver.carAheadDelta
+	local splineSides = ac.getTrackAISplineSides(driver.car.splinePosition)
+	local splineSidesAhead = ac.getTrackAISplineSides(DRIVERS[driver.carAhead].car.splinePosition)
+	local splineSideDelta = splineSides - splineSidesAhead
+
+	if upcomingTurn.x > 150 and delta <= 0.4 and delta > 0.15 then
+		if splineSideDelta > 0 then
+			return math.clamp(driver.aiSplineOffset + 0.05, -5, 5)
+		elseif splineSideDelta < 0 then
+			return math.clamp(driver.aiSplineOffset - 0.05, -5, 5)
+		end
+	else
+		return 0
+	end
+end
+
+local function altAIGasBrakeLookAhead(driver, upcomingTurn)
+	return 0
+end
+
 --- Variable aggression function for AI drivers
 --- @param driver Driver
 function ai.alternateLevel(driver)
+	if driver.car.isInPitlane then
+		return
+	end
+
 	local upcomingTurn = ac.getTrackUpcomingTurn(driver.index)
 
 	local aiAggression = altAIAggression(driver, upcomingTurn)
 	driver.aiBrakeHint = altAIBrakeHint(driver, upcomingTurn)
 	driver.aiThrottleLimit = altAIThrottleLimit(driver, upcomingTurn)
+	driver.aiCaution = altAICaution(driver, upcomingTurn)
+	driver.aiSplineOffset = alignCarAhead(driver, upcomingTurn)
+	driver.aiGasBrakeLookAhead = altAIGasBrakeLookAhead(driver, upcomingTurn)
 
 	physics.setAIAggression(driver.index, aiAggression)
 	physics.setAIThrottleLimit(driver.index, driver.aiThrottleLimit)
 
-	if ac.getPatchVersionCode() >= 2278 then
+	if ac.getPatchVersionCode() >= 2363 then
+		physics.setAICaution(driver.index, driver.aiCaution)
+		physics.setAISplineOffset(driver.index, driver.aiSplineOffset, driver.aiCaution == 0)
 		physics.setAIBrakeHint(driver.index, driver.aiBrakeHint)
+		-- physics.setAILookaheadGasBrake(driver.index, driver.aiGasBrakeLookAhead)
 	end
 end
 

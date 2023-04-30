@@ -20,8 +20,9 @@ function Driver:initialize(carIndex)
 	self.isAISpeedUp = false
 	self.aiMgukDelivery = 0
 	self.aiMgukRecovery = 0
-	self.aiBaseBrakeHint = 1
 	self.aiBrakeHint = 1
+	self.aiGasBrakeLookAhead = 0
+	self.aiCaution = 1
 
 	self.isOnOutlap = false
 	self.isOnFlyingLap = false
@@ -79,21 +80,22 @@ function Driver:initialize(carIndex)
 
 	if self.car.isAIControlled then
 		self:setAITyreCompound()
-
-		self.aiLevel = self.car.aiLevel
-		self.aiBrakeHint = ac.INIConfig.carData(self.index, "ai.ini"):get("PEDALS", "BRAKE_HINT", 1)
-		self.aiThrottleLimitBase = math.lerp(0.5, 1, 1 - ((1 - self.aiLevel) / 0.3))
-		self.aiAggression = self.car.aiAggression
-
-		if RARE_CONFIG.data.AI.AI_RELATIVE_SCALING == 1 then
-			self.aiLevel = self.aiLevel * RARE_CONFIG.data.AI.AI_RELATIVE_LEVEL / 100
-			self.aiThrottleLimitBase = math.lerp(0.5, 1, 1 - ((1 - self.aiLevel) / 0.3))
-		end
-
-		physics.setAILevel(self.index, 1)
-		physics.setAIAggression(self.index, self.aiAggression)
-	else
 	end
+
+	self.aiLevel = self.car.aiLevel
+	self.aiGasBrakeLookAheadBase =
+		ac.INIConfig.carData(self.index, "ai.ini"):get("LOOKAHEAD", "GAS_BRAKE_LOOKAHEAD", 10)
+	self.aiBrakeHintBase = ac.INIConfig.carData(self.index, "ai.ini"):get("PEDALS", "BRAKE_HINT", 1)
+	self.aiThrottleLimitBase = math.lerp(0.5, 1, 1 - ((1 - self.aiLevel) / 0.3))
+	self.aiAggression = self.car.aiAggression
+
+	if RARE_CONFIG.data.AI.AI_RELATIVE_SCALING == 1 then
+		self.aiLevel = self.aiLevel * RARE_CONFIG.data.AI.AI_RELATIVE_LEVEL / 100
+		self.aiThrottleLimitBase = math.lerp(0.5, 1, 1 - ((1 - self.aiLevel) / 0.3))
+	end
+
+	physics.setAILevel(self.index, 1)
+	physics.setAIAggression(self.index, self.aiAggression)
 
 	log("[" .. self.index .. "] " .. self.name .. " initialized")
 

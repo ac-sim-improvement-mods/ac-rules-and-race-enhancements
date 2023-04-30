@@ -1,5 +1,4 @@
 require("src/helpers/ui_helper")
-local drs = require("src/controllers/drs")
 
 local space = 200
 
@@ -25,9 +24,19 @@ local function aiTreeNode(driver)
 		)
 		ui.inLineBulletText(
 			"Brake Hint",
-			"[" .. math.round(driver.aiBaseBrakeHint * 100, 2) .. "] " .. math.round(driver.aiBrakeHint * 100, 2),
+			"[" .. math.round(driver.aiBrakeHintBase * 100, 2) .. "] " .. math.round(driver.aiBrakeHint * 100, 2),
 			space
 		)
+		ui.inLineBulletText(
+			"Gas Brake Look",
+			"["
+				.. math.round(driver.aiGasBrakeLookAheadBase * 100, 2)
+				.. "] "
+				.. math.round(driver.aiGasBrakeLookAhead * 100, 2),
+			space
+		)
+		ui.inLineBulletText("Caution", "[1] " .. (driver.aiCaution or -1), space)
+		ui.inLineBulletText("Spline Offset", "[0] " .. (driver.aiSplineOffset or -1), space)
 	end)
 end
 
