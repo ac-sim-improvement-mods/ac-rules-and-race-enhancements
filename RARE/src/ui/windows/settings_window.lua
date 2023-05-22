@@ -652,15 +652,17 @@ local function updateCarConfig()
 	selectedCarIDConfigFile = compoundConfigDir .. "\\" .. selectedCarID .. ".ini"
 	selectedCarConfigINI = ac.INIConfig.load(selectedCarIDConfigFile, ac.INIFormat.Default)
 	selectedCarConfig = MappedConfig(selectedCarIDConfigFile, {
-		COMPOUNDS = {
-			COMPOUND_TARGET_MATERIAL = (ac.INIConfig.OptionalString == nil) and ac.INIConfig.OptionalString or "",
+		COMPOUND_DEFAULTS = {
 			SOFT_COMPOUND = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
 			MEDIUM_COMPOUND = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
 			HARD_COMPOUND = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
 			INTER_COMPOUND = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
 			WET_COMPOUND = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or 0,
-			SOFT_COMPOUND_TEXTURE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or "",
-			MEDIUM_COMPOUND_TEXTURE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or "",
+		},
+		COMPOUND_TEXTURES = {
+			COMPOUND_TARGET_MATERIAL = (ac.INIConfig.OptionalString == nil) and ac.INIConfig.OptionalString or "",
+			SOFT_COMPOUND_TEXTURE = (ac.INIConfig.OptionalString == nil) and ac.INIConfig.OptionalString or "",
+			MEDIUM_COMPOUND_TEXTURE = (ac.INIConfig.OptionalString == nil) and ac.INIConfig.OptionalString or "",
 			HARD_COMPOUND_TEXTURE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or "",
 			INTER_COMPOUND_TEXTURE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or "",
 			WET_COMPOUND_TEXTURE = (ac.INIConfig.OptionalNumber == nil) and ac.INIConfig.OptionalNumber or "",
@@ -674,40 +676,45 @@ if not io.fileExists(selectedCarIDConfigFile) then
 	io.save(
 		selectedCarIDConfigFile,
 		[[
-[COMPOUNDS]
-COMPOUND_TARGET_MATERIAL=RSS_T1
+[COMPOUND_DEFAULTS]
 SOFT_COMPOUND=1
 MEDIUM_COMPOUND=2
 HARD_COMPOUND=3
 INTER_COMPOUND=5
 WET_COMPOUND=6
-SOFT_COMPOUND_TEXTURE=C4
-MEDIUM_COMPOUND_TEXTURE=C3
-HARD_COMPOUND_TEXTURE=C2
-INTER_COMPOUND_TEXTURE=Inter
-WET_COMPOUND_TEXTURE=Wet
-	]]
+
+[COMPOUND_TEXTURES]
+COMPOUND_TARGET_MATERIAL=
+SOFT_COMPOUND_TEXTURE=
+MEDIUM_COMPOUND_TEXTURE=
+HARD_COMPOUND_TEXTURE=
+INTER_COMPOUND_TEXTURE=
+WET_COMPOUND_TEXTURE=
+]]
 	)
 end
-
-local compoundKeys = {
-	"COMPOUND_TARGET_MATERIAL",
-	"SOFT_COMPOUND",
-	"MEDIUM_COMPOUND",
-	"HARD_COMPOUND",
-	"INTER_COMPOUND",
-	"WET_COMPOUND ",
-	"SOFT_COMPOUND_TEXTURE ",
-	"MEDIUM_COMPOUND_TEXTURE",
-	"HARD_COMPOUND_TEXTURE",
-	"INTER_COMPOUND_TEXTURE",
-	"WET_COMPOUND_TEXTURE",
-}
 
 local trackCompoundKeys = {
 	"SOFT_COMPOUND",
 	"MEDIUM_COMPOUND",
 	"HARD_COMPOUND",
+}
+
+local compoundDefaultsKeys = {
+	"SOFT_COMPOUND",
+	"MEDIUM_COMPOUND",
+	"HARD_COMPOUND",
+	"INTER_COMPOUND",
+	"WET_COMPOUND ",
+}
+
+local compoundTexturesKeys = {
+	"COMPOUND_TARGET_MATERIAL",
+	"SOFT_COMPOUND_TEXTURE ",
+	"MEDIUM_COMPOUND_TEXTURE",
+	"HARD_COMPOUND_TEXTURE",
+	"INTER_COMPOUND_TEXTURE",
+	"WET_COMPOUND_TEXTURE",
 }
 
 local function compoundsTab()
@@ -722,7 +729,6 @@ local function compoundsTab()
 		end
 
 		ui.newLine(1)
-
 		ui.pushFont(ui.Font.Small)
 		ui.header("CONFIG CAR: ")
 
@@ -741,9 +747,8 @@ local function compoundsTab()
 
 		ui.newLine(1)
 		ui.popFont()
-		ui.header("TRACK SPECIFIC COMPOUNDS")
+		ui.header("CURRENT TRACK")
 		ui.pushFont(ui.Font.Small)
-
 		ui.newLine(1)
 
 		for i = 1, #trackCompoundKeys do
@@ -769,12 +774,12 @@ local function compoundsTab()
 		ui.popFont()
 		ui.newLine(1)
 
-		ui.header("COMPOUND SETTINGS")
+		ui.header("COMPOUND DEFAULTS")
 		ui.pushFont(ui.Font.Small)
 		ui.newLine(1)
 
-		for i = 1, #compoundKeys do
-			local key = compoundKeys[i]
+		for i = 1, #compoundDefaultsKeys do
+			local key = compoundDefaultsKeys[i]
 			local prefix = ""
 			if key == "SOFT_COMPOUND" or key == "MEDIUM_COMPOUND" or key == "HARD_COMPOUND" then
 				prefix = "DEFAULT "
@@ -783,10 +788,38 @@ local function compoundsTab()
 			ui.sameLine(190)
 			ui.setNextItemWidth(206)
 
-			local value, changed =
-				ui.inputText("##" .. key .. "label", selectedCarConfig.data.COMPOUNDS[key], ui.InputTextFlags.None)
+			local value, changed = ui.inputText(
+				"##" .. key .. "label",
+				selectedCarConfig.data.COMPOUND_DEFAULTS[key],
+				ui.InputTextFlags.None
+			)
 			if changed then
-				selectedCarConfig:set("COMPOUNDS", key, value, false)
+				selectedCarConfig:set("COMPOUND_DEFAULTS", key, value, false)
+				for i = 0, #DRIVERS do
+					DRIVERS[i]:updateTyreCompoundConfig()
+					DRIVERS[i]:setAITyreCompound()
+				end
+			end
+		end
+		ui.popFont()
+		ui.newLine(1)
+
+		ui.header("COMPOUND TEXTURES")
+		ui.pushFont(ui.Font.Small)
+		ui.newLine(1)
+		for i = 1, #compoundTexturesKeys do
+			local key = compoundTexturesKeys[i]
+			ui.text(key:gsub("_", " ") .. ":")
+			ui.sameLine(190)
+			ui.setNextItemWidth(206)
+
+			local value, changed = ui.inputText(
+				"##" .. key .. "label",
+				selectedCarConfig.data.COMPOUND_TEXTURES[key],
+				ui.InputTextFlags.None
+			)
+			if changed then
+				selectedCarConfig:set("COMPOUND_TEXTURES", key, value, false)
 				for i = 0, #DRIVERS do
 					DRIVERS[i]:updateTyreCompoundConfig()
 					DRIVERS[i]:setAITyreCompound()
@@ -794,7 +827,6 @@ local function compoundsTab()
 			end
 		end
 		ui.newLine(1)
-
 		ui.popFont()
 	end)
 end

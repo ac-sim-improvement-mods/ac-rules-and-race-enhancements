@@ -173,28 +173,32 @@ function Driver:updateTyreCompoundConfig()
 		ac.INIFormat.Default
 	)
 
-	self.tyreCompoundMaterialTarget = compoundsIni:get("COMPOUNDS", "COMPOUND_TARGET_MATERIAL", "")
+	self.tyreCompoundMaterialTarget = compoundsIni:get("COMPOUND_TEXTURES", "COMPOUND_TARGET_MATERIAL", "")
 	self.tyreCompoundSoftTexture =
-		compoundsIni:get("COMPOUNDS", "SOFT_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
+		compoundsIni:get("COMPOUND_TEXTURES", "SOFT_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
 	self.tyreCompoundMediumTexture =
-		compoundsIni:get("COMPOUNDS", "MEDIUM_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
+		compoundsIni:get("COMPOUND_TEXTURES", "MEDIUM_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
 	self.tyreCompoundHardTexture =
-		compoundsIni:get("COMPOUNDS", "HARD_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
+		compoundsIni:get("COMPOUND_TEXTURES", "HARD_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
 	self.tyreCompoundInterTexture =
-		compoundsIni:get("COMPOUNDS", "INTER_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
-	self.tyreCompoundWetTexture = compoundsIni:get("COMPOUNDS", "WET_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
+		compoundsIni:get("COMPOUND_TEXTURES", "INTER_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
+	self.tyreCompoundWetTexture =
+		compoundsIni:get("COMPOUND_TEXTURES", "WET_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
 
 	self.tyreCompoundSoft = compoundsIni:get(trackID, "SOFT_COMPOUND", ""):gsub('"', ""):gsub("'", "") ~= ""
 			and compoundsIni:get(trackID, "SOFT_COMPOUND", ""):gsub('"', ""):gsub("'", "")
-		or compoundsIni:get("COMPOUNDS", "SOFT_COMPOUND", "1"):gsub('"', ""):gsub("'", "")
+		or compoundsIni:get("COMPOUND_DEFAULTS", "SOFT_COMPOUND", "1"):gsub('"', ""):gsub("'", "")
 	self.tyreCompoundMedium = compoundsIni:get(trackID, "MEDIUM_COMPOUND", ""):gsub('"', ""):gsub("'", "") ~= ""
 			and compoundsIni:get(trackID, "MEDIUM_COMPOUND", ""):gsub('"', ""):gsub("'", "")
-		or compoundsIni:get("COMPOUNDS", "MEDIUM_COMPOUND", "2"):gsub('"', ""):gsub("'", "")
-	self.tyreCompoundHard = compoundsIni:get("COMPOUNDS", "HARD_COMPOUND", ""):gsub('"', ""):gsub("'", "") ~= ""
+		or compoundsIni:get("COMPOUND_DEFAULTS", "MEDIUM_COMPOUND", "2"):gsub('"', ""):gsub("'", "")
+	self.tyreCompoundHard = compoundsIni
+				:get("COMPOUND_DEFAULTS", "HARD_COMPOUND", "")
+				:gsub('"', "")
+				:gsub("'", "") ~= ""
 			and compoundsIni:get(trackID, "HARD_COMPOUND", ""):gsub('"', ""):gsub("'", "")
-		or compoundsIni:get("COMPOUNDS", "HARD_COMPOUND", "3"):gsub('"', ""):gsub("'", "")
-	self.tyreCompoundInter = compoundsIni:get("COMPOUNDS", "INTER_COMPOUND", "5"):gsub('"', ""):gsub("'", "")
-	self.tyreCompoundWet = compoundsIni:get("COMPOUNDS", "WET_COMPOUND", "6"):gsub('"', ""):gsub("'", "")
+		or compoundsIni:get("COMPOUND_DEFAULTS", "HARD_COMPOUND", "3"):gsub('"', ""):gsub("'", "")
+	self.tyreCompoundInter = compoundsIni:get("COMPOUND_DEFAULTS", "INTER_COMPOUND", "5"):gsub('"', ""):gsub("'", "")
+	self.tyreCompoundWet = compoundsIni:get("COMPOUND_DEFAULTS", "WET_COMPOUND", "6"):gsub('"', ""):gsub("'", "")
 
 	self.tyreCompoundsAvailable = {
 		self.tyreCompoundSoft,

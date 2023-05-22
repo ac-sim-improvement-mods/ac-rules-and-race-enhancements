@@ -325,23 +325,6 @@ local function inputsTreeNode(driver)
 	end)
 end
 
-local function controllerScriptInputsTreeNode(driver)
-	ui.treeNode("[SCRIPT CONTROLLER INPUTS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
-		ui.inLineBulletText(
-			"[0] Total Brake Balance",
-			math.round(ac.getCarPhysics(driver.index).scriptControllerInputs[0], 5),
-			space
-		)
-		ui.inLineBulletText("[1] Brake Migration %", ac.getCarPhysics(driver.index).scriptControllerInputs[1], space)
-		ui.inLineBulletText("[2] Exit Diff", ac.getCarPhysics(driver.index).scriptControllerInputs[2], space)
-		ui.inLineBulletText("[3] Entry Diff", ac.getCarPhysics(driver.index).scriptControllerInputs[3], space)
-		ui.inLineBulletText("[4] Mid Diff", ac.getCarPhysics(driver.index).scriptControllerInputs[4], space)
-		ui.inLineBulletText("[5] Hispd Diff", ac.getCarPhysics(driver.index).scriptControllerInputs[5], space)
-		ui.inLineBulletText("[6] Diff Mode", ac.getCarPhysics(driver.index).scriptControllerInputs[6], space)
-		ui.inLineBulletText("[7]", ac.getCarPhysics(driver.index).scriptControllerInputs[7], space)
-	end)
-end
-
 local function debugHeader()
 	ui.inLineBulletText("CSP Version", ac.getPatchVersion(), space)
 	ui.inLineBulletText("CSP Version Code", ac.getPatchVersionCode(), space)
@@ -401,7 +384,6 @@ function debug_window(sim, rc, error)
 	driverTreeNode(sim, rc, driver)
 	weatherTreeNode(sim, rc)
 	inputsTreeNode(driver)
-	controllerScriptInputsTreeNode(driver)
 
 	ui.popFont()
 end
