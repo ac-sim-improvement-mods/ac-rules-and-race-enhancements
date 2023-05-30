@@ -1,11 +1,7 @@
 local ai = {}
 
---- Returns whether driver's average tyre life is below
---- the limit or not
----@param driver Driver
----@return bool
 local function avgTyreWearBelowLimit(driver)
-	local avgTyreLimit = 1 - (RARE_CONFIG.data.AI.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom) / 100
+	local avgTyreLimit = 1 - driver.aiTyrePitBelowAvg / 100
 	local avgTyreWear = (
 		driver.car.wheels[0].tyreWear
 		+ driver.car.wheels[1].tyreWear
@@ -21,12 +17,8 @@ end
 ---| `ai.QualifyLap.InLap` @Value: 2.
 ai.QualifyLap = { OutLap = 0, FlyingLap = 1, InLap = 2 }
 
---- Returns whether one of a driver's tyre life is below
---- the limit or not
----@param driver Driver
----@return bool
 local function singleTyreWearBelowLimit(driver)
-	local singleTyreLimit = 1 - (RARE_CONFIG.data.AI.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom) / 100
+	local singleTyreLimit = 1 - driver.aiTyrePitBelowSingle / 100
 
 	if
 		driver.car.wheels[0].tyreWear > singleTyreLimit
@@ -57,8 +49,6 @@ local function getNextTyreCompound(driver)
 	return compoundNext
 end
 
---- Force AI driver to drive to the pits
---- @param driver Driver
 local function triggerPitStopRequest(driver, trigger)
 	if ac.getPatchVersionCode() >= 2278 then
 		physics.setAIPitStopRequest(driver.index, trigger)
@@ -76,9 +66,6 @@ local function triggerPitStopRequest(driver, trigger)
 	end
 end
 
---- Determine if going to the pits is advantageous or not
---- @param driver Driver
---- @param forced boolean
 local function pitStrategyCall(driver, forced)
 	local carAhead = DRIVERS[driver.carAhead]
 	local trigger = true
@@ -93,8 +80,7 @@ local function pitStrategyCall(driver, forced)
 
 	triggerPitStopRequest(driver, trigger)
 end
---- Occurs when a driver is in the pit
----@param driver Driver
+
 local function pitstop(raceRules, driver)
 	if driver.isAIPitting then
 		if not driver.hasChangedTyreCompound and driver.tyreCompoundNext ~= driver.tyreCompoundStart then
@@ -125,8 +111,6 @@ local function pitstop(raceRules, driver)
 	driver.isAIPitting = false
 end
 
---- Determines when an AI driver should pit for new tyres
---- @param driver Driver
 function ai.pitNewTyres(raceRules, driver)
 	if not driver.car.isInPitlane and not driver.isAIPitting then
 		if singleTyreWearBelowLimit(driver) then
@@ -137,6 +121,18 @@ function ai.pitNewTyres(raceRules, driver)
 	else
 		if driver.car.isInPit then
 			pitstop(raceRules, driver)
+			if driver.pitstopTime < 3 then
+				if not driver.aiPitFix then
+					physics.teleportCarTo(driver.index, ac.SpawnSet.Pits)
+					physics.resetCarState(driver.index, 1)
+					driver.aiPitFix = true
+					physics.setAIPitStopRequest(driver.index, true)
+				end
+			else
+				physics.setAIPitStopRequest(driver.index, false)
+			end
+		elseif not driver.car.isInPit and driver.aiPitFix then
+			driver.aiPitFix = false
 		end
 
 		if driver.isAIPitCall then
@@ -281,7 +277,7 @@ end
 local function altAICaution(driver, upcomingTurn)
 	local delta = driver.carAheadDelta
 	local safeMoveOnStraight = upcomingTurn.x > 150 and delta <= 0.3 and delta > 0.15
-	local safeMoveSlowTurns = driver.car.speedKmh < 150 and delta <= 0.4 and delta > 0.2
+	local safeMoveSlowTurns = driver.car.speedKmh < 150 and delta <= 0.5 and delta > 0.3
 
 	if safeMoveOnStraight or safeMoveSlowTurns then
 		return 0
@@ -296,7 +292,7 @@ local function alignCarAhead(driver, upcomingTurn)
 	local splineSidesAhead = ac.getTrackAISplineSides(DRIVERS[driver.carAhead].car.splinePosition)
 	local splineSideDelta = splineSides - splineSidesAhead
 
-	if upcomingTurn.x > 150 and delta <= 0.4 and delta > 0.15 then
+	if upcomingTurn.x > 200 and delta <= 0.4 and delta > 0.15 then
 		if splineSideDelta > 0 then
 			return math.clamp(driver.aiSplineOffset + 0.05, -5, 5)
 		elseif splineSideDelta < 0 then
@@ -338,115 +334,12 @@ function ai.alternateLevel(driver)
 	end
 end
 
-local function mgukBuild(driver)
-	if driver.aiMgukDelivery ~= 1 then
-		driver.aiMgukDelivery = 1
-		physics.setMGUKDelivery(driver.index, driver.aiMgukDelivery)
-	end
-
-	if driver.aiMgukRecovery ~= 10 then
-		driver.aiMgukRecovery = 10
-		physics.setMGUKRecovery(driver.index, driver.aiMgukRecovery)
-	end
-end
-
-local function mgukLow(driver)
-	if driver.aiMgukDelivery ~= 2 then
-		driver.aiMgukDelivery = 2
-		physics.setMGUKDelivery(driver.index, driver.aiMgukDelivery)
-	end
-
-	-- driver.car.kersCurrentKJ
-	if driver.car.kersCharge > 0.8 then
-		if driver.aiMgukRecovery ~= 0 then
-			driver.aiMgukRecovery = 0
-			physics.setMGUKRecovery(driver.index, driver.aiMgukRecovery)
-		end
-	elseif driver.car.kersCharge > 0.15 then
-		if driver.aiMgukRecovery ~= 7 then
-			driver.aiMgukRecovery = 7
-			physics.setMGUKRecovery(driver.index, driver.aiMgukRecovery)
-		end
-	else
-		mgukBuild(driver)
-	end
-end
-
-local function mgukBalanced(driver)
-	if driver.aiMgukDelivery ~= 3 then
-		driver.aiMgukDelivery = 3
-		physics.setMGUKDelivery(driver.index, driver.aiMgukDelivery)
-	end
-
-	-- driver.car.kersCurrentKJ
-	if driver.car.kersCharge > 0.8 then
-		if driver.aiMgukRecovery ~= 0 then
-			driver.aiMgukRecovery = 0
-			physics.setMGUKRecovery(driver.index, driver.aiMgukRecovery)
-		end
-	elseif driver.car.kersCharge > 0.25 then
-		if driver.aiMgukRecovery ~= 7 then
-			driver.aiMgukRecovery = 7
-			physics.setMGUKRecovery(driver.index, driver.aiMgukRecovery)
-		end
-	else
-		mgukLow(driver)
-	end
-end
-
-local function mgukHigh(driver)
-	if driver.aiMgukDelivery ~= 4 then
-		driver.aiMgukDelivery = 4
-		physics.setMGUKDelivery(driver.index, driver.aiMgukDelivery)
-	end
-
-	-- driver.car.kersCurrentKJ
-	if driver.car.kersCharge > 0.8 then
-		if driver.aiMgukRecovery ~= 0 then
-			driver.aiMgukRecovery = 0
-			physics.setMGUKRecovery(driver.index, driver.aiMgukRecovery)
-		end
-	elseif driver.car.kersCharge > 0.45 then
-		if driver.aiMgukRecovery ~= 7 then
-			driver.aiMgukRecovery = 7
-			physics.setMGUKRecovery(driver.index, driver.aiMgukRecovery)
-		end
-	else
-		mgukBalanced(driver)
-	end
-end
-
-local function mgukAttack(driver)
-	if driver.aiMgukDelivery ~= 5 then
-		driver.aiMgukDelivery = 5
-		physics.setMGUKDelivery(driver.index, driver.aiMgukDelivery)
-	end
-
-	if driver.aiMgukRecovery ~= 0 then
-		driver.aiMgukRecovery = 0
-		physics.setMGUKRecovery(driver.index, driver.aiMgukRecovery)
-	end
-end
-
-function ai.mgukController(driver)
-	if driver.carAheadDelta < 0.5 and driver.car.kersCharge > 0.25 then
-		mgukAttack(driver)
-	elseif driver.carAheadDelta < 1.5 then
-		mgukHigh(driver)
-	else
-		mgukBalanced(driver)
-	end
-end
-
 function ai.controller(raceRules, aiRules, driver)
-	if aiRules.AI_FORCE_PIT_TYRES == 1 then
+	if aiRules.FORCE_PIT_TYRES == 1 then
 		ai.pitNewTyres(raceRules, driver)
 	end
-	if aiRules.AI_ALTERNATE_LEVEL == 1 then
+	if aiRules.ALTERNATE_LEVEL == 1 then
 		ai.alternateLevel(driver)
-	end
-	if aiRules.AI_MGUK_CONTROL == 1 and ac.getPatchVersionCode() >= 2555 then
-		ai.mgukController(driver)
 	end
 end
 

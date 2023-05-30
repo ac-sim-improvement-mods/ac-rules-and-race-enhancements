@@ -52,6 +52,9 @@ local function setDrsAvailable(driver, drsEnabled, drsEnabledLap)
 		end
 
 		return driver.drsDetection[driver.drsZoneId]
+	elseif driver.car.isInPitlane then
+		driver.drsDetection[driver.drsZoneId] = false
+		return false
 	else
 		return false
 	end

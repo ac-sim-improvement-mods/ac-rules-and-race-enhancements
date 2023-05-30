@@ -23,6 +23,8 @@ function Driver:initialize(carIndex)
 	self.aiBrakeHint = 1
 	self.aiGasBrakeLookAhead = 0
 	self.aiCaution = 1
+	self.aiInitialCompoundApplied = false
+	self.aiPitFix = false
 
 	self.isOnOutlap = false
 	self.isOnFlyingLap = false
@@ -65,9 +67,7 @@ function Driver:initialize(carIndex)
 	self.returnRacePosition = -1
 	self.returnPostionTimer = -1
 
-	self.aiTyreAvgRandom = math.randomizer(self.index, RARE_CONFIG.data.AI.AI_AVG_TYRE_LIFE_RANGE)
-	self.aiTyreSingleRandom = math.randomizer(self.index, RARE_CONFIG.data.AI.AI_SINGLE_TYRE_LIFE_RANGE)
-
+	self:updateAITyreLife()
 	self:updateTyreCompoundConfig()
 
 	for i = 0, #DRS_ZONES.startLines do
@@ -89,8 +89,8 @@ function Driver:initialize(carIndex)
 	self.aiThrottleLimitBase = math.lerp(0.5, 1, 1 - ((1 - self.aiLevel) / 0.3))
 	self.aiAggression = self.car.aiAggression
 
-	if RARE_CONFIG.data.AI.AI_RELATIVE_SCALING == 1 then
-		self.aiLevel = self.aiLevel * RARE_CONFIG.data.AI.AI_RELATIVE_LEVEL / 100
+	if RARE_CONFIG.data.AI.RELATIVE_SCALING == 1 then
+		self.aiLevel = self.aiLevel * RARE_CONFIG.data.AI.RELATIVE_LEVEL / 100
 		self.aiThrottleLimitBase = math.lerp(0.5, 1, 1 - ((1 - self.aiLevel) / 0.3))
 	end
 
@@ -102,29 +102,36 @@ function Driver:initialize(carIndex)
 	return self
 end
 
---- Returns lap pitted or lap count if driver just pitted
----@param driver Driver
----@return number
+function Driver:updateAITyreLife()
+	local carID = ac.getCarID(self.index)
+	local compoundsINI = ac.INIConfig.load(
+		ac.getFolder(ac.FolderID.ACApps) .. "/lua/RARE/configs/" .. carID .. ".ini",
+		ac.INIFormat.Default
+	)
+
+	self.aiTyreLifeAvgRange = compoundsINI:get("AI", "AVG_TYRE_LIFE_RANGE", 5)
+	self.aiTyreLifeAvg = compoundsINI:get("AI", "AVG_TYRE_LIFE", 62)
+	self.aiTyrePitBelowAvg = self.aiTyreLifeAvg + math.randomizer(self.index, self.aiTyreLifeAvgRange)
+	self.aiTyreLifeSingleRange = compoundsINI:get("AI", "SINGLE_TYRE_LIFE_RANGE", 5)
+	self.aiTyreLifeSingle = compoundsINI:get("AI", "SINGLE_TYRE_LIFE", 45)
+	self.aiTyrePitBelowSingle = self.aiTyreLifeSingle + math.randomizer(self.index, self.aiTyreLifeSingleRange)
+end
+
 local function getLapPitted(driver)
 	return (driver.tyreLaps > 0 and driver.car.isInPitlane) and driver.car.lapCount or driver.lapPitted
 end
 
---- Returns tyre lap count
----@param driver Driver
----@return number
 local function getTyreLapCount(driver)
 	return (driver.car.isInPitlane and not driver.hasPitted) and driver.tyreLaps
 		or (driver.car.lapCount - driver.lapPitted)
 end
 
---- Updates driver's pitstop count
----@param driver Driver
----@return number
 local function updatePistopCount(driver)
 	if driver.car.isInPit and not driver.hasPitted then
 		driver.hasPitted = true
-		driver.aiTyreAvgRandom = math.randomizer(driver.index, RARE_CONFIG.data.AI.AI_AVG_TYRE_LIFE_RANGE)
-		driver.aiTyreSingleRandom = math.randomizer(driver.index, RARE_CONFIG.data.AI.AI_SINGLE_TYRE_LIFE_RANGE)
+		driver.aiTyrePitBelowAvg = driver.aiTyreLifeAvg + math.randomizer(driver.index, driver.aiTyreLifeAvgRange)
+		driver.aiTyrePitBelowSingle = driver.aiTyreLifeSingle
+			+ math.randomizer(driver.index, driver.aiTyreLifeSingleRange)
 		return driver.pitstopCount + 1
 	elseif not driver.car.isInPitlane and driver.hasPitted then
 		driver.hasPitted = false
@@ -168,37 +175,37 @@ end
 function Driver:updateTyreCompoundConfig()
 	local trackID = ac.getTrackID()
 	local carID = ac.getCarID(self.index)
-	local compoundsIni = ac.INIConfig.load(
+	local compoundsINI = ac.INIConfig.load(
 		ac.getFolder(ac.FolderID.ACApps) .. "/lua/RARE/configs/" .. carID .. ".ini",
 		ac.INIFormat.Default
 	)
 
-	self.tyreCompoundMaterialTarget = compoundsIni:get("COMPOUND_TEXTURES", "COMPOUND_TARGET_MATERIAL", "")
+	self.tyreCompoundMaterialTarget = compoundsINI:get("COMPOUND_TEXTURES", "COMPOUND_TARGET_MATERIAL", "")
 	self.tyreCompoundSoftTexture =
-		compoundsIni:get("COMPOUND_TEXTURES", "SOFT_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
+		compoundsINI:get("COMPOUND_TEXTURES", "SOFT_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
 	self.tyreCompoundMediumTexture =
-		compoundsIni:get("COMPOUND_TEXTURES", "MEDIUM_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
+		compoundsINI:get("COMPOUND_TEXTURES", "MEDIUM_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
 	self.tyreCompoundHardTexture =
-		compoundsIni:get("COMPOUND_TEXTURES", "HARD_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
+		compoundsINI:get("COMPOUND_TEXTURES", "HARD_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
 	self.tyreCompoundInterTexture =
-		compoundsIni:get("COMPOUND_TEXTURES", "INTER_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
+		compoundsINI:get("COMPOUND_TEXTURES", "INTER_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
 	self.tyreCompoundWetTexture =
-		compoundsIni:get("COMPOUND_TEXTURES", "WET_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
+		compoundsINI:get("COMPOUND_TEXTURES", "WET_COMPOUND_TEXTURE", ""):gsub('"', ""):gsub("'", "")
 
-	self.tyreCompoundSoft = compoundsIni:get(trackID, "SOFT_COMPOUND", ""):gsub('"', ""):gsub("'", "") ~= ""
-			and compoundsIni:get(trackID, "SOFT_COMPOUND", ""):gsub('"', ""):gsub("'", "")
-		or compoundsIni:get("COMPOUND_DEFAULTS", "SOFT_COMPOUND", "1"):gsub('"', ""):gsub("'", "")
-	self.tyreCompoundMedium = compoundsIni:get(trackID, "MEDIUM_COMPOUND", ""):gsub('"', ""):gsub("'", "") ~= ""
-			and compoundsIni:get(trackID, "MEDIUM_COMPOUND", ""):gsub('"', ""):gsub("'", "")
-		or compoundsIni:get("COMPOUND_DEFAULTS", "MEDIUM_COMPOUND", "2"):gsub('"', ""):gsub("'", "")
-	self.tyreCompoundHard = compoundsIni
+	self.tyreCompoundSoft = compoundsINI:get(trackID, "SOFT_COMPOUND", ""):gsub('"', ""):gsub("'", "") ~= ""
+			and compoundsINI:get(trackID, "SOFT_COMPOUND", ""):gsub('"', ""):gsub("'", "")
+		or compoundsINI:get("COMPOUND_DEFAULTS", "SOFT_COMPOUND", "1"):gsub('"', ""):gsub("'", "")
+	self.tyreCompoundMedium = compoundsINI:get(trackID, "MEDIUM_COMPOUND", ""):gsub('"', ""):gsub("'", "") ~= ""
+			and compoundsINI:get(trackID, "MEDIUM_COMPOUND", ""):gsub('"', ""):gsub("'", "")
+		or compoundsINI:get("COMPOUND_DEFAULTS", "MEDIUM_COMPOUND", "2"):gsub('"', ""):gsub("'", "")
+	self.tyreCompoundHard = compoundsINI
 				:get("COMPOUND_DEFAULTS", "HARD_COMPOUND", "")
 				:gsub('"', "")
 				:gsub("'", "") ~= ""
-			and compoundsIni:get(trackID, "HARD_COMPOUND", ""):gsub('"', ""):gsub("'", "")
-		or compoundsIni:get("COMPOUND_DEFAULTS", "HARD_COMPOUND", "3"):gsub('"', ""):gsub("'", "")
-	self.tyreCompoundInter = compoundsIni:get("COMPOUND_DEFAULTS", "INTER_COMPOUND", "5"):gsub('"', ""):gsub("'", "")
-	self.tyreCompoundWet = compoundsIni:get("COMPOUND_DEFAULTS", "WET_COMPOUND", "6"):gsub('"', ""):gsub("'", "")
+			and compoundsINI:get(trackID, "HARD_COMPOUND", ""):gsub('"', ""):gsub("'", "")
+		or compoundsINI:get("COMPOUND_DEFAULTS", "HARD_COMPOUND", "3"):gsub('"', ""):gsub("'", "")
+	self.tyreCompoundInter = compoundsINI:get("COMPOUND_DEFAULTS", "INTER_COMPOUND", "5"):gsub('"', ""):gsub("'", "")
+	self.tyreCompoundWet = compoundsINI:get("COMPOUND_DEFAULTS", "WET_COMPOUND", "6"):gsub('"', ""):gsub("'", "")
 
 	self.tyreCompoundsAvailable = {
 		self.tyreCompoundSoft,
@@ -238,7 +245,7 @@ function Driver:setFuelTankRace()
 	end
 
 	if self.car.isAIControlled then
-		if RARE_CONFIG.data.AI.AI_TANK_FILL == 1 then
+		if RARE_CONFIG.data.AI.TANK_FILL == 1 then
 			physics.setCarFuel(self.index, fuelload)
 		end
 	else
@@ -264,7 +271,7 @@ function Driver:setAITyreCompound()
 end
 
 function Driver:setAIRelativeLevel()
-	self.aiLevelRelative = self.aiLevel * RARE_CONFIG.data.AI.AI_RELATIVE_LEVEL / 100
+	self.aiLevelRelative = self.aiLevel * RARE_CONFIG.data.AI.RELATIVE_LEVEL / 100
 	self.aiThrottleLimitBase = math.lerp(0.5, 1, 1 - ((1 - self.aiLevelRelative) / 0.3))
 end
 
@@ -285,7 +292,13 @@ function Driver:update(dt)
 	end
 
 	if self.carAhead >= 0 then
-		-- self.carAheadDelta = ac.getDelta(sim, self.index, self.carAhead)
 		self.carAheadDelta = getMiniSectorGap(self, self.carAhead) or ac.getDelta(sim, self.index, self.carAhead)
+	end
+
+	if not sim.isSessionStarted and not self.aiInitialCompoundApplied then
+		self:setAITyreCompound()
+		self.aiInitialCompoundApplied = true
+	elseif sim.isSessionStarted and self.aiInitialCompoundApplied then
+		self.aiInitialCompoundApplied = false
 	end
 end
