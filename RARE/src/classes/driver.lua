@@ -89,8 +89,8 @@ function Driver:initialize(carIndex)
 	self.aiThrottleLimitBase = math.lerp(0.5, 1, 1 - ((1 - self.aiLevel) / 0.3))
 	self.aiAggression = self.car.aiAggression
 
-	if RARE_CONFIG.data.AI.AI_RELATIVE_SCALING == 1 then
-		self.aiLevel = self.aiLevel * RARE_CONFIG.data.AI.AI_RELATIVE_LEVEL / 100
+	if RARE_CONFIG.data.AI.RELATIVE_SCALING == 1 then
+		self.aiLevel = self.aiLevel * RARE_CONFIG.data.AI.RELATIVE_LEVEL / 100
 		self.aiThrottleLimitBase = math.lerp(0.5, 1, 1 - ((1 - self.aiLevel) / 0.3))
 	end
 
@@ -191,10 +191,8 @@ function Driver:updateTyreCompoundConfig()
 	self.tyreCompoundMedium = compoundsIni:get(trackID, "MEDIUM_COMPOUND", ""):gsub('"', ""):gsub("'", "") ~= ""
 			and compoundsIni:get(trackID, "MEDIUM_COMPOUND", ""):gsub('"', ""):gsub("'", "")
 		or compoundsIni:get("COMPOUND_DEFAULTS", "MEDIUM_COMPOUND", "2"):gsub('"', ""):gsub("'", "")
-	self.tyreCompoundHard = compoundsIni
-				:get("COMPOUND_DEFAULTS", "HARD_COMPOUND", "")
-				:gsub('"', "")
-				:gsub("'", "") ~= ""
+	self.tyreCompoundHard = compoundsIni:get("COMPOUND_DEFAULTS", "HARD_COMPOUND", ""):gsub('"', ""):gsub("'", "")
+				~= ""
 			and compoundsIni:get(trackID, "HARD_COMPOUND", ""):gsub('"', ""):gsub("'", "")
 		or compoundsIni:get("COMPOUND_DEFAULTS", "HARD_COMPOUND", "3"):gsub('"', ""):gsub("'", "")
 	self.tyreCompoundInter = compoundsIni:get("COMPOUND_DEFAULTS", "INTER_COMPOUND", "5"):gsub('"', ""):gsub("'", "")
@@ -238,7 +236,7 @@ function Driver:setFuelTankRace()
 	end
 
 	if self.car.isAIControlled then
-		if RARE_CONFIG.data.AI.AI_TANK_FILL == 1 then
+		if RARE_CONFIG.data.AI.TANK_FILL == 1 then
 			physics.setCarFuel(self.index, fuelload)
 		end
 	else
@@ -264,7 +262,7 @@ function Driver:setAITyreCompound()
 end
 
 function Driver:setAIRelativeLevel()
-	self.aiLevelRelative = self.aiLevel * RARE_CONFIG.data.AI.AI_RELATIVE_LEVEL / 100
+	self.aiLevelRelative = self.aiLevel * RARE_CONFIG.data.AI.RELATIVE_LEVEL / 100
 	self.aiThrottleLimitBase = math.lerp(0.5, 1, 1 - ((1 - self.aiLevelRelative) / 0.3))
 end
 

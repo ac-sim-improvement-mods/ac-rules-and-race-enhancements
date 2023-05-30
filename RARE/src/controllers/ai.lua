@@ -439,13 +439,13 @@ function ai.mgukController(driver)
 end
 
 function ai.controller(raceRules, aiRules, driver)
-	if aiRules.AI_FORCE_PIT_TYRES == 1 then
+	if aiRules.FORCE_PIT_TYRES == 1 then
 		ai.pitNewTyres(raceRules, driver)
 	end
-	if aiRules.AI_ALTERNATE_LEVEL == 1 then
+	if aiRules.ALTERNATE_LEVEL == 1 then
 		ai.alternateLevel(driver)
 	end
-	if aiRules.AI_MGUK_CONTROL == 1 and ac.getPatchVersionCode() >= 2555 then
+	if aiRules.MGUK_CONTROL == 1 and ac.getPatchVersionCode() >= 2555 then
 		ai.mgukController(driver)
 	end
 end

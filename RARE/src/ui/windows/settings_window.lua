@@ -243,12 +243,12 @@ local function aiTab()
 		controls.slider(
 			RARE_CONFIG,
 			"AI",
-			"AI_ALTERNATE_LEVEL",
+			"ALTERNATE_LEVEL",
 			0,
 			1,
 			1,
 			true,
-			RARE_CONFIG.data.AI.AI_ALTERNATE_LEVEL == 1 and "Alternate AI Strength: ENABLED"
+			RARE_CONFIG.data.AI.ALTERNATE_LEVEL == 1 and "Alternate AI Strength: ENABLED"
 				or "Alternate AI Strength: DISABLED",
 			"Changes the default AI level to be more competitive",
 			function(v)
@@ -261,12 +261,12 @@ local function aiTab()
 		controls.slider(
 			RARE_CONFIG,
 			"AI",
-			"AI_RELATIVE_SCALING",
+			"RELATIVE_SCALING",
 			0,
 			1,
 			1,
 			true,
-			RARE_CONFIG.data.AI.AI_RELATIVE_SCALING == 1 and "Relative AI Scaling: ENABLED"
+			RARE_CONFIG.data.AI.RELATIVE_SCALING == 1 and "Relative AI Scaling: ENABLED"
 				or "Relative AI Scaling: DISABLED",
 			"Enables relative AI scaling",
 			function(v)
@@ -277,12 +277,12 @@ local function aiTab()
 		controls.slider(
 			RARE_CONFIG,
 			"AI",
-			"AI_RELATIVE_LEVEL",
+			"RELATIVE_LEVEL",
 			70,
 			100,
 			1,
 			true,
-			RARE_CONFIG.data.AI.AI_RELATIVE_LEVEL == 1 and "Relative AI Level %.0f%%" or "Relative AI Level %.0f%%",
+			RARE_CONFIG.data.AI.RELATIVE_LEVEL == 1 and "Relative AI Level %.0f%%" or "Relative AI Level %.0f%%",
 			"Relative AI level, for easier scaling with BoP'd grids",
 			function(v)
 				for i = 0, #DRIVERS do
@@ -299,12 +299,12 @@ local function aiTab()
 		controls.slider(
 			RARE_CONFIG,
 			"AI",
-			"AI_FORCE_PIT_TYRES",
+			"FORCE_PIT_TYRES",
 			0,
 			1,
 			1,
 			true,
-			RARE_CONFIG.data.AI.AI_FORCE_PIT_TYRES == 1 and "Pit When Tyres Worn: ENABLED"
+			RARE_CONFIG.data.AI.FORCE_PIT_TYRES == 1 and "Pit When Tyres Worn: ENABLED"
 				or "Pit When Tyres Worn: DISABLED",
 			"Force AI to pit for new tyres when their average tyre life is below AI TYRE LIFE",
 			function(v)
@@ -315,7 +315,7 @@ local function aiTab()
 		ui.newLine(1)
 
 		local driver = DRIVERS[sim.focusedCar]
-		if RARE_CONFIG.data.AI.AI_FORCE_PIT_TYRES == 1 then
+		if RARE_CONFIG.data.AI.FORCE_PIT_TYRES == 1 then
 			controls.slider(
 				RARE_CONFIG,
 				"AI",
@@ -386,12 +386,12 @@ local function aiTab()
 			controls.slider(
 				RARE_CONFIG,
 				"AI",
-				"AI_TANK_FILL",
+				"TANK_FILL",
 				0,
 				1,
 				1,
 				true,
-				RARE_CONFIG.data.AI.AI_TANK_FILL == 1 and "Fill Fuel Tank: ENABLED" or "Fill Fuel Tank: DISABLED",
+				RARE_CONFIG.data.AI.TANK_FILL == 1 and "Fill Fuel Tank: ENABLED" or "Fill Fuel Tank: DISABLED",
 				"Enable or disable refueling AI car's fuel tank with enough fuel for the whole race, given the capacity is high enough",
 				function(v)
 					return math.round(v, 0)
@@ -405,13 +405,12 @@ local function aiTab()
 				controls.slider(
 					RARE_CONFIG,
 					"AI",
-					"AI_MGUK_CONTROL",
+					"MGUK_CONTROL",
 					0,
 					1,
 					1,
 					true,
-					RARE_CONFIG.data.AI.AI_MGUK_CONTROL == 1 and "AI Dynamic MGUK: ENABLED"
-						or "AI Dynamic MGUK: DISABLED",
+					RARE_CONFIG.data.AI.MGUK_CONTROL == 1 and "AI Dynamic MGUK: ENABLED" or "AI Dynamic MGUK: DISABLED",
 					"Enables AI to make MGUK changes during the race",
 					function(v)
 						return math.round(v, 0)
