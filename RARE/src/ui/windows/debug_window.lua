@@ -44,6 +44,7 @@ local function pitStopsTreeNode(driver)
 	ui.treeNode("[PIT STOPS]", ui.TreeNodeFlags.DefaultOpen and ui.TreeNodeFlags.Framed, function()
 		ui.inLineBulletText("In Pit Lane", ui.upperBool(driver.car.isInPitlane), space)
 		ui.inLineBulletText("In Pits", ui.upperBool(driver.car.isInPit), space)
+		ui.inLineBulletText("Is Retired", ui.upperBool(driver.car.isRetired), space)
 		ui.inLineBulletText("Pit Stop Count", driver.pitstopCount, space)
 		ui.inLineBulletText("Last Pitted Lap", driver.lapPitted, space)
 		ui.inLineBulletText("Last Pit Time", math.round(driver.pitlaneTime, 2), space)
@@ -90,18 +91,8 @@ local function tyresTreeNode(driver)
 		ui.inLineBulletText("Start Compound", ac.getTyresName(driver.index, driver.tyreCompoundStart), space)
 		ui.inLineBulletText("Tyre Laps", driver.tyreLaps, space)
 
-		ui.inLineBulletText(
-			"Tyre Life Avg Limit",
-			RARE_CONFIG.data.AI.AI_AVG_TYRE_LIFE + driver.aiTyreAvgRandom .. " %",
-			space,
-			driver
-		)
-		ui.inLineBulletText(
-			"Tyre Life Single Limit",
-			RARE_CONFIG.data.AI.AI_SINGLE_TYRE_LIFE + driver.aiTyreSingleRandom .. " %",
-			space,
-			driver
-		)
+		ui.inLineBulletText("Tyre Life Avg Limit", driver.aiTyrePitBelowAvg .. " %", space, driver)
+		ui.inLineBulletText("Tyre Life Single Limit", driver.aiTyrePitBelowSingle .. " %", space, driver)
 
 		ui.inLineBulletText("Tyre Life Average", math.round(100 - (avg_tyre_wear * 100), 1), space)
 		if driver.car.isAIControlled then
