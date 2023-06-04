@@ -2,9 +2,15 @@ local sim = ac.getSim()
 
 Driver = class("Driver")
 function Driver:initialize(carIndex)
-	self.index = carIndex
 	self.car = ac.getCar(carIndex)
-	self.name = ac.getDriverName(carIndex)
+
+	if sim.isOnlineRace then
+		self.index = self.car.sessionID
+	else
+		self.index = carIndex
+	end
+
+	self.name = ac.getDriverName(self.index)
 
 	self.aiThrottleLimitBase = math.lerp(0.5, 1, 1 - ((1 - self.car.aiLevel) / 0.3))
 	self.aiThrottleLimit = 1
@@ -248,7 +254,7 @@ function Driver:setFuelTankRace()
 		if RARE_CONFIG.data.AI.TANK_FILL == 1 then
 			physics.setCarFuel(self.index, fuelload)
 		end
-	else
+	elseif not sim.isOnlineRace then
 		if RARE_CONFIG.data.DRIVER.TANK_FILL == 1 then
 			ac.setSetupSpinnerValue("FUEL", fuelload)
 		end
@@ -284,6 +290,12 @@ function Driver:update(dt)
 
 	if not self.car.isInPit and self.car.fuel > 1 then
 		self.aiPrePitFuel = self.car.fuel
+	end
+
+	if self.car.isInPit and RARE_CONFIG.data.RULES.RACE_REFUELING == 0 then
+		if physics.allowed() then
+			physics.setCarFuel(self.index, self.aiPrePitFuel)
+		end
 	end
 
 	if self.currentMiniSector ~= math.floor((self.car.splinePosition * sim.trackLengthM) / 50) then

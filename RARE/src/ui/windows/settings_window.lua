@@ -794,7 +794,7 @@ local function driverTab()
 	end)
 end
 
-function settingsMenu(sim)
+function settingsMenu()
 	local rareEnable = ac.isWindowOpen("rare")
 
 	if sim.isInMainMenu then
@@ -804,46 +804,55 @@ function settingsMenu(sim)
 		ui.textAligned(SCRIPT_NAME, vec2(0.5, 0.5), vec2(ui.availableSpaceX(), 34))
 		ui.popFont()
 
-		ui.sameLine(0, 0)
-		ui.drawRectFilled(
-			vec2(380, 30),
-			vec2(420, 60),
-			(rareEnable and injected) and rgbm(0, 1, 0, 0.5) or rgbm(1, 0, 0, 0.5)
-		)
+		if not sim.isOnlineRace then
+			ui.sameLine(0, 0)
+			ui.drawRectFilled(
+				vec2(380, 30),
+				vec2(420, 60),
+				(rareEnable and injected) and rgbm(0, 1, 0, 0.5) or rgbm(1, 0, 0, 0.5)
+			)
 
-		ui.sameLine(380, 0)
-		ui.setCursor(vec2(380, 30))
+			ui.sameLine(380, 0)
+			ui.setCursor(vec2(380, 30))
 
-		local buttonLabel = (rareEnable and injected) and "ON" or "OFF"
-		if ui.button(buttonLabel, vec2(40, 30), ui.ButtonFlags.None) then
-			if injected then
-				ac.setWindowOpen("rare", not ac.isWindowOpen("rare"))
-			else
-				inject.injectRare()
+			local buttonLabel = (rareEnable and injected) and "ON" or "OFF"
+			if ui.button(buttonLabel, vec2(40, 30), ui.ButtonFlags.None) then
+				if injected then
+					ac.setWindowOpen("rare", not ac.isWindowOpen("rare"))
+				else
+					inject.injectRare()
+				end
 			end
-		end
 
-		if ui.itemHovered() then
-			if not physics.allowed() then
-				ui.setTooltip("Inject " .. SCRIPT_SHORT_NAME .. " App")
-			else
-				ui.setTooltip("Enable or Disable " .. SCRIPT_SHORT_NAME .. " App")
+			if ui.itemHovered() then
+				if not physics.allowed() then
+					ui.setTooltip("Inject " .. SCRIPT_SHORT_NAME .. " App")
+				else
+					ui.setTooltip("Enable or Disable " .. SCRIPT_SHORT_NAME .. " App")
+				end
 			end
+		else
+			ui.newLine()
 		end
 	end
 
-	if ac.isWindowOpen("rare") and INITIALIZED and injected then
-		ui.newLine(3)
-	else
-		ui.newLine(0)
-		return
+	if not sim.isOnlineRace then
+		if ac.isWindowOpen("rare") and INITIALIZED and injected then
+			ui.newLine(3)
+		else
+			ui.newLine(0)
+			return
+		end
 	end
 
 	ui.tabBar("settingstabbar", ui.TabBarFlags.None, function()
-		rulesTab()
-		driverTab()
-		compoundsTab()
-		aiTab()
+		if not sim.isOnlineRace then
+			rulesTab()
+			driverTab()
+			aiTab()
+			compoundsTab()
+		end
+
 		audioTab()
 		uiTab()
 	end)
