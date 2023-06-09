@@ -199,7 +199,7 @@ function Driver:updateTyreCompoundConfig()
 			and compoundsINI:get(trackID, "MEDIUM_COMPOUND", ""):gsub('"', ""):gsub("'", "")
 		or compoundsINI:get("COMPOUND_DEFAULTS", "MEDIUM_COMPOUND", "2"):gsub('"', ""):gsub("'", "")
 	self.tyreCompoundHard = compoundsINI
-				:get("COMPOUND_DEFAULTS", "HARD_COMPOUND", "")
+				:get(trackID, "HARD_COMPOUND", "")
 				:gsub('"', "")
 				:gsub("'", "") ~= ""
 			and compoundsINI:get(trackID, "HARD_COMPOUND", ""):gsub('"', ""):gsub("'", "")
