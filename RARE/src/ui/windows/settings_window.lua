@@ -393,7 +393,7 @@ local function compoundsTab()
 
 			local value, changed = ui.inputText(
 				"##track" .. key .. "label",
-				selectedCarConfigINI:get(ac.getTrackID(), key, 0),
+				selectedCarConfigINI:get(ac.getTrackID(), key, selectedCarConfig.data.COMPOUND_DEFAULTS[key]),
 				ui.InputTextFlags.None
 			)
 			if changed then
