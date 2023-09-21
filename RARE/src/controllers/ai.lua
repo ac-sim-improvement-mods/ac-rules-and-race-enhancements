@@ -121,18 +121,18 @@ function ai.pitNewTyres(raceRules, driver)
 	else
 		if driver.car.isInPit then
 			pitstop(raceRules, driver)
-			if driver.pitstopTime < 3 then
-				if not driver.aiPitFix then
-					physics.teleportCarTo(driver.index, ac.SpawnSet.Pits)
-					physics.resetCarState(driver.index, 1)
-					driver.aiPitFix = true
-					physics.setAIPitStopRequest(driver.index, true)
-				end
-			else
-				physics.setAIPitStopRequest(driver.index, false)
-			end
-		elseif not driver.car.isInPit and driver.aiPitFix then
-			driver.aiPitFix = false
+			-- if driver.pitstopTime < 3 then
+			-- 	if not driver.aiPitFix then
+			-- 		physics.teleportCarTo(driver.index, ac.SpawnSet.Pits)
+			-- 		physics.resetCarState(driver.index, 1)
+			-- 		driver.aiPitFix = true
+			-- 		physics.setAIPitStopRequest(driver.index, true)
+			-- 	end
+			-- else
+			-- 	physics.setAIPitStopRequest(driver.index, false)
+			-- end
+			-- elseif not driver.car.isInPit and driver.aiPitFix then
+			-- 	driver.aiPitFix = false
 		end
 
 		if driver.isAIPitCall then

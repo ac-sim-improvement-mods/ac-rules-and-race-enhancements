@@ -102,6 +102,10 @@ end
 --- @param config RARE_CONFIG.data
 --- @param driver Driver
 local function qualifySession(racecontrol, config, driver)
+	if driver.car.isInPit then
+		physics.setCarFuel(driver.index, 8.5)
+	end
+
 	if racecontrol.sim.sessionTimeLeft <= 0 then
 		physics.setAIPitStopRequest(driver.index, false)
 		ac.log("sessionover")

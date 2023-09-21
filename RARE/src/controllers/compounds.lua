@@ -1,3 +1,4 @@
+local sim = ac.getSim()
 local compounds = {}
 local driverCompounds = {}
 
@@ -64,7 +65,11 @@ local function restrictCompoundChoice()
 	previousIndex = compoundIndex
 end
 
-function compounds.update(sim)
+function compounds.update()
+	if sim.isOnlineRace then
+		return
+	end
+
 	if RARE_CONFIG.data.RULES.RESTRICT_COMPOUNDS == 1 then
 		if sim.isInMainMenu then
 			restrictCompoundChoice()

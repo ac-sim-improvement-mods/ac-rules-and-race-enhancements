@@ -55,7 +55,7 @@ function initialize(sim)
 
 	installExtensionContents()
 	cspVersionCheck()
-	settings:load(sim)
+	settings:load()
 	DRS_ZONES = DrsZones()
 	createDataDir()
 	createDrivers(sim)

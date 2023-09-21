@@ -1,14 +1,20 @@
 require("src/classes/mapped_config")
 
+local sim = ac.getSim()
+
 local settings = {}
 
-function settings:load(sim)
-	local settingsDir = ac.dirname() .. "\\settings"
+function settings:load()
+	local settingsDir = ac.getFolder(ac.FolderID.ACApps) .. "\\lua\\" .. SCRIPT_SHORT_NAME .. "\\settings"
 	local settingsFile = settingsDir .. "\\settings.ini"
 	local settingsDefaultFile = settingsDir .. "\\default_settings.ini"
 
 	if not io.fileExists(settingsFile) then
 		io.copyFile(settingsDefaultFile, settingsFile)
+	end
+
+	if sim.isOnlineRace then
+		ac.INIConfig.onlineExtras()
 	end
 
 	RARE_CONFIG = MappedConfig(settingsFile, {
