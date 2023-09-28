@@ -52,6 +52,12 @@ function Driver:initialize(carIndex)
 	self.tyreStints = {}
 	self.tyreCompoundTextureTimer = 0
 
+	self.eosCamberLimitFront = -5
+	self.eosCamberLimitRear = -5
+
+	self.tyreMinimumStartingPressureFront = -5
+	self.tyreMinimumStartingPressureRear = -5
+
 	self.trackPosition = -1
 	self.carAhead = -1
 	self.carAheadDelta = -1
@@ -73,6 +79,8 @@ function Driver:initialize(carIndex)
 	self.returnRacePosition = -1
 	self.returnPostionTimer = -1
 
+	self:updateTyreMinimumStartingPressureConfig()
+	self:updateEOSCamberLimitConfig()
 	self:updateAITyreLife()
 	self:updateTyreCompoundConfig()
 
@@ -178,6 +186,30 @@ local function getMiniSectorGap(driver, carAheadIndex)
 	return driver.miniSectors[driver.currentMiniSector] - DRIVERS[carAheadIndex].miniSectors[driver.currentMiniSector]
 end
 
+function Driver:updateEOSCamberLimitConfig()
+	local trackID = ac.getTrackID()
+	local carID = ac.getCarID(self.index)
+	local compoundsINI = ac.INIConfig.load(
+		ac.getFolder(ac.FolderID.ACApps) .. "/lua/RARE/configs/" .. carID .. ".ini",
+		ac.INIFormat.Default
+	)
+
+	self.eosCamberLimitFront = compoundsINI:get(trackID, "EOS_CAMBER_LIMIT_FRONT", -5)
+	self.eosCamberLimitRear = compoundsINI:get(trackID, "EOS_CAMBER_LIMIT_REAR", -5)
+end
+
+function Driver:updateTyreMinimumStartingPressureConfig()
+	local trackID = ac.getTrackID()
+	local carID = ac.getCarID(self.index)
+	local compoundsINI = ac.INIConfig.load(
+		ac.getFolder(ac.FolderID.ACApps) .. "/lua/RARE/configs/" .. carID .. ".ini",
+		ac.INIFormat.Default
+	)
+
+	self.tyreMinimumStartingPressureFront = compoundsINI:get(trackID, "MIN_STARTING_PRESSURE_FRONT", 15)
+	self.tyreMinimumStartingPressureRear = compoundsINI:get(trackID, "MIN_STARTING_PRESSURE_REAR", 15)
+end
+
 function Driver:updateTyreCompoundConfig()
 	local trackID = ac.getTrackID()
 	local carID = ac.getCarID(self.index)
@@ -204,10 +236,7 @@ function Driver:updateTyreCompoundConfig()
 	self.tyreCompoundMedium = compoundsINI:get(trackID, "MEDIUM_COMPOUND", ""):gsub('"', ""):gsub("'", "") ~= ""
 			and compoundsINI:get(trackID, "MEDIUM_COMPOUND", ""):gsub('"', ""):gsub("'", "")
 		or compoundsINI:get("COMPOUND_DEFAULTS", "MEDIUM_COMPOUND", "2"):gsub('"', ""):gsub("'", "")
-	self.tyreCompoundHard = compoundsINI
-				:get(trackID, "HARD_COMPOUND", "")
-				:gsub('"', "")
-				:gsub("'", "") ~= ""
+	self.tyreCompoundHard = compoundsINI:get(trackID, "HARD_COMPOUND", ""):gsub('"', ""):gsub("'", "") ~= ""
 			and compoundsINI:get(trackID, "HARD_COMPOUND", ""):gsub('"', ""):gsub("'", "")
 		or compoundsINI:get("COMPOUND_DEFAULTS", "HARD_COMPOUND", "3"):gsub('"', ""):gsub("'", "")
 	self.tyreCompoundInter = compoundsINI:get("COMPOUND_DEFAULTS", "INTER_COMPOUND", "5"):gsub('"', ""):gsub("'", "")

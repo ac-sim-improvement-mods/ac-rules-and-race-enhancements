@@ -6,7 +6,7 @@ require("src/ui/windows/settings_window")
 require("src/ui/windows/notification_window")
 require("src/classes/audio")
 local racecontrol = require("src/controllers/race_control")
-local cc = require("src/controllers/compounds")
+local pirellilimits = require("src/controllers/pirelli_limits")
 
 INITIALIZED = false
 RARE_CONFIG = nil
@@ -33,6 +33,7 @@ function script.update(dt)
 	if not sim.isOnlineRace then
 		if sim.isInMainMenu then
 			ac.setWindowOpen("settings_setup", true)
+			ac.setWindowOpen("infrigement_setup", true)
 		end
 
 		if not ac.isWindowOpen("rare") then
@@ -54,7 +55,7 @@ function script.update(dt)
 		if sim.isLive then
 			rc = racecontrol.getRaceControl(dt, sim)
 			sfx:update()
-			cc.update()
+			pirellilimits.update()
 		end
 	else
 		if sim.isInMainMenu or sim.isSessionStarted then
