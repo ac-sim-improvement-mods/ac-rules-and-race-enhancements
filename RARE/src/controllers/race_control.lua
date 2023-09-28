@@ -178,7 +178,7 @@ local function runSession(lastUpdate, racecontrol, sessionType, driver)
 		raceSession(lastUpdate, racecontrol, config, driver)
 	elseif sessionType == ac.SessionType.Qualify then
 		qualifySession(racecontrol, config, driver)
-	elseif sessionType == ac.SessionType.Practice then
+	elseif sessionType == ac.SessionType.Practice or sessionType == ac.SessionType.Hotlap then
 		practiceSession(racecontrol, config, driver)
 	end
 
