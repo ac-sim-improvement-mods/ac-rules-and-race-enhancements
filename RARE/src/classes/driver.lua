@@ -61,8 +61,18 @@ function Driver:initialize(carIndex)
 	self.eosCamberLimitFront = -5
 	self.eosCamberLimitRear = -5
 
-	self.tyreMinimumStartingPressureFront = -5
-	self.tyreMinimumStartingPressureRear = -5
+	self.tyreSlicksMinimumStartingPressureFront = 22
+	self.tyreSlicksMinimumStartingPressureRear = 20
+
+	self.tyreIntersMinimumStartingPressureFront = 23
+	self.tyreIntersMinimumStartingPressureRear = 21
+
+	self.tyreWetsMinimumStartingPressureFront = 20
+	self.tyreWetsMinimumStartingPressureRear = 18
+
+	self.tyreSlicksTyreBlanketTemp = 70
+	self.tyreIntsTyreBlanketTemp = 60
+	self.tyreWetsTyreBlanketTemp = 40
 
 	self.trackPosition = -1
 	self.carAhead = -1
@@ -85,8 +95,7 @@ function Driver:initialize(carIndex)
 	self.returnRacePosition = -1
 	self.returnPostionTimer = -1
 
-	self:updateTyreMinimumStartingPressureConfig()
-	self:updateEOSCamberLimitConfig()
+	self:updatePirelliLimitsConfig()
 	self:updateAITyreLife()
 	self:updateTyreCompoundConfig()
 
@@ -195,7 +204,7 @@ local function getMiniSectorGap(driver, carAheadIndex)
 	return driver.miniSectors[driver.currentMiniSector] - DRIVERS[carAheadIndex].miniSectors[driver.currentMiniSector]
 end
 
-function Driver:updateEOSCamberLimitConfig()
+function Driver:updatePirelliLimitsConfig()
 	local trackID = ac.getTrackID()
 	local carID = ac.getCarID(self.index)
 	local compoundsINI = ac.INIConfig.load(
@@ -203,20 +212,18 @@ function Driver:updateEOSCamberLimitConfig()
 		ac.INIFormat.Default
 	)
 
-	self.eosCamberLimitFront = compoundsINI:get(trackID, "EOS_CAMBER_LIMIT_FRONT", -5)
-	self.eosCamberLimitRear = compoundsINI:get(trackID, "EOS_CAMBER_LIMIT_REAR", -5)
-end
+	self.eosCamberLimitFront = compoundsINI:get(trackID, "EOS_CAMBER_LIMIT_FRONT", -3.25)
+	self.eosCamberLimitRear = compoundsINI:get(trackID, "EOS_CAMBER_LIMIT_REAR", -2)
 
-function Driver:updateTyreMinimumStartingPressureConfig()
-	local trackID = ac.getTrackID()
-	local carID = ac.getCarID(self.index)
-	local compoundsINI = ac.INIConfig.load(
-		ac.getFolder(ac.FolderID.ACApps) .. "/lua/RARE/configs/" .. carID .. ".ini",
-		ac.INIFormat.Default
-	)
-
-	self.tyreMinimumStartingPressureFront = compoundsINI:get(trackID, "MIN_STARTING_PRESSURE_FRONT", 15)
-	self.tyreMinimumStartingPressureRear = compoundsINI:get(trackID, "MIN_STARTING_PRESSURE_REAR", 15)
+	self.tyreSlicksMinimumStartingPressureFront = compoundsINI:get(trackID, "SLICKS_MIN_HOT_START_PSI_FRONT", 22)
+	self.tyreSlicksMinimumStartingPressureRear = compoundsINI:get(trackID, "SLICKS_MIN_HOT_START_PSI_REAR", 20)
+	self.tyreIntersMinimumStartingPressureFront = compoundsINI:get(trackID, "INTERS_MIN_HOT_START_PSI_FRONT", 23)
+	self.tyreIntersMinimumStartingPressureRear = compoundsINI:get(trackID, "INTERS_MIN_HOT_START_PSI_REAR", 21)
+	self.tyreWetsMinimumStartingPressureFront = compoundsINI:get(trackID, "WETS_MIN_HOT_START_PSI_FRONT", 20)
+	self.tyreWetsMinimumStartingPressureRear = compoundsINI:get(trackID, "WETS_MIN_HOT_START_PSI_REAR", 18)
+	self.tyreSlicksTyreBlanketTemp = compoundsINI:get(trackID, "SLICKS_TYRE_BLANKET_TEMP", 70)
+	self.tyreIntsTyreBlanketTemp = compoundsINI:get(trackID, "INTERS_TYRE_BLANKET_TEMP", 60)
+	self.tyreWetsTyreBlanketTemp = compoundsINI:get(trackID, "WETS_TYRE_BLANKET_TEMP", 40)
 end
 
 function Driver:updateTyreCompoundConfig()
@@ -352,13 +359,6 @@ function Driver:update(dt)
 	if not self.car.isInPit and self.car.fuel > 1 then
 		self.aiPrePitFuel = self.car.fuel
 	end
-
-	-- if self.car.isInPit and RARE_CONFIG.data.RULES.RACE_REFUELING == 0 then
-	-- 	if physics.allowed() then
-	-- 		ac.log("hi")
-	-- 		physics.setCarFuel(self.index, self.aiPrePitFuel)
-	-- 	end
-	-- end
 
 	if self.currentMiniSector ~= math.floor((self.car.splinePosition * sim.trackLengthM) / 50) then
 		self.currentMiniSector = math.floor((self.car.splinePosition * sim.trackLengthM) / 50)

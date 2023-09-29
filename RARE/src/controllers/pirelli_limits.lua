@@ -118,9 +118,36 @@ local function restrictEOSCamber(driver)
 	end
 end
 
+local lastCompoundIndex = 0
+local delay = 0
+local delayAmount = 0.2
+local menuDelay = false
 local function restrictStartingTyrePressure(driver)
+	local tyreMinimumStartingPressureFront = driver.tyreSlicksMinimumStartingPressureFront
+	local tyreMinimumStartingPressureRear = driver.tyreSlicksMinimumStartingPressureRear
+
+	if driver.car.compoundIndex == tonumber(driver.tyreCompoundInter) then
+		tyreMinimumStartingPressureFront = driver.tyreIntersMinimumStartingPressureFront
+		tyreMinimumStartingPressureRear = driver.tyreIntersMinimumStartingPressureRear
+	elseif driver.car.compoundIndex == tonumber(driver.tyreCompoundWet) then
+		tyreMinimumStartingPressureFront = driver.tyreWetsMinimumStartingPressureFront
+		tyreMinimumStartingPressureRear = driver.tyreWetsMinimumStartingPressureRear
+	end
+
+	if lastCompoundIndex ~= driver.car.compoundIndex or menuDelay then
+		delay = os.clock() + delayAmount
+		lastCompoundIndex = driver.car.compoundIndex
+		menuDelay = false
+		delayAmount = 0.2
+		return
+	end
+
+	if delay > os.clock() then
+		return
+	end
+
 	for i = 0, 1 do
-		if driver.car.wheels[i].tyrePressure < driver.tyreMinimumStartingPressureFront - 0.5 then
+		if driver.car.wheels[i].tyrePressure < tyreMinimumStartingPressureFront - 0.5 then
 			ac.setSetupSpinnerValue(
 				"PRESSURE_" .. wheelPostfix[i],
 				ac.getSetupSpinnerValue("PRESSURE_" .. wheelPostfix[i]) + 1
@@ -129,7 +156,7 @@ local function restrictStartingTyrePressure(driver)
 	end
 
 	for i = 2, 3 do
-		if driver.car.wheels[i].tyrePressure < driver.tyreMinimumStartingPressureRear - 0.5 then
+		if driver.car.wheels[i].tyrePressure < tyreMinimumStartingPressureRear - 0.5 then
 			ac.setSetupSpinnerValue(
 				"PRESSURE_" .. wheelPostfix[i],
 				ac.getSetupSpinnerValue("PRESSURE_" .. wheelPostfix[i]) + 1
@@ -139,35 +166,55 @@ local function restrictStartingTyrePressure(driver)
 end
 
 function pirelliLimits.update()
-	if sim.isOnlineRace or RARE_CONFIG.data.RULES.PIRELLI_LIMITS ~= 1 then
+	if
+		sim.isOnlineRace or (RARE_CONFIG.data.RULES.PIRELLI_LIMITS ~= 1 and RARE_CONFIG.data.RULES.TYRE_BLANKETS ~= 1)
+	then
 		return
 	end
 
-	local driver = DRIVERS[0]
+	for i = 0, #DRIVERS do
+		local driver = DRIVERS[i]
 
-	if sim.isInMainMenu then
-		restrictCompoundChoice(driver)
-		restrictStartingTyrePressure(driver)
-		for i = 0, 3 do
-			eosCamber[i] = 0
-		end
-		infringed = false
-	else
-		restrictEOSCamber(driver)
-	end
-
-	if sim.isInMainMenu then
-		for i = 0, #DRIVERS do
-			local driver = DRIVERS[i]
-			setTyreCompoundsColor(driver, false)
-			driver.tyreCompoundTextureIndex = driver.car.compoundIndex
-		end
-	else
-		for i = 0, #DRIVERS do
-			local driver = DRIVERS[i]
-			if driver.car.isInPit then
+		if RARE_CONFIG.data.RULES.PIRELLI_LIMITS == 1 then
+			if sim.isInMainMenu and sim.raceSessionType == ac.SessionType.Race then
 				setTyreCompoundsColor(driver, false)
-				driver.tyreCompoundTextureIndex = driver.car.compoundIndex
+			elseif driver.car.isInPit then
+				setTyreCompoundsColor(driver, false)
+			end
+
+			if i == 0 then
+				if sim.isInMainMenu then
+					restrictCompoundChoice(driver)
+					restrictStartingTyrePressure(driver)
+
+					local tyreBlanketTemp = driver.tyreSlicksTyreBlanketTemp
+					local setTyreBlankets = true
+					if driver.car.compoundIndex == tonumber(driver.tyreCompoundInter) then
+						tyreBlanketTemp = driver.tyreIntsTyreBlanketTemp
+					elseif driver.car.compoundIndex == tonumber(driver.tyreCompoundWet) then
+						tyreBlanketTemp = driver.tyreWetsTyreBlanketTemp
+					end
+
+					if tyreBlanketTemp <= sim.ambientTemperature then
+						setTyreBlankets = false
+					end
+
+					for i = 0, 3 do
+						eosCamber[i] = 0
+
+						physics.setTyresBlankets(driver.car.index, i, setTyreBlankets)
+						physics.setTyresTemperature(
+							driver.car.index,
+							i,
+							math.max(tyreBlanketTemp, sim.ambientTemperature)
+						)
+					end
+					infringed = false
+				else
+					restrictEOSCamber(driver)
+					menuDelay = true
+					delayAmount = 1
+				end
 			end
 		end
 	end
