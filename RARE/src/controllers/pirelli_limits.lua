@@ -1,49 +1,32 @@
 local sim = ac.getSim()
 local pirelliLimits = {}
-local driverCompounds = {}
 
-local function setTyreCompoundsColor(driver, time, force)
+local function setTyreCompoundsColor(driver, force)
 	local driverCompound = driver.car.compoundIndex
 
-	if (driver.tyreCompoundTextureTimer < os.clock() and driverCompound ~= driverCompounds[driver.index]) or force then
-		driver.tyreCompoundTextureTimer = os.clock() + time
+	local compoundHardness = ""
+
+	if tonumber(driver.tyreCompoundSoft) == driverCompound then
+		compoundHardness = driver.tyreCompoundSoftTexture
+	elseif tonumber(driver.tyreCompoundMedium) == driverCompound then
+		compoundHardness = driver.tyreCompoundMediumTexture
+	elseif tonumber(driver.tyreCompoundHard) == driverCompound then
+		compoundHardness = driver.tyreCompoundHardTexture
+	elseif tonumber(driver.tyreCompoundInter) == driverCompound then
+		compoundHardness = driver.tyreCompoundInterTexture
+	elseif tonumber(driver.tyreCompoundWet) == driverCompound then
+		compoundHardness = driver.tyreCompoundWetTexture
 	end
 
-	if driver.tyreCompoundTextureTimer >= os.clock() then
-		local extensionDir = ac.getFolder(ac.FolderID.ContentCars) .. "/" .. ac.getCarID(driver.index) .. "/extension/"
-
-		local compoundHardness = ""
-
-		if tonumber(driver.tyreCompoundSoft) == driverCompound then
-			compoundHardness = driver.tyreCompoundSoftTexture
-		elseif tonumber(driver.tyreCompoundMedium) == driverCompound then
-			compoundHardness = driver.tyreCompoundMediumTexture
-		elseif tonumber(driver.tyreCompoundHard) == driverCompound then
-			compoundHardness = driver.tyreCompoundHardTexture
-		elseif tonumber(driver.tyreCompoundInter) == driverCompound then
-			compoundHardness = driver.tyreCompoundInterTexture
-		elseif tonumber(driver.tyreCompoundWet) == driverCompound then
-			compoundHardness = driver.tyreCompoundWetTexture
-		else
-			return
-		end
-
-		if compoundHardness == "" or compoundHardness == nil then
-			return
-		end
-
-		local compoundTexture = extensionDir .. compoundHardness .. ".dds"
-		local compoundBlurTexture = extensionDir .. compoundHardness .. "_Blur.dds"
-
-		ac.findNodes("carRoot:" .. driver.index)
-			:findMeshes("material:" .. driver.tyreCompoundMaterialTarget)
-			:setMaterialTexture("txDiffuse", compoundTexture)
-		ac.findNodes("carRoot:" .. driver.index)
-			:findMeshes("material:" .. driver.tyreCompoundMaterialTarget)
-			:setMaterialTexture("txBlur", compoundBlurTexture)
-
-		driverCompounds[driver.index] = driverCompound
+	if compoundHardness == "" or compoundHardness == nil then
+		return
 	end
+
+	local compoundTexture = driver.extensionDir .. compoundHardness .. ".dds"
+	local compoundBlurTexture = driver.extensionDir .. compoundHardness .. "_Blur.dds"
+
+	driver.tyreCompoundNode:setMaterialTexture("txDiffuse", compoundTexture)
+	driver.tyreCompoundNode:setMaterialTexture("txBlur", compoundBlurTexture)
 end
 
 local previousIndex = 0
@@ -174,22 +157,17 @@ function pirelliLimits.update()
 	end
 
 	if sim.isInMainMenu then
-		if sim.raceSessionType == 3 and not sim.isSessionStarted then
-			for i = 0, #DRIVERS do
-				local driver = DRIVERS[i]
-				setTyreCompoundsColor(driver, 15, true)
-			end
-		else
-			for i = 0, #DRIVERS do
-				local driver = DRIVERS[i]
-				setTyreCompoundsColor(driver, 15, true)
-			end
+		for i = 0, #DRIVERS do
+			local driver = DRIVERS[i]
+			setTyreCompoundsColor(driver, false)
+			driver.tyreCompoundTextureIndex = driver.car.compoundIndex
 		end
 	else
 		for i = 0, #DRIVERS do
 			local driver = DRIVERS[i]
 			if driver.car.isInPit then
-				setTyreCompoundsColor(driver, 0.2, false)
+				setTyreCompoundsColor(driver, false)
+				driver.tyreCompoundTextureIndex = driver.car.compoundIndex
 			end
 		end
 	end

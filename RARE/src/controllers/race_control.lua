@@ -102,20 +102,19 @@ end
 --- @param config RARE_CONFIG.data
 --- @param driver Driver
 local function qualifySession(racecontrol, config, driver)
-	if driver.car.isInPit then
-		physics.setCarFuel(driver.index, 8.5)
-	end
-
-	if racecontrol.sim.sessionTimeLeft <= 0 then
-		physics.setAIPitStopRequest(driver.index, false)
-		ac.log("sessionover")
+	if driver.car.isAIControlled then
+		ai.qualifying(racecontrol, driver)
 	end
 end
 
 --- Race Control for practice sessions
 --- @param config RARE_CONFIG.data
 --- @param driver Driver
-local function practiceSession(racecontrol, config, driver) end
+local function practiceSession(racecontrol, config, driver)
+	if driver.car.isAIControlled then
+		ai.practice(racecontrol, driver)
+	end
+end
 
 --- Race Control for race sessions
 --- @param config RARE_CONFIG.data
@@ -190,7 +189,8 @@ local function update(sim, drivers)
 	local carsOnTrackCount = getTrackOrder(drivers)
 	local leaderCompletedLaps = getLeaderCompletedLaps(sim)
 	local wetTrack = isTrackWet(config, sim)
-	local drsEnabled = isDrsEnabled(config, leaderCompletedLaps, wetTrack)
+	local drsEnabled
+	isDrsEnabled(config, 0, false)
 	local drsEnabledLap = drsActivationLap
 	local session = nil
 
@@ -227,10 +227,10 @@ function rc.getRaceControl(dt, sim)
 		local driver = drivers[i]
 		driver:update(dt, sim)
 		DRIVERS[i] = runSession(lastUpdate, racecontrol, sim.raceSessionType, driver)
-		connect.storeDriverData(driver)
+		-- connect.storeDriverData(driver)
 	end
 
-	connect.storeRaceControlData(racecontrol)
+	-- connect.storeRaceControlData(racecontrol)
 
 	return racecontrol
 end
