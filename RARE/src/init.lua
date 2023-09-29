@@ -53,7 +53,7 @@ end
 function initialize(sim)
 	log(FIRST_LAUNCH and "First initialization" or "Reinitializing")
 
-	installExtensionContents()
+	-- installExtensionContents()
 	cspVersionCheck()
 	settings:load()
 	DRS_ZONES = DrsZones()

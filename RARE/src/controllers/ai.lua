@@ -181,12 +181,31 @@ local function moveOffRacingLine(driver)
 	-- end
 end
 
-function ai.qualifying(driver)
+function ai.practice(racecontrol, driver)
 	if driver.car.isInPitlane then
-		physics.allowCarDRS(driver.index, true)
+		if driver.car.drsActive then
+			physics.setCarDRS(driver.index, false)
+		end
+	end
+end
+
+function ai.qualifying(racecontrol, driver)
+	if racecontrol.sim.sessionTimeLeft <= 3000 then
+		physics.setAIPitStopRequest(driver.index, false)
+	end
+
+	if driver.car.isInPitlane then
+		physics.allowCarDRS(driver.index, false)
+		driver.tyreCompoundStart = driver.tyreCompoundsAvailable[1]
+		driver.tyreCompoundNext = driver.tyreCompoundsAvailable[1]
+
 		if driver.car.isInPit then
-			local qualiRunFuel = driver.fuelPerLap * 3.5
-			physics.setCarFuel(driver.index, qualiRunFuel)
+			if driver.car.compoundIndex ~= driver.tyreCompoundsAvailable[1] then
+				ac.log(driver.car.compoundIndex)
+				driver:setAITyreCompound(driver.tyreCompoundsAvailable[1])
+			end
+			driver:setFuelTankQuali()
+			physics.setAIPitStopRequest(driver.index, false)
 		end
 		driver.isOnInLap = false
 		driver.isOnFlyingLap = false
@@ -194,11 +213,8 @@ function ai.qualifying(driver)
 	else
 		if driver.isOnFlyingLap then
 			moveOffRacingLine(driver)
-			if ac.getTrackUpcomingTurn(driver.index).x > 200 then
-				physics.setAIAggression(driver.index, 1)
-			else
-				physics.setAIAggression(driver.index, 0.25)
-			end
+			physics.setAILevel(driver.index, driver.aiLevelRelative)
+			physics.setAIAggression(driver.index, 1)
 
 			if driver.car.lapCount >= driver.inLap then
 				driver.isOnOutlap = false
@@ -210,7 +226,7 @@ function ai.qualifying(driver)
 				if not driver.isAIMoveAside and not driver.isAISpeedUp then
 					physics.setAITopSpeed(driver.index, 250)
 					physics.setAILevel(driver.index, 0.8)
-					physics.setAIAggression(driver.index, 1)
+					physics.setAIAggression(driver.index, 0)
 					physics.allowCarDRS(driver.index, true)
 
 					if driver.carAheadDelta < 5 then

@@ -50,7 +50,13 @@ function Driver:initialize(carIndex)
 	self.tyreCompoundNext = self.car.compoundIndex
 	self.hasChangedTyreCompound = false
 	self.tyreStints = {}
+
+	self.extensionDir = ac.getFolder(ac.FolderID.ContentCars) .. "/" .. ac.getCarID(self.index) .. "/extension/"
+
 	self.tyreCompoundTextureTimer = 0
+	self.tyreCompoundTextureIndex = self.car.compoundIndex
+
+	self.fuelCons = ac.INIConfig.carData(self.index, "fuel_cons.ini"):get("FUEL_EVAL", "KM_PER_LITER", 0.0)
 
 	self.eosCamberLimitFront = -5
 	self.eosCamberLimitRear = -5
@@ -83,6 +89,9 @@ function Driver:initialize(carIndex)
 	self:updateEOSCamberLimitConfig()
 	self:updateAITyreLife()
 	self:updateTyreCompoundConfig()
+
+	self.tyreCompoundNode = ac.findNodes("carRoot:" .. self.index)
+		:findMeshes("material:" .. self.tyreCompoundMaterialTarget)
 
 	for i = 0, #DRS_ZONES.startLines do
 		self.drsDetection[i] = false
@@ -243,11 +252,11 @@ function Driver:updateTyreCompoundConfig()
 	self.tyreCompoundWet = compoundsINI:get("COMPOUND_DEFAULTS", "WET_COMPOUND", "6"):gsub('"', ""):gsub("'", "")
 
 	self.tyreCompoundsAvailable = {
-		self.tyreCompoundSoft,
-		self.tyreCompoundMedium,
-		self.tyreCompoundHard,
-		self.tyreCompoundInter,
-		self.tyreCompoundWet,
+		tonumber(self.tyreCompoundSoft),
+		tonumber(self.tyreCompoundMedium),
+		tonumber(self.tyreCompoundHard),
+		tonumber(self.tyreCompoundInter),
+		tonumber(self.tyreCompoundWet),
 	}
 
 	self.tyreDryCompounds = {
@@ -261,6 +270,9 @@ function Driver:updateTyreCompoundConfig()
 		self.tyreCompoundWet,
 	}
 
+	self.tyreCompoundNode = ac.findNodes("carRoot:" .. self.index)
+		:findMeshes("material:" .. self.tyreCompoundMaterialTarget)
+
 	table.sort(self.tyreCompoundsAvailable, function(a, b)
 		return a < b
 	end)
@@ -269,14 +281,11 @@ function Driver:updateTyreCompoundConfig()
 end
 
 function Driver:setFuelTankRace()
-	local fuelcons = ac.INIConfig.carData(self.index, "fuel_cons.ini"):get("FUEL_EVAL", "KM_PER_LITER", 0.0)
 	local fuelload = 0
-	local fuelPerLap = (sim.trackLengthM / 1000) / (fuelcons - (fuelcons * 0.1))
+	local fuelPerLap = (sim.trackLengthM / 1000) / (self.fuelCons - (self.fuelCons * 0.1))
 
 	if sim.raceSessionType == ac.SessionType.Race then
 		fuelload = ((ac.getSession(sim.currentSessionIndex).laps + 2) * fuelPerLap)
-	elseif sim.raceSessionType == ac.SessionType.Qualify then
-		fuelload = 3.5 * fuelPerLap
 	end
 
 	if self.car.isAIControlled then
@@ -290,14 +299,37 @@ function Driver:setFuelTankRace()
 	end
 end
 
-function Driver:setAITyreCompound()
-	math.randomseed(os.clock() * self.index)
-	math.random()
-	for i = 0, math.random(0, math.random(3)) do
-		math.random()
+function Driver:setFuelTankQuali()
+	local fuelload = 0
+	local fuelPerLap = (sim.trackLengthM / 1000) / (self.fuelCons - (self.fuelCons * 0.1))
+
+	fuelload = 3.5 * fuelPerLap
+
+	if self.car.isAIControlled then
+		if RARE_CONFIG.data.AI.TANK_FILL == 1 then
+			physics.setCarFuel(self.index, fuelload)
+		end
+	elseif not sim.isOnlineRace then
+		if RARE_CONFIG.data.DRIVER.TANK_FILL == 1 then
+			ac.setSetupSpinnerValue("FUEL", fuelload)
+		end
 	end
-	local tyrevalue = self.tyreDryCompounds[math.random(1, #self.tyreDryCompounds)]
-	self.tyreCompoundStart = tyrevalue
+end
+
+function Driver:setAITyreCompound(compoundIndex)
+	local tyrevalue = 0
+
+	if compoundIndex then
+		tyrevalue = compoundIndex
+	else
+		math.randomseed(os.clock() * self.index)
+		math.random()
+		for i = 0, math.random(0, math.random(3)) do
+			math.random()
+		end
+		tyrevalue = self.tyreDryCompounds[math.random(1, #self.tyreDryCompounds)]
+		self.tyreCompoundStart = tyrevalue
+	end
 
 	if ac.getPatchVersionCode() >= 2278 then
 		physics.setAITyres(self.index, tyrevalue)
@@ -321,11 +353,12 @@ function Driver:update(dt)
 		self.aiPrePitFuel = self.car.fuel
 	end
 
-	if self.car.isInPit and RARE_CONFIG.data.RULES.RACE_REFUELING == 0 then
-		if physics.allowed() then
-			physics.setCarFuel(self.index, self.aiPrePitFuel)
-		end
-	end
+	-- if self.car.isInPit and RARE_CONFIG.data.RULES.RACE_REFUELING == 0 then
+	-- 	if physics.allowed() then
+	-- 		ac.log("hi")
+	-- 		physics.setCarFuel(self.index, self.aiPrePitFuel)
+	-- 	end
+	-- end
 
 	if self.currentMiniSector ~= math.floor((self.car.splinePosition * sim.trackLengthM) / 50) then
 		self.currentMiniSector = math.floor((self.car.splinePosition * sim.trackLengthM) / 50)

@@ -17,7 +17,9 @@ local sfx = nil
 
 ac.onSessionStart(function(sessionIndex, restarted)
 	if restarted then
+		INITIALIZED = false
 		log("Session restarted")
+		INITIALIZED = initialize(sim)
 	end
 end)
 
