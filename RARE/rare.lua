@@ -10,20 +10,22 @@ local pirellilimits = require("src/controllers/pirelli_limits")
 
 INITIALIZED = false
 RARE_CONFIG = nil
+RESTARTED = false
 
 local sim = ac.getSim()
 local rc = nil
 local sfx = nil
+local delay = 0
 
 ac.onSessionStart(function(sessionIndex, restarted)
-	if restarted then
-		INITIALIZED = false
-		log("Session restarted")
-		INITIALIZED = initialize(sim)
-	end
+	delay = os.clock() + 6
 end)
 
 function script.update(dt)
+	if sim.sessionsCount > 1 and ac.getPatchVersionCode() == 2501 then
+		return
+	end
+
 	sim = ac.getSim()
 
 	local error = ac.getLastError()
@@ -35,7 +37,6 @@ function script.update(dt)
 	if not sim.isOnlineRace then
 		if sim.isInMainMenu then
 			ac.setWindowOpen("settings_setup", true)
-			ac.setWindowOpen("infrigement_setup", true)
 		end
 
 		if not ac.isWindowOpen("rare") then
@@ -54,13 +55,13 @@ function script.update(dt)
 			sfx = Audio()
 		end
 
-		if sim.isLive then
+		if sim.isLive and os.clock() > delay then
 			rc = racecontrol.getRaceControl(dt, sim)
 			sfx:update()
 			pirellilimits.update()
 		end
 	else
-		if sim.isInMainMenu or sim.isSessionStarted then
+		if sim.isInMainMenu then
 			INITIALIZED = initialize(sim)
 		end
 	end
@@ -95,6 +96,10 @@ function script.windowDebug(dt)
 end
 
 function script.windowSettings()
+	if os.clock() < delay then
+		return
+	end
+
 	local scriptVersion = SCRIPT_VERSION .. " (" .. SCRIPT_VERSION_CODE .. ")"
 	ac.setWindowTitle("settings", SCRIPT_NAME .. " Settings | " .. scriptVersion)
 

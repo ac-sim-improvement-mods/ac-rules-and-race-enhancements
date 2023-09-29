@@ -201,7 +201,6 @@ function ai.qualifying(racecontrol, driver)
 
 		if driver.car.isInPit then
 			if driver.car.compoundIndex ~= driver.tyreCompoundsAvailable[1] then
-				ac.log(driver.car.compoundIndex)
 				driver:setAITyreCompound(driver.tyreCompoundsAvailable[1])
 			end
 			driver:setFuelTankQuali()
