@@ -35,13 +35,6 @@ local function setDrsAvailable(driver, drsEnabled, drsEnabledLap)
 			local isInDrsZone = driverSplinePosition >= detectionLine and driverSplinePosition < endLine
 			local isInDrsActivationZone = isInDrsZone and driverSplinePosition >= startLine
 
-			-- if driver.car.index == 10 then
-			-- 	ac.debug("driver." .. i .. ".detectionLine", detectionLine)
-			-- 	ac.debug("driver." .. i .. ".startLine", startLine)
-			-- 	ac.debug("driver." .. i .. ".zendLine", endLine)
-			-- 	ac.debug("driver.pos", driverSplinePosition)
-			-- end
-
 			if not isInDrsZone then
 				driver.drsDetection[i] = inDrsRange(driver)
 			elseif isInDrsActivationZone then

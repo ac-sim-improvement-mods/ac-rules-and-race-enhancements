@@ -189,8 +189,7 @@ local function update(sim, drivers)
 	local carsOnTrackCount = getTrackOrder(drivers)
 	local leaderCompletedLaps = getLeaderCompletedLaps(sim)
 	local wetTrack = isTrackWet(config, sim)
-	local drsEnabled
-	isDrsEnabled(config, 0, false)
+	local drsEnabled = isDrsEnabled(config, leaderCompletedLaps, wetTrack)
 	local drsEnabledLap = drsActivationLap
 	local session = nil
 
