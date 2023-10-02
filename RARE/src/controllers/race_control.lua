@@ -2,7 +2,7 @@
 local connect = require("app/connection")
 local drs = require("src/controllers/drs")
 local vsc = require("src/controllers/vsc")
-local ai = require("src/controllers/ai")
+local ai = require("src/controllers/ai/ai")
 local notifications = require("src/ui/windows/notification_window")
 require("src/helpers/helper")
 
@@ -102,8 +102,11 @@ end
 --- @param config RARE_CONFIG.data
 --- @param driver Driver
 local function qualifySession(racecontrol, config, driver)
+	local raceRules = config.RULES
+	local aiRules = config.AI
+
 	if driver.car.isAIControlled then
-		ai.qualifying(racecontrol, driver)
+		ai.controller(racecontrol, aiRules, driver)
 	end
 end
 
@@ -111,8 +114,11 @@ end
 --- @param config RARE_CONFIG.data
 --- @param driver Driver
 local function practiceSession(racecontrol, config, driver)
+	local raceRules = config.RULES
+	local aiRules = config.AI
+
 	if driver.car.isAIControlled then
-		ai.practice(racecontrol, driver)
+		ai.controller(racecontrol, aiRules, driver)
 	end
 end
 
@@ -160,7 +166,7 @@ local function raceSession(lastUpdate, racecontrol, config, driver)
 	end
 
 	if driver.car.isAIControlled then
-		ai.controller(raceRules, aiRules, driver)
+		ai.controller(racecontrol, raceRules, aiRules, driver)
 	end
 
 	return driver
