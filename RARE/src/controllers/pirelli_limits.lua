@@ -166,9 +166,7 @@ local function restrictStartingTyrePressure(driver)
 end
 
 function pirelliLimits.update()
-	if
-		sim.isOnlineRace or (RARE_CONFIG.data.RULES.PIRELLI_LIMITS ~= 1 and RARE_CONFIG.data.RULES.TYRE_BLANKETS ~= 1)
-	then
+	if sim.isOnlineRace or RARE_CONFIG.data.RULES.PIRELLI_LIMITS ~= 1 then
 		return
 	end
 
@@ -176,7 +174,10 @@ function pirelliLimits.update()
 		local driver = DRIVERS[i]
 
 		if RARE_CONFIG.data.RULES.PIRELLI_LIMITS == 1 then
-			if sim.isInMainMenu and sim.raceSessionType == ac.SessionType.Race then
+			if
+				sim.isInMainMenu
+				and (sim.raceSessionType == ac.SessionType.Race or sim.raceSessionType == ac.SessionType.Hotlap)
+			then
 				setTyreCompoundsColor(driver, false)
 			elseif driver.car.isInPit then
 				setTyreCompoundsColor(driver, false)
