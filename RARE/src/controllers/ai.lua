@@ -189,7 +189,7 @@ function ai.practice(racecontrol, driver)
 	end
 end
 
-function ai.qualifying(racecontrol, driver)
+function ai.qualifying(racecontrol, aiRules, driver)
 	if racecontrol.sim.sessionTimeLeft <= 3000 then
 		physics.setAIPitStopRequest(driver.index, false)
 	end
@@ -211,10 +211,11 @@ function ai.qualifying(racecontrol, driver)
 		driver.isOnOutlap = true
 	else
 		if driver.isOnFlyingLap then
-			moveOffRacingLine(driver)
-			physics.setAILevel(driver.index, driver.aiLevelRelative)
-			physics.setAIAggression(driver.index, 1)
+			if aiRules.ALTERNATE_LEVEL == 1 then
+				ai.alternateLevel(driver)
+			end
 
+			moveOffRacingLine(driver)
 			if driver.car.lapCount >= driver.inLap then
 				driver.isOnOutlap = false
 				driver.isOnFlyingLap = false
@@ -224,21 +225,15 @@ function ai.qualifying(racecontrol, driver)
 			if driver.car.splinePosition <= 0.8 then
 				if not driver.isAIMoveAside and not driver.isAISpeedUp then
 					physics.setAITopSpeed(driver.index, 250)
-					physics.setAILevel(driver.index, 0.8)
-					physics.setAIAggression(driver.index, 0)
-					physics.allowCarDRS(driver.index, true)
 
 					if driver.carAheadDelta < 5 then
-						physics.setAITopSpeed(driver.index, 200)
+						physics.setAITopSpeed(driver.index, 150)
 					end
 				elseif driver.isAISpeedUp then
 					moveOffRacingLine(driver)
 				end
 			else
-				physics.setAITopSpeed(driver.index, 1e9)
-				physics.setAILevel(driver.index, 1)
-				physics.setAIAggression(driver.index, 1)
-				physics.allowCarDRS(driver.index, false)
+				physics.setAITopSpeed(driver.index, 1000)
 				driver.isOnOutlap = false
 				driver.isOnFlyingLap = true
 				driver.inLap = driver.car.lapCount + 2
@@ -246,8 +241,6 @@ function ai.qualifying(racecontrol, driver)
 		elseif driver.isOnInLap then
 			if not driver.isAIMoveAside and not driver.isAISpeedUp then
 				physics.setAITopSpeed(driver.index, 200)
-				physics.setAILevel(driver.index, 0.65)
-				physics.setAIAggression(driver.index, 0)
 			elseif driver.isAISpeedUp then
 				moveOffRacingLine(driver)
 			end
@@ -346,6 +339,72 @@ function ai.alternateLevel(driver)
 		physics.setAISplineOffset(driver.index, driver.aiSplineOffset, driver.aiCaution == 0)
 		physics.setAIBrakeHint(driver.index, driver.aiBrakeHint)
 		-- physics.setAILookaheadGasBrake(driver.index, driver.aiGasBrakeLookAhead)
+	end
+end
+
+function ai.practice(racecontrol, driver)
+	if driver.car.isInPitlane then
+		if driver.car.drsActive then
+			physics.setCarDRS(driver.index, false)
+		end
+	end
+end
+
+function ai.qualifying(racecontrol, aiRules, driver)
+	if racecontrol.sim.sessionTimeLeft <= 3000 then
+		physics.setAIPitStopRequest(driver.index, false)
+	end
+
+	if driver.car.isInPitlane then
+		physics.allowCarDRS(driver.index, false)
+		driver.tyreCompoundStart = driver.tyreCompoundsAvailable[1]
+		driver.tyreCompoundNext = driver.tyreCompoundsAvailable[1]
+
+		if driver.car.isInPit then
+			if driver.car.compoundIndex ~= driver.tyreCompoundsAvailable[1] then
+				driver:setAITyreCompound(driver.tyreCompoundsAvailable[1])
+			end
+			driver:setFuelTankQuali()
+		end
+		driver.isOnInLap = false
+		driver.isOnFlyingLap = false
+		driver.isOnOutlap = true
+	else
+		if driver.isOnFlyingLap then
+			if aiRules.ALTERNATE_LEVEL == 1 then
+				ai.alternateLevel(driver)
+			end
+
+			moveOffRacingLine(driver)
+			if driver.car.lapCount >= driver.inLap then
+				driver.isOnOutlap = false
+				driver.isOnFlyingLap = false
+				driver.isOnInLap = true
+			end
+		elseif driver.isOnOutlap then
+			if driver.car.splinePosition <= 0.8 then
+				if not driver.isAIMoveAside and not driver.isAISpeedUp then
+					physics.setAITopSpeed(driver.index, 250)
+
+					if driver.carAheadDelta < 5 then
+						physics.setAITopSpeed(driver.index, 150)
+					end
+				elseif driver.isAISpeedUp then
+					moveOffRacingLine(driver)
+				end
+			else
+				physics.setAITopSpeed(driver.index, 1000)
+				driver.isOnOutlap = false
+				driver.isOnFlyingLap = true
+				driver.inLap = driver.car.lapCount + 2
+			end
+		elseif driver.isOnInLap then
+			if not driver.isAIMoveAside and not driver.isAISpeedUp then
+				physics.setAITopSpeed(driver.index, 200)
+			elseif driver.isAISpeedUp then
+				moveOffRacingLine(driver)
+			end
+		end
 	end
 end
 

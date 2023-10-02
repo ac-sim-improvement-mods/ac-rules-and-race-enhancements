@@ -102,8 +102,11 @@ end
 --- @param config RARE_CONFIG.data
 --- @param driver Driver
 local function qualifySession(racecontrol, config, driver)
+	local raceRules = config.RULES
+	local aiRules = config.AI
+
 	if driver.car.isAIControlled then
-		ai.qualifying(racecontrol, driver)
+		ai.qualifying(racecontrol, aiRules, driver)
 	end
 end
 
@@ -111,6 +114,9 @@ end
 --- @param config RARE_CONFIG.data
 --- @param driver Driver
 local function practiceSession(racecontrol, config, driver)
+	local raceRules = config.RULES
+	local aiRules = config.AI
+
 	if driver.car.isAIControlled then
 		ai.practice(racecontrol, driver)
 	end

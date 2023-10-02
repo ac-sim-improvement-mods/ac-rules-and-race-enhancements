@@ -18,7 +18,7 @@ local sfx = nil
 local delay = 0
 
 ac.onSessionStart(function(sessionIndex, restarted)
-	delay = os.clock() + 6
+	delay = os.clock() + 1
 end)
 
 function script.update(dt)
