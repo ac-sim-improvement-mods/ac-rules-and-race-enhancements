@@ -56,7 +56,9 @@ function script.update(dt)
 		end
 
 		if sim.isLive and os.clock() > delay then
-			rc = racecontrol.getRaceControl(dt, sim)
+			if not sim.isOnlineRace then
+				rc = racecontrol.getRaceControl(dt, sim)
+			end
 			sfx:update()
 			pirellilimits.update()
 		end

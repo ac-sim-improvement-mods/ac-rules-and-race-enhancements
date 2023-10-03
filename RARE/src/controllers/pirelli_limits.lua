@@ -118,10 +118,6 @@ local function restrictEOSCamber(driver)
 	end
 end
 
-local lastCompoundIndex = 0
-local delay = 0
-local delayAmount = 0.2
-local menuDelay = false
 local function restrictStartingTyrePressure(driver)
 	local tyreMinimumStartingPressureFront = driver.tyreSlicksMinimumStartingPressureFront
 	local tyreMinimumStartingPressureRear = driver.tyreSlicksMinimumStartingPressureRear
@@ -134,33 +130,21 @@ local function restrictStartingTyrePressure(driver)
 		tyreMinimumStartingPressureRear = driver.tyreWetsMinimumStartingPressureRear
 	end
 
-	if lastCompoundIndex ~= driver.car.compoundIndex or menuDelay then
-		delay = os.clock() + delayAmount
-		lastCompoundIndex = driver.car.compoundIndex
-		menuDelay = false
-		delayAmount = 0.2
-		return
-	end
-
-	if delay > os.clock() then
-		return
-	end
-
 	for i = 0, 1 do
-		if driver.car.wheels[i].tyrePressure < tyreMinimumStartingPressureFront - 0.5 then
-			ac.setSetupSpinnerValue(
-				"PRESSURE_" .. wheelPostfix[i],
-				ac.getSetupSpinnerValue("PRESSURE_" .. wheelPostfix[i]) + 1
-			)
+		if
+			driver.car.wheels[i].tyreWear > 0.000001
+			and driver.car.wheels[i].tyrePressure < tyreMinimumStartingPressureFront
+		then
+			ac.setSetupSpinnerValue("PRESSURE_" .. wheelPostfix[i], driver.car.wheels[i].tyreStaticPressure + 1)
 		end
 	end
 
 	for i = 2, 3 do
-		if driver.car.wheels[i].tyrePressure < tyreMinimumStartingPressureRear - 0.5 then
-			ac.setSetupSpinnerValue(
-				"PRESSURE_" .. wheelPostfix[i],
-				ac.getSetupSpinnerValue("PRESSURE_" .. wheelPostfix[i]) + 1
-			)
+		if
+			driver.car.wheels[i].tyreWear > 0.000001
+			and driver.car.wheels[i].tyrePressure < tyreMinimumStartingPressureRear
+		then
+			ac.setSetupSpinnerValue("PRESSURE_" .. wheelPostfix[i], driver.car.wheels[i].tyreStaticPressure + 1)
 		end
 	end
 end
@@ -176,7 +160,7 @@ function pirelliLimits.update()
 		if RARE_CONFIG.data.RULES.PIRELLI_LIMITS == 1 then
 			if
 				sim.isInMainMenu
-				and (sim.raceSessionType == ac.SessionType.Race or sim.raceSessionType == ac.SessionType.Hotlap)
+				and (sim.raceSessionType == ac.SessionType.Race or ac.getSessionSpawnSet(0) == ac.SpawnSet.HotlapStart)
 			then
 				setTyreCompoundsColor(driver, false)
 			elseif driver.car.isInPit then
@@ -185,9 +169,6 @@ function pirelliLimits.update()
 
 			if i == 0 then
 				if sim.isInMainMenu then
-					restrictCompoundChoice(driver)
-					restrictStartingTyrePressure(driver)
-
 					local tyreBlanketTemp = driver.tyreSlicksTyreBlanketTemp
 					local setTyreBlankets = true
 					if driver.car.compoundIndex == tonumber(driver.tyreCompoundInter) then
@@ -202,15 +183,20 @@ function pirelliLimits.update()
 
 					for i = 0, 3 do
 						eosCamber[i] = 0
+					end
 
-						physics.setTyresBlankets(driver.car.index, i, setTyreBlankets)
+					if setTyreBlankets then
 						physics.setTyresTemperature(
 							driver.car.index,
-							i,
+							ac.Wheel.All,
 							math.max(tyreBlanketTemp, sim.ambientTemperature)
 						)
 					end
+
 					infringed = false
+
+					restrictCompoundChoice(driver)
+					restrictStartingTyrePressure(driver)
 				else
 					restrictEOSCamber(driver)
 					menuDelay = true

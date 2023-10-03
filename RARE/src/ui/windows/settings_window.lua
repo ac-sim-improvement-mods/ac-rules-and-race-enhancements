@@ -388,7 +388,7 @@ local function compoundsTab()
 					),
 					15,
 					30,
-					"%.0f psi",
+					"%.1f psi",
 					1
 				)
 
@@ -396,7 +396,7 @@ local function compoundsTab()
 					selectedCarConfigINI:setAndSave(
 						ac.getTrackID(),
 						trackMinStartingPressureKeys[i],
-						math.round(value),
+						math.floor(value / 0.5 + 0.5) * 0.5,
 						false
 					)
 					for i = 0, #DRIVERS do
@@ -439,7 +439,7 @@ local function compoundsTab()
 					selectedCarConfigINI:setAndSave(
 						ac.getTrackID(),
 						trackTyreBlanketTempKeys[i],
-						math.round(value),
+						math.floor(value / 5) * 5,
 						false
 					)
 					for i = 0, #DRIVERS do
@@ -485,7 +485,7 @@ local function compoundsTab()
 					selectedCarConfigINI:setAndSave(
 						ac.getTrackID(),
 						trackEOSCamberKeys[i],
-						math.round(value * 100) / 100,
+						math.floor(value / 0.05 + 0.05) * 0.05,
 						false
 					)
 					for i = 0, #DRIVERS do
@@ -994,7 +994,9 @@ local function driverTab()
 			"Enable or disable refueling driver's car's fuel tank with enough fuel for the whole race, given the capacity is high enough",
 			function(v)
 				if v == 1 then
-					DRIVERS[0]:setFuelTankRace()
+					if sim.raceSessionType == ac.SessionType.Race then
+						DRIVERS[0]:setFuelTankRace()
+					end
 				end
 				return math.round(v, 0)
 			end
