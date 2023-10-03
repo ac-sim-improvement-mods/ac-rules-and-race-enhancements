@@ -12,7 +12,8 @@ $build_ver = ((Get-Content $version)[2] -split "`"")[1]
 $build_code = ((Get-Content $version)[3] -split "= ")[1]
 $build_code = [int]$build_code + 1
 $build_code = [string]$build_code
-$build_ver = $build_code[0] + "." + $build_code[1] + "." + $build_code[2] + "." + $build_code[3] + "-preview" + $build_code[4]
+# $build_ver = $build_code[0] + "." + $build_code[1] + "." + $build_code[2] + "." + $build_code[3] + "-preview" + $build_code[4]
+$build_ver = "1.2.0.0-preview" + $build_code[2] + $build_code[3] + $build_code[4]
 
 $date = Get-Date -Format "yyyy-MM-dd"
 
