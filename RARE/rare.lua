@@ -42,10 +42,10 @@ function script.update(dt)
 		if not ac.isWindowOpen("rare") then
 			return
 		elseif not physics.allowed() then
-			ui.toast(
-				ui.Icons.Warning,
-				"[RARE] INJECT THE APP! Inject the app by clicking the 'OFF' button in the RARE window while in the setup menu."
-			)
+			-- ui.toast(
+			-- 	ui.Icons.Warning,
+			-- 	"[RARE] INJECT THE APP! Inject the app by clicking the 'OFF' button in the RARE window while in the setup menu."
+			-- )
 			return
 		end
 	end
