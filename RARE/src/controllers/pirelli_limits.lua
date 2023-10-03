@@ -118,6 +118,8 @@ local function restrictEOSCamber(driver)
 	end
 end
 
+local delay = 0
+local menuDelay = false
 local function restrictStartingTyrePressure(driver)
 	local tyreMinimumStartingPressureFront = driver.tyreSlicksMinimumStartingPressureFront
 	local tyreMinimumStartingPressureRear = driver.tyreSlicksMinimumStartingPressureRear
@@ -128,6 +130,15 @@ local function restrictStartingTyrePressure(driver)
 	elseif driver.car.compoundIndex == tonumber(driver.tyreCompoundWet) then
 		tyreMinimumStartingPressureFront = driver.tyreWetsMinimumStartingPressureFront
 		tyreMinimumStartingPressureRear = driver.tyreWetsMinimumStartingPressureRear
+	end
+
+	if menuDelay then
+		delay = os.clock() + 1
+		menuDelay = false
+	end
+
+	if delay > os.clock() then
+		return
 	end
 
 	for i = 0, 1 do
@@ -200,7 +211,6 @@ function pirelliLimits.update()
 				else
 					restrictEOSCamber(driver)
 					menuDelay = true
-					delayAmount = 1
 				end
 			end
 		end
